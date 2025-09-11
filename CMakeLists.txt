@@ -13,8 +13,10 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(SOURCES src/main.cpp
+    src/lexer.cpp)
 add_executable(${PROJECT_NAME}
-    src/main.cpp
+    ${SOURCES}
 )
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)

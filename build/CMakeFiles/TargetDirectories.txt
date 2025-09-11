@@ -1,7 +1,0 @@
-/home/kibertod/dev/uni/timur/build/CMakeFiles/Timur.dir
-/home/kibertod/dev/uni/timur/build/CMakeFiles/edit_cache.dir
-/home/kibertod/dev/uni/timur/build/CMakeFiles/rebuild_cache.dir
-/home/kibertod/dev/uni/timur/build/CMakeFiles/list_install_components.dir
-/home/kibertod/dev/uni/timur/build/CMakeFiles/install.dir
-/home/kibertod/dev/uni/timur/build/CMakeFiles/install/local.dir
-/home/kibertod/dev/uni/timur/build/CMakeFiles/install/strip.dir
