@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <fstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 enum class TokenType {
@@ -25,11 +26,14 @@ enum class TokenType {
     LParen,
     RParen,
     Colon,
+    Comma,
     LBracket,
     RBracket,
     LitStr,
     LitInt,
-    Eof
+    LitReal,
+    Eof,
+    Err
 };
 
 struct Token {
@@ -38,6 +42,12 @@ struct Token {
     Token() :
         type(TokenType::Eof),
         value() { };
+    Token(TokenType type) :
+        type(type),
+        value() { };
+    Token(TokenType type, const std::string& value) :
+        type(type),
+        value(value) { };
 };
 
 class Lexer {
