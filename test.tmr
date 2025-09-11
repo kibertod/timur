@@ -12,7 +12,7 @@ class Program extends Class is
         while some_int.Equals(124).Not() loop
             Pipe().WriteLn(some_int.ToString())
         end
-        if (True.Equals(False)) Pipe().WriteLn("Punks not dead") end
+        if (True.Equals(False)) then Pipe().WriteLn("Punks not dead") end
         var list: List[Integer] := List[Integer]()
         list.Add(1)
         list.Assign(0, 2)
