@@ -1,21 +1,53 @@
+#include <cstddef>
 #include <fstream>
 #include <string>
 #include <vector>
 
-enum TokenType { KEYWORD, IDENTIFIER, OPERATOR, DELIMITER, LITERAL, COMMENT };
+enum class TokenType {
+    KVar,
+    KWhile,
+    KLoop,
+    KIf,
+    KThen,
+    KElse,
+    KIs,
+    KEnd,
+    KClass,
+    KMethod,
+    KExtends,
+    KThis,
+    KSuper,
+    KTrue,
+    KFalse,
+    Identifier,
+    Access,
+    Assign,
+    LParen,
+    RParen,
+    Colon,
+    LBracket,
+    RBracket,
+    LitStr,
+    LitInt,
+    Eof
+};
 
 struct Token {
     TokenType type;
     std::string value;
+    Token() :
+        type(TokenType::Eof),
+        value() { };
 };
 
 class Lexer {
 private:
-    std::fstream file;
-    std::vector<Token> current_sequence;
+    std::string src;
+    Token current;
+    size_t pos;
 
 public:
-    Lexer(std::string target);
-    ~Lexer();
+    Lexer(std::string src);
     Token NextToken();
+    Token Peek();
 };

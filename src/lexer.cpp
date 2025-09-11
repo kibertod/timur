@@ -1,14 +1,11 @@
 #include "lexer.h"
 #include <string>
-#include <vector>
 
-Lexer::Lexer(std::string filename) {
-    file = std::fstream(filename);
-    current_sequence = std::vector<Token>();
-};
+Lexer::Lexer(std::string src) :
+    src(src),
+    pos(0),
+    current() { };
 
-Lexer::~Lexer() { file.close(); }
+Token Lexer::NextToken() { }
 
-Token Lexer::NextToken() {
-    return Token { TokenType::COMMENT, std::string("// this is comment") };
-}
+Token Lexer::Peek() { return current; }
