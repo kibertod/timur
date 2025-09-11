@@ -76,6 +76,16 @@ Token Lexer::NextToken() {
         case ']':
             pos++;
             return Token(TokenType::RBracket);
+        case '/':
+            pos++;
+            if (src[pos] == '/') {
+                while (true) {
+                    pos++;
+                    if (std::isspace(src[pos]) && !std::isblank(src[pos]))
+                        break;
+                }
+            }
+            continue;
         }
 
         if (std::isalpha(src[pos]) || src[pos] == '_') {

@@ -1,3 +1,4 @@
+// lexer should skip this &???//%#@
 class Program extends Class is
     this() is
         super()
@@ -16,4 +17,5 @@ class Program extends Class is
         list.Add(1)
         list.Assign(0, 2)
     end
+// lexer should skip this &???//%#@
 end
