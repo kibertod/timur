@@ -1,0 +1,19 @@
+class Program extends Class is
+    this() is
+        super()
+        var some_int: Integer := 123
+        var some_real: Real := 1.000
+        if (some_int.Equals(123)) then
+            Pipe().WriteLn("Hello World!")
+        else
+            Pipe().WriteLn("123 != 123")
+        end
+        while some_int.Equals(124).Not() loop
+            Pipe().WriteLn(some_int.ToString())
+        end
+        if (True.Equals(False)) Pipe().WriteLn("Punks not dead") end
+        var list: List[Integer] := List[Integer]()
+        list.Add(1)
+        list.Assign(0, 2)
+    end
+end
