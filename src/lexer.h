@@ -55,6 +55,7 @@ private:
     std::string src;
     Token current;
     size_t pos;
+    Token nextTokenUnsaved();
 
 public:
     Lexer(std::string src);

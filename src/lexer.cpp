@@ -7,7 +7,7 @@ Lexer::Lexer(std::string src) :
     pos(0),
     current() { };
 
-Token Lexer::NextToken() {
+Token Lexer::nextTokenUnsaved() {
     std::string buffer;
 
     while (true) {
@@ -130,6 +130,11 @@ Token Lexer::NextToken() {
         }
         return Token(TokenType::Err, "Unexpected character");
     }
+}
+
+Token Lexer::NextToken() {
+    current = nextTokenUnsaved();
+    return current;
 }
 
 Token Lexer::Peek() { return current; }
