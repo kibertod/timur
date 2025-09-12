@@ -4,20 +4,15 @@ project(Timur VERSION 0.1.0 LANGUAGES CXX)
 
 find_package(BISON REQUIRED)
 
-# Specify the .y file
 set(BISON_INPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.ypp)
 
-# Specify the output .cpp and .h files
 set(BISON_OUTPUT_CPP ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.tab.cpp)
 set(BISON_OUTPUT_H   ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.tab.hpp)
 
-# Generate parser using Bison
 BISON_TARGET(parser ${BISON_INPUT_FILE} ${BISON_OUTPUT_CPP} DEFINES_FILE ${BISON_OUTPUT_H})
 
-# Include directory for generated header
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-# Set C++ standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
