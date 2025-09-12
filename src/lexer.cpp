@@ -1,11 +1,23 @@
 #include "lexer.h"
+#include <cstdlib>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <cctype>
 
-Lexer::Lexer(std::string src) :
-    src(src),
+Lexer::Lexer() :
     pos(0),
-    current() { };
+    current() {
+
+    std::ifstream file("test.tmr");
+    if (!file) {
+        std::cerr << "Failed to open file.\n";
+        exit(1);
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    src = buffer.str();
+};
 
 Token Lexer::nextTokenUnsaved() {
     std::string buffer;
@@ -138,3 +150,72 @@ Token Lexer::NextToken() {
 }
 
 Token Lexer::Peek() { return current; }
+
+Lexer lexer = Lexer();
+
+namespace yy {
+    parser::symbol_type yylex() {
+        Token token = lexer.NextToken();
+        switch (token.type) {
+
+        case TokenType::KVar:
+            return yy::parser::make_KVar();
+        case TokenType::KWhile:
+            return yy::parser::make_KWhile();
+        case TokenType::KLoop:
+            return yy::parser::make_KLoop();
+        case TokenType::KIf:
+            return yy::parser::make_KIf();
+        case TokenType::KThen:
+            return yy::parser::make_KThen();
+        case TokenType::KElse:
+            return yy::parser::make_KElse();
+        case TokenType::KIs:
+            return yy::parser::make_KIs();
+        case TokenType::KEnd:
+            return yy::parser::make_KEnd();
+        case TokenType::KClass:
+            return yy::parser::make_KClass();
+        case TokenType::KMethod:
+            return yy::parser::make_KMethod();
+        case TokenType::KExtends:
+            return yy::parser::make_KExtends();
+        case TokenType::KThis:
+            return yy::parser::make_KThis();
+        case TokenType::KSuper:
+            return yy::parser::make_KSuper();
+        case TokenType::KTrue:
+            return yy::parser::make_KTrue();
+        case TokenType::KFalse:
+            return yy::parser::make_KFalse();
+        case TokenType::Identifier:
+            return yy::parser::make_Identifier(token.value);
+        case TokenType::Access:
+            return yy::parser::make_Access();
+        case TokenType::Assign:
+            return yy::parser::make_Assign();
+        case TokenType::LParen:
+            return yy::parser::make_LParen();
+        case TokenType::RParen:
+            return yy::parser::make_RParen();
+        case TokenType::Colon:
+            return yy::parser::make_Colon();
+        case TokenType::Comma:
+            return yy::parser::make_Comma();
+        case TokenType::LBracket:
+            return yy::parser::make_LBracket();
+        case TokenType::RBracket:
+            return yy::parser::make_RBracket();
+        case TokenType::LitStr:
+            return yy::parser::make_LitStr(token.value);
+        case TokenType::LitInt:
+            return yy::parser::make_LitInt(token.value);
+        case TokenType::LitReal:
+            return yy::parser::make_LitReal(token.value);
+        case TokenType::Eof:
+            return yy::parser::make_YYEOF();
+        case TokenType::Err:
+            return yy::parser::make_Err(token.value);
+        }
+    }
+}

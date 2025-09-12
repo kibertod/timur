@@ -1,0 +1,80 @@
+%require "3.2"
+%language "C++"
+%define api.value.type variant
+%define api.token.constructor
+%define parse.assert
+
+%code requires
+{
+    #pragma once
+    #include <iostream>
+    #include <string>
+    
+    namespace yy
+    {
+        class parser;
+    }
+}
+
+%code
+{    
+    namespace yy
+    {
+        parser::symbol_type yylex();
+    }
+
+    extern yy::parser::symbol_type get_next_token();
+}
+
+%token  
+    KVar
+    KWhile
+    KLoop
+    KIf
+    KThen
+    KElse
+    KIs
+    KEnd
+    KClass
+    KMethod
+    KExtends
+    KThis
+    KSuper
+    KTrue
+    KFalse
+    Identifier
+    Access
+    Assign
+    LParen
+    RParen
+    Colon
+    Comma
+    LBracket
+    RBracket
+    LitStr
+    LitInt
+    LitReal
+    Err
+%type <std::string> Identifier
+%type <std::string> LitStr
+%type <std::string> LitInt
+%type <std::string> LitReal
+%type <std::string> Err
+
+%%
+
+Program:
+|Program Lal
+;
+
+Lal: KVar {std::cout << "there is some var :-/" << std::endl;}
+;
+
+%%
+namespace yy
+{
+    void parser::error(const std::string& msg) //(3+)
+    {
+        std::cout<< msg;
+    }
+}

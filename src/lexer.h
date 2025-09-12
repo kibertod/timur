@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "parser.tab.hpp"
 
 enum class TokenType {
     KVar,
@@ -58,7 +59,9 @@ private:
     Token nextTokenUnsaved();
 
 public:
-    Lexer(std::string src);
+    Lexer();
     Token NextToken();
     Token Peek();
 };
+
+yy::parser::symbol_kind::symbol_kind_type yylex();
