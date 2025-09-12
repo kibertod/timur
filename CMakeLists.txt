@@ -5,7 +5,6 @@ project(Timur VERSION 0.1.0 LANGUAGES CXX)
 find_package(BISON REQUIRED)
 
 set(BISON_INPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.ypp)
-
 set(BISON_OUTPUT_CPP ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.tab.cpp)
 set(BISON_OUTPUT_H   ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.tab.hpp)
 
