@@ -151,11 +151,9 @@ Token Lexer::NextToken() {
 
 Token Lexer::Peek() { return current; }
 
-Lexer lexer = Lexer();
-
 namespace yy {
-    parser::symbol_type yylex() {
-        Token token = lexer.NextToken();
+    parser::symbol_type yylex(ParserContext* ctx) {
+        Token token = ctx->lexer.NextToken();
         switch (token.type) {
 
         case TokenType::KVar:
@@ -217,5 +215,6 @@ namespace yy {
         case TokenType::Err:
             return yy::parser::make_Err(token.value);
         }
+        return yy::parser::make_Err(token.value);
     }
 }

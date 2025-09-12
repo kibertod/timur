@@ -42,16 +42,15 @@
 
 
 // Unqualified %code blocks.
-#line 20 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 26 "/home/kibertod/dev/uni/timur/src/parser.ypp"
     
     namespace yy
     {
-        parser::symbol_type yylex();
+        parser::symbol_type yylex(ParserContext* ctx);
     }
 
-    extern yy::parser::symbol_type get_next_token();
 
-#line 55 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 54 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
 
 #ifndef YY_
@@ -124,16 +123,17 @@
 #define YYRECOVERING()  (!!yyerrstatus_)
 
 namespace yy {
-#line 128 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 127 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
   /// Build a parser object.
-  parser::parser ()
+  parser::parser (ParserContext* ctx_yyarg)
 #if YYDEBUG
     : yydebug_ (false),
-      yycdebug_ (&std::cerr)
+      yycdebug_ (&std::cerr),
 #else
-
+    :
 #endif
+      ctx (ctx_yyarg)
   {}
 
   parser::~parser ()
@@ -446,7 +446,7 @@ namespace yy {
         try
 #endif // YY_EXCEPTIONS
           {
-            symbol_type yylookahead (yylex ());
+            symbol_type yylookahead (yylex (ctx));
             yyla.move (yylookahead);
           }
 #if YY_EXCEPTIONS
@@ -543,7 +543,7 @@ namespace yy {
           switch (yyn)
             {
   case 4: // Lal: KVar
-#line 70 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 75 "/home/kibertod/dev/uni/timur/src/parser.ypp"
           {std::cout << "there is some var :-/" << std::endl;}
 #line 549 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
@@ -816,7 +816,7 @@ namespace yy {
   const signed char
   parser::yyrline_[] =
   {
-       0,    66,    66,    67,    70
+       0,    71,    71,    72,    75
   };
 
   void
@@ -850,12 +850,12 @@ namespace yy {
 } // yy
 #line 852 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
-#line 73 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 78 "/home/kibertod/dev/uni/timur/src/parser.ypp"
 
 namespace yy
 {
     void parser::error(const std::string& msg) //(3+)
     {
-        std::cout<< msg;
+        std::cout << msg;
     }
 }

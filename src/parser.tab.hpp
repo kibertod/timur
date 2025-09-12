@@ -45,18 +45,20 @@
 #ifndef YY_YY_HOME_KIBERTOD_DEV_UNI_TIMUR_SRC_PARSER_TAB_HPP_INCLUDED
 # define YY_YY_HOME_KIBERTOD_DEV_UNI_TIMUR_SRC_PARSER_TAB_HPP_INCLUDED
 // "%code requires" blocks.
-#line 8 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 12 "/home/kibertod/dev/uni/timur/src/parser.ypp"
 
     #pragma once
     #include <iostream>
     #include <string>
+
+    struct ParserContext;
     
     namespace yy
     {
         class parser;
     }
 
-#line 60 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 62 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -196,7 +198,7 @@
 #endif
 
 namespace yy {
-#line 200 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 202 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 
@@ -772,7 +774,7 @@ switch (yykind)
     };
 
     /// Build a parser object.
-    parser ();
+    parser (ParserContext* ctx_yyarg);
     virtual ~parser ();
 
 #if 201103L <= YY_CPLUSPLUS
@@ -1594,6 +1596,8 @@ switch (yykind)
     };
 
 
+    // User arguments.
+    ParserContext* ctx;
 
   };
 
@@ -1768,7 +1772,7 @@ switch (yykind)
 
 
 } // yy
-#line 1772 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 1776 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 

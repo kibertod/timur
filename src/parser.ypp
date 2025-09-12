@@ -1,14 +1,20 @@
 %require "3.2"
 %language "C++"
+
 %define api.value.type variant
 %define api.token.constructor
 %define parse.assert
+
+%lex-param { ParserContext* ctx }
+%parse-param { ParserContext* ctx }
 
 %code requires
 {
     #pragma once
     #include <iostream>
     #include <string>
+
+    struct ParserContext;
     
     namespace yy
     {
@@ -20,10 +26,9 @@
 {    
     namespace yy
     {
-        parser::symbol_type yylex();
+        parser::symbol_type yylex(ParserContext* ctx);
     }
 
-    extern yy::parser::symbol_type get_next_token();
 }
 
 %token  
@@ -75,6 +80,6 @@ namespace yy
 {
     void parser::error(const std::string& msg) //(3+)
     {
-        std::cout<< msg;
+        std::cout << msg;
     }
 }

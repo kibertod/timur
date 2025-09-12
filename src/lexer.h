@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstddef>
 #include <fstream>
 #include <string>
@@ -54,8 +56,8 @@ struct Token {
 class Lexer {
 private:
     std::string src;
-    Token current;
     size_t pos;
+    Token current;
     Token nextTokenUnsaved();
 
 public:
@@ -65,3 +67,7 @@ public:
 };
 
 yy::parser::symbol_kind::symbol_kind_type yylex();
+
+struct ParserContext {
+    Lexer lexer;
+};

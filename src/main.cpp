@@ -1,6 +1,8 @@
 #include "parser.tab.hpp"
+#include "lexer.h"
 
 int main() {
-    yy::parser p;
+    ParserContext ctx;
+    yy::parser p(&ctx);
     p.parse();
 }
