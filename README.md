@@ -9,6 +9,7 @@ Clone the repository and run this
 chmod +x run.sh
 ./run.sh
 ```
+###### Idk if this will work on windows ☠️
 For now we only have lexer and parser (which only recognises 'var' keyword 🤨)
 
 So this will build them and run with test.tmr as input source code
