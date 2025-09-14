@@ -484,19 +484,20 @@ namespace yy {
     KSuper = 270,                  // KSuper
     KTrue = 271,                   // KTrue
     KFalse = 272,                  // KFalse
-    Identifier = 273,              // Identifier
-    Access = 274,                  // Access
-    Assign = 275,                  // Assign
-    LParen = 276,                  // LParen
-    RParen = 277,                  // RParen
-    Colon = 278,                   // Colon
-    Comma = 279,                   // Comma
-    LBracket = 280,                // LBracket
-    RBracket = 281,                // RBracket
-    LitStr = 282,                  // LitStr
-    LitInt = 283,                  // LitInt
-    LitReal = 284,                 // LitReal
-    Err = 285                      // Err
+    KReturn = 273,                 // KReturn
+    Identifier = 274,              // Identifier
+    Access = 275,                  // Access
+    Assign = 276,                  // Assign
+    LParen = 277,                  // LParen
+    RParen = 278,                  // RParen
+    Colon = 279,                   // Colon
+    Comma = 280,                   // Comma
+    LBracket = 281,                // LBracket
+    RBracket = 282,                // RBracket
+    LitStr = 283,                  // LitStr
+    LitInt = 284,                  // LitInt
+    LitReal = 285,                 // LitReal
+    Err = 286                      // Err
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -513,7 +514,7 @@ namespace yy {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 31, ///< Number of tokens.
+        YYNTOKENS = 32, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -533,22 +534,23 @@ namespace yy {
         S_KSuper = 15,                           // KSuper
         S_KTrue = 16,                            // KTrue
         S_KFalse = 17,                           // KFalse
-        S_Identifier = 18,                       // Identifier
-        S_Access = 19,                           // Access
-        S_Assign = 20,                           // Assign
-        S_LParen = 21,                           // LParen
-        S_RParen = 22,                           // RParen
-        S_Colon = 23,                            // Colon
-        S_Comma = 24,                            // Comma
-        S_LBracket = 25,                         // LBracket
-        S_RBracket = 26,                         // RBracket
-        S_LitStr = 27,                           // LitStr
-        S_LitInt = 28,                           // LitInt
-        S_LitReal = 29,                          // LitReal
-        S_Err = 30,                              // Err
-        S_YYACCEPT = 31,                         // $accept
-        S_Program = 32,                          // Program
-        S_Lal = 33                               // Lal
+        S_KReturn = 18,                          // KReturn
+        S_Identifier = 19,                       // Identifier
+        S_Access = 20,                           // Access
+        S_Assign = 21,                           // Assign
+        S_LParen = 22,                           // LParen
+        S_RParen = 23,                           // RParen
+        S_Colon = 24,                            // Colon
+        S_Comma = 25,                            // Comma
+        S_LBracket = 26,                         // LBracket
+        S_RBracket = 27,                         // RBracket
+        S_LitStr = 28,                           // LitStr
+        S_LitInt = 29,                           // LitInt
+        S_LitReal = 30,                          // LitReal
+        S_Err = 31,                              // Err
+        S_YYACCEPT = 32,                         // $accept
+        S_Program = 33,                          // Program
+        S_Lal = 34                               // Lal
       };
     };
 
@@ -754,7 +756,7 @@ switch (yykind)
       {
 #if !defined _MSC_VER || defined __clang__
         YY_ASSERT (tok == token::YYEOF
-                   || (token::YYerror <= tok && tok <= token::KFalse)
+                   || (token::YYerror <= tok && tok <= token::KReturn)
                    || (token::Access <= tok && tok <= token::RBracket));
 #endif
       }
@@ -1089,6 +1091,21 @@ switch (yykind)
       make_KFalse ()
       {
         return symbol_type (token::KFalse);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_KReturn ()
+      {
+        return symbol_type (token::KReturn);
+      }
+#else
+      static
+      symbol_type
+      make_KReturn ()
+      {
+        return symbol_type (token::KReturn);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1639,10 +1656,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30
+      25,    26,    27,    28,    29,    30,    31
     };
     // Last valid token kind.
-    const int code_max = 285;
+    const int code_max = 286;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -1772,7 +1789,7 @@ switch (yykind)
 
 
 } // yy
-#line 1776 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 1793 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 

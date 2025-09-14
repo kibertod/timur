@@ -47,6 +47,7 @@
     KSuper
     KTrue
     KFalse
+    KReturn
     Identifier
     Access
     Assign

@@ -543,7 +543,7 @@ namespace yy {
           switch (yyn)
             {
   case 4: // Lal: KVar
-#line 75 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 76 "/home/kibertod/dev/uni/timur/src/parser.ypp"
           {std::cout << "there is some var :-/" << std::endl;}
 #line 549 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
@@ -781,13 +781,13 @@ namespace yy {
   const signed char
   parser::yystos_[] =
   {
-       0,    32,     0,     3,    33
+       0,    33,     0,     3,    34
   };
 
   const signed char
   parser::yyr1_[] =
   {
-       0,    31,    32,    32,    33
+       0,    32,    33,    33,    34
   };
 
   const signed char
@@ -805,9 +805,10 @@ namespace yy {
   {
   "\"end of file\"", "error", "\"invalid token\"", "KVar", "KWhile",
   "KLoop", "KIf", "KThen", "KElse", "KIs", "KEnd", "KClass", "KMethod",
-  "KExtends", "KThis", "KSuper", "KTrue", "KFalse", "Identifier", "Access",
-  "Assign", "LParen", "RParen", "Colon", "Comma", "LBracket", "RBracket",
-  "LitStr", "LitInt", "LitReal", "Err", "$accept", "Program", "Lal", YY_NULLPTR
+  "KExtends", "KThis", "KSuper", "KTrue", "KFalse", "KReturn",
+  "Identifier", "Access", "Assign", "LParen", "RParen", "Colon", "Comma",
+  "LBracket", "RBracket", "LitStr", "LitInt", "LitReal", "Err", "$accept",
+  "Program", "Lal", YY_NULLPTR
   };
 #endif
 
@@ -816,7 +817,7 @@ namespace yy {
   const signed char
   parser::yyrline_[] =
   {
-       0,    71,    71,    72,    75
+       0,    72,    72,    73,    76
   };
 
   void
@@ -848,9 +849,9 @@ namespace yy {
 
 
 } // yy
-#line 852 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 853 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
-#line 78 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 79 "/home/kibertod/dev/uni/timur/src/parser.ypp"
 
 namespace yy
 {

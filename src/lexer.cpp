@@ -125,6 +125,8 @@ namespace yy {
                     return parser::make_KTrue();
                 if (buffer == "false")
                     return parser::make_KFalse();
+                if (buffer == "return")
+                    return parser::make_KReturn();
                 return parser::make_Identifier(buffer);
             }
             return parser::make_Err("Unexpected character");
