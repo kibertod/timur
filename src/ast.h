@@ -1,17 +1,21 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
 #include <variant>
 #include <vector>
 
 namespace ast {
 
     template<typename T>
-    using Ptr = std::unique_ptr<T>;
+    using Ptr = std::shared_ptr<T>;
 
     struct Identifier {
         std::string name;
+    };
+
+    struct TypeName {
+        Identifier name;
+        std::vector<Identifier> generic_arguments;
     };
 
     struct Expression {
@@ -36,6 +40,7 @@ namespace ast {
     };
 
     struct Variable {
+        TypeName type_name;
         Identifier name;
         std::optional<Expression> value;
     };
@@ -72,12 +77,13 @@ namespace ast {
 
     struct Method {
         Identifier name;
-        std::vector<std::pair<Identifier, Identifier>> arguments;
+        std::vector<std::pair<TypeName, Identifier>> arguments;
         std::vector<Statement> body;
     };
 
     struct Class {
         Identifier name;
+        std::vector<Identifier> generic_arguments;
         std::optional<Identifier> extends;
         std::vector<std::variant<Variable, Method>> body;
     };

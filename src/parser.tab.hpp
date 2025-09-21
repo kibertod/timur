@@ -50,15 +50,20 @@
     #pragma once
     #include <iostream>
     #include <string>
+    #include "ast.h"
 
-    struct ParserContext;
+    struct ParserContext {
+        size_t pos;
+        std::string src;
+        std::vector<ast::Expression> root;
+    };
     
     namespace yy
     {
         class parser;
     }
 
-#line 62 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 67 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -198,7 +203,7 @@
 #endif
 
 namespace yy {
-#line 202 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 207 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 
@@ -417,12 +422,18 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // Expression
+      char dummy1[sizeof (ast::Expression)];
+
       // Identifier
       // LitStr
       // LitInt
       // LitReal
       // Err
-      char dummy1[sizeof (std::string)];
+      char dummy2[sizeof (std::string)];
+
+      // Expressions
+      char dummy3[sizeof (std::vector<ast::Expression>)];
     };
 
     /// The size of the largest semantic type.
@@ -550,7 +561,8 @@ namespace yy {
         S_Err = 31,                              // Err
         S_YYACCEPT = 32,                         // $accept
         S_Program = 33,                          // Program
-        S_Lal = 34                               // Lal
+        S_Expression = 34,                       // Expression
+        S_Expressions = 35                       // Expressions
       };
     };
 
@@ -585,12 +597,20 @@ namespace yy {
       {
         switch (this->kind ())
     {
+      case symbol_kind::S_Expression: // Expression
+        value.move< ast::Expression > (std::move (that.value));
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.move< std::string > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.move< std::vector<ast::Expression> > (std::move (that.value));
         break;
 
       default:
@@ -615,12 +635,36 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::Expression&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::Expression& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v)
         : Base (t)
         , value (std::move (v))
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::string& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ast::Expression>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ast::Expression>& v)
         : Base (t)
         , value (v)
       {}
@@ -650,12 +694,20 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
+      case symbol_kind::S_Expression: // Expression
+        value.template destroy< ast::Expression > ();
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.template destroy< std::string > ();
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.template destroy< std::vector<ast::Expression> > ();
         break;
 
       default:
@@ -776,7 +828,7 @@ switch (yykind)
     };
 
     /// Build a parser object.
-    parser (ParserContext* ctx_yyarg);
+    parser (ParserContext& ctx_yyarg);
     virtual ~parser ();
 
 #if 201103L <= YY_CPLUSPLUS
@@ -1607,14 +1659,14 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 3,     ///< Last index in yytable_.
-      yynnts_ = 3,  ///< Number of nonterminal symbols.
-      yyfinal_ = 2 ///< Termination state number.
+      yylast_ = 9,     ///< Last index in yytable_.
+      yynnts_ = 4,  ///< Number of nonterminal symbols.
+      yyfinal_ = 5 ///< Termination state number.
     };
 
 
     // User arguments.
-    ParserContext* ctx;
+    ParserContext& ctx;
 
   };
 
@@ -1677,12 +1729,20 @@ switch (yykind)
   {
     switch (this->kind ())
     {
+      case symbol_kind::S_Expression: // Expression
+        value.copy< ast::Expression > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.copy< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.copy< std::vector<ast::Expression> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1716,12 +1776,20 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
+      case symbol_kind::S_Expression: // Expression
+        value.move< ast::Expression > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.move< std::string > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.move< std::vector<ast::Expression> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1789,7 +1857,7 @@ switch (yykind)
 
 
 } // yy
-#line 1793 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 1861 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 

@@ -5,16 +5,21 @@
 %define api.token.constructor
 %define parse.assert
 
-%lex-param { ParserContext* ctx }
-%parse-param { ParserContext* ctx }
+%lex-param { ParserContext& ctx }
+%parse-param { ParserContext& ctx }
 
 %code requires
 {
     #pragma once
     #include <iostream>
     #include <string>
+    #include "ast.h"
 
-    struct ParserContext;
+    struct ParserContext {
+        size_t pos;
+        std::string src;
+        std::vector<ast::Expression> root;
+    };
     
     namespace yy
     {
@@ -26,9 +31,8 @@
 {    
     namespace yy
     {
-        parser::symbol_type yylex(ParserContext* ctx);
+        parser::symbol_type yylex(ParserContext& ctx);
     }
-
 }
 
 %token  
@@ -61,19 +65,54 @@
     LitInt
     LitReal
     Err
-%type <std::string> Identifier
 %type <std::string> LitStr
 %type <std::string> LitInt
 %type <std::string> LitReal
 %type <std::string> Err
 
+%type <std::string> Identifier
+%type <std::vector<ast::Identifier>> Identifiers;
+
+%type <ast::TypeName> TypeName
+
+%type <ast::Expression> Expression
+%type <std::vector<ast::Expression>> Expressions
+
 %%
 
-Program:
-|Program Lal
+Program: 
+    Expressions { ctx.root = $1; }
 ;
 
-Lal: KVar {std::cout << "there is some var :-/" << std::endl;}
+Identifiers:
+    Identifier { $$ = std::vector<ast::Identifier> {ast::Identifier{$1}}; }
+    | Identifiers Comma Identifier { $1.push_back(ast::Identifier{$3}); $$ = $1; }
+;
+
+TypeName:
+    Identifier { $$ = ast::TypeName {$1, std::vector<ast::Identifier>()}; }
+    | Identifier LBracket Identifiers RBracket { $$ = ast::TypeName {$1, $3}; }
+;
+
+Expression:
+    Expression Access Identifier {
+        $$ = ast::Expression{
+            ast::Expression::MemberAccess{ std::make_shared<ast::Expression>($1), $3 }
+        };
+    }
+    | Expression Access Identifier LParen Expressions RParen {
+        $$ = ast::Expression{
+            ast::Expression::MethodCall{ std::make_shared<ast::Expression>($1), $3, $5 }
+        }; 
+    }
+    | Identifier {
+        $$ = ast::Expression{ ast::Identifier{$1} };
+    }
+;
+
+Expressions:
+    Expression { $$ = std::vector<ast::Expression> {$1}; }
+    | Expressions Expression { $1.push_back($2); $$ = $1; }
 ;
 
 %%

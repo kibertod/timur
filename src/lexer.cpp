@@ -1,33 +1,33 @@
-#include "lexer.h"
 #include <string>
 #include <cctype>
+#include "parser.tab.hpp"
 
 namespace yy {
-    parser::symbol_type yylex(ParserContext* ctx) {
+    parser::symbol_type yylex(ParserContext& ctx) {
         std::string buffer;
 
         while (true) {
-            if (ctx->pos >= ctx->src.length()) {
+            if (ctx.pos >= ctx.src.length()) {
                 return parser::make_YYEOF();
             }
-            if (std::isspace(ctx->src[ctx->pos])) {
-                ctx->pos++;
+            if (std::isspace(ctx.src[ctx.pos])) {
+                ctx.pos++;
                 continue;
             }
-            if (std::isdigit(ctx->src[ctx->pos])) {
+            if (std::isdigit(ctx.src[ctx.pos])) {
                 bool real = false;
-                buffer += ctx->src[ctx->pos];
-                ctx->pos++;
-                while (std::isdigit(ctx->src[ctx->pos]) ||
-                       ctx->src[ctx->pos] == '.') {
-                    if (ctx->src[ctx->pos] == '.') {
+                buffer += ctx.src[ctx.pos];
+                ctx.pos++;
+                while (
+                    std::isdigit(ctx.src[ctx.pos]) || ctx.src[ctx.pos] == '.') {
+                    if (ctx.src[ctx.pos] == '.') {
                         if (real) {
                             return parser::make_LitInt(buffer);
                         }
                         real = true;
                     }
-                    buffer += ctx->src[ctx->pos];
-                    ctx->pos++;
+                    buffer += ctx.src[ctx.pos];
+                    ctx.pos++;
                 }
                 if (buffer[buffer.length() - 1] == '.')
                     return parser::make_Err(
@@ -38,62 +38,62 @@ namespace yy {
                     return parser::make_LitInt(buffer);
                 }
             }
-            if (ctx->src[ctx->pos] == '"') {
-                ctx->pos++;
-                while (ctx->src[ctx->pos] != '"') {
-                    buffer += ctx->src[ctx->pos];
-                    ctx->pos++;
+            if (ctx.src[ctx.pos] == '"') {
+                ctx.pos++;
+                while (ctx.src[ctx.pos] != '"') {
+                    buffer += ctx.src[ctx.pos];
+                    ctx.pos++;
                 }
-                ctx->pos++;
+                ctx.pos++;
                 return parser::make_LitStr(buffer);
             }
-            switch (ctx->src[ctx->pos]) {
+            switch (ctx.src[ctx.pos]) {
             case '(':
-                ctx->pos++;
+                ctx.pos++;
                 return parser::make_LParen();
             case ')':
-                ctx->pos++;
+                ctx.pos++;
                 return parser::make_RParen();
             case '.':
-                ctx->pos++;
+                ctx.pos++;
                 return parser::make_Access();
             case ',':
-                ctx->pos++;
+                ctx.pos++;
                 return parser::make_Comma();
             case ':':
-                ctx->pos++;
-                if (ctx->src[ctx->pos] == '=') {
-                    ctx->pos++;
+                ctx.pos++;
+                if (ctx.src[ctx.pos] == '=') {
+                    ctx.pos++;
                     return parser::make_Assign();
                 }
                 return parser::make_Colon();
             case '[':
-                ctx->pos++;
+                ctx.pos++;
                 return parser::make_LBracket();
             case ']':
-                ctx->pos++;
+                ctx.pos++;
                 return parser::make_RBracket();
             case '/':
-                ctx->pos++;
-                if (ctx->src[ctx->pos] == '/') {
+                ctx.pos++;
+                if (ctx.src[ctx.pos] == '/') {
                     while (true) {
-                        ctx->pos++;
-                        if (std::isspace(ctx->src[ctx->pos]) &&
-                            !std::isblank(ctx->src[ctx->pos]))
+                        ctx.pos++;
+                        if (std::isspace(ctx.src[ctx.pos]) &&
+                            !std::isblank(ctx.src[ctx.pos]))
                             break;
                     }
                 }
                 continue;
             }
 
-            if (std::isalpha(ctx->src[ctx->pos]) || ctx->src[ctx->pos] == '_') {
-                buffer += ctx->src[ctx->pos];
-                ctx->pos++;
-                while (std::isalpha(ctx->src[ctx->pos]) ||
-                       ctx->src[ctx->pos] == '_' ||
-                       std::isdigit(ctx->src[ctx->pos])) {
-                    buffer += ctx->src[ctx->pos];
-                    ctx->pos++;
+            if (std::isalpha(ctx.src[ctx.pos]) || ctx.src[ctx.pos] == '_') {
+                buffer += ctx.src[ctx.pos];
+                ctx.pos++;
+                while (std::isalpha(ctx.src[ctx.pos]) ||
+                       ctx.src[ctx.pos] == '_' ||
+                       std::isdigit(ctx.src[ctx.pos])) {
+                    buffer += ctx.src[ctx.pos];
+                    ctx.pos++;
                 }
                 if (buffer == "var")
                     return parser::make_KVar();

@@ -42,15 +42,14 @@
 
 
 // Unqualified %code blocks.
-#line 26 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 31 "/home/kibertod/dev/uni/timur/src/parser.ypp"
     
     namespace yy
     {
-        parser::symbol_type yylex(ParserContext* ctx);
+        parser::symbol_type yylex(ParserContext& ctx);
     }
 
-
-#line 54 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 53 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
 
 #ifndef YY_
@@ -123,10 +122,10 @@
 #define YYRECOVERING()  (!!yyerrstatus_)
 
 namespace yy {
-#line 127 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 126 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
   /// Build a parser object.
-  parser::parser (ParserContext* ctx_yyarg)
+  parser::parser (ParserContext& ctx_yyarg)
 #if YYDEBUG
     : yydebug_ (false),
       yycdebug_ (&std::cerr),
@@ -191,12 +190,20 @@ namespace yy {
   {
     switch (that.kind ())
     {
+      case symbol_kind::S_Expression: // Expression
+        value.YY_MOVE_OR_COPY< ast::Expression > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.YY_MOVE_OR_COPY< std::vector<ast::Expression> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -214,12 +221,20 @@ namespace yy {
   {
     switch (that.kind ())
     {
+      case symbol_kind::S_Expression: // Expression
+        value.move< ast::Expression > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.move< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.move< std::vector<ast::Expression> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -237,12 +252,20 @@ namespace yy {
     state = that.state;
     switch (that.kind ())
     {
+      case symbol_kind::S_Expression: // Expression
+        value.copy< ast::Expression > (that.value);
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.copy< std::string > (that.value);
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.copy< std::vector<ast::Expression> > (that.value);
         break;
 
       default:
@@ -258,12 +281,20 @@ namespace yy {
     state = that.state;
     switch (that.kind ())
     {
+      case symbol_kind::S_Expression: // Expression
+        value.move< ast::Expression > (that.value);
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         value.move< std::string > (that.value);
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        value.move< std::vector<ast::Expression> > (that.value);
         break;
 
       default:
@@ -520,12 +551,20 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
+      case symbol_kind::S_Expression: // Expression
+        yylhs.value.emplace< ast::Expression > ();
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
       case symbol_kind::S_LitReal: // LitReal
       case symbol_kind::S_Err: // Err
         yylhs.value.emplace< std::string > ();
+        break;
+
+      case symbol_kind::S_Expressions: // Expressions
+        yylhs.value.emplace< std::vector<ast::Expression> > ();
         break;
 
       default:
@@ -542,14 +581,54 @@ namespace yy {
         {
           switch (yyn)
             {
-  case 4: // Lal: KVar
-#line 76 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-          {std::cout << "there is some var :-/" << std::endl;}
-#line 549 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+  case 2: // Program: Expressions
+#line 84 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                { ctx.root = yystack_[0].value.as < std::vector<ast::Expression> > (); }
+#line 588 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 3: // Expression: Expression Access Identifier
+#line 98 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                 {
+        yylhs.value.as < ast::Expression > () = ast::Expression{
+            ast::Expression::MemberAccess{ std::make_shared<ast::Expression>(yystack_[2].value.as < ast::Expression > ()), yystack_[0].value.as < std::string > () }
+        };
+    }
+#line 598 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 4: // Expression: Expression Access Identifier LParen Expressions RParen
+#line 103 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                             {
+        yylhs.value.as < ast::Expression > () = ast::Expression{
+            ast::Expression::MethodCall{ std::make_shared<ast::Expression>(yystack_[5].value.as < ast::Expression > ()), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<ast::Expression> > () }
+        }; 
+    }
+#line 608 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 5: // Expression: Identifier
+#line 108 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                 {
+        yylhs.value.as < ast::Expression > () = ast::Expression{ ast::Identifier{yystack_[0].value.as < std::string > ()} };
+    }
+#line 616 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 6: // Expressions: Expression
+#line 114 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+               { yylhs.value.as < std::vector<ast::Expression> > () = std::vector<ast::Expression> {yystack_[0].value.as < ast::Expression > ()}; }
+#line 622 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 7: // Expressions: Expressions Expression
+#line 115 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                             { yystack_[1].value.as < std::vector<ast::Expression> > ().push_back(yystack_[0].value.as < ast::Expression > ()); yylhs.value.as < std::vector<ast::Expression> > () = yystack_[1].value.as < std::vector<ast::Expression> > (); }
+#line 628 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
 
-#line 553 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 632 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
             default:
               break;
@@ -738,62 +817,65 @@ namespace yy {
 
 
 
-  const signed char parser::yypact_ninf_ = -1;
+  const signed char parser::yypact_ninf_ = -19;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-      -1,     0,    -1,    -1,    -1
+     -17,   -19,     3,   -16,   -17,   -19,   -12,   -16,   -14,   -17,
+     -18,   -19
   };
 
   const signed char
   parser::yydefact_[] =
   {
-       2,     0,     1,     4,     3
+       0,     5,     0,     6,     2,     1,     0,     7,     3,     0,
+       0,     4
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-      -1,    -1,    -1
+     -19,   -19,    -4,     0
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-       0,     1,     4
+       0,     2,     3,     4
   };
 
   const signed char
   parser::yytable_[] =
   {
-       2,     0,     0,     3
+       7,     1,     1,     5,     6,    11,     7,     8,     9,    10
   };
 
   const signed char
   parser::yycheck_[] =
   {
-       0,    -1,    -1,     3
+       4,    19,    19,     0,    20,    23,    10,    19,    22,     9
   };
 
   const signed char
   parser::yystos_[] =
   {
-       0,    33,     0,     3,    34
+       0,    19,    33,    34,    35,     0,    20,    34,    19,    22,
+      35,    23
   };
 
   const signed char
   parser::yyr1_[] =
   {
-       0,    32,    33,    33,    34
+       0,    32,    33,    34,    34,    34,    35,    35
   };
 
   const signed char
   parser::yyr2_[] =
   {
-       0,     2,     0,     2,     1
+       0,     2,     1,     3,     6,     1,     1,     2
   };
 
 
@@ -808,7 +890,7 @@ namespace yy {
   "KExtends", "KThis", "KSuper", "KTrue", "KFalse", "KReturn",
   "Identifier", "Access", "Assign", "LParen", "RParen", "Colon", "Comma",
   "LBracket", "RBracket", "LitStr", "LitInt", "LitReal", "Err", "$accept",
-  "Program", "Lal", YY_NULLPTR
+  "Program", "Expression", "Expressions", YY_NULLPTR
   };
 #endif
 
@@ -817,7 +899,7 @@ namespace yy {
   const signed char
   parser::yyrline_[] =
   {
-       0,    72,    72,    73,    76
+       0,    84,    84,    98,   103,   108,   114,   115
   };
 
   void
@@ -849,9 +931,9 @@ namespace yy {
 
 
 } // yy
-#line 853 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 935 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
-#line 79 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 118 "/home/kibertod/dev/uni/timur/src/parser.ypp"
 
 namespace yy
 {

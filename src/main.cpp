@@ -1,6 +1,43 @@
 #include "parser.tab.hpp"
-#include "lexer.h"
 #include <sstream>
+#include <fstream>
+#include <variant>
+
+std::string tabs(size_t depth) {
+    std::string res = "";
+    for (size_t i = 0; i < depth; i++) {
+        res += "\t";
+    }
+    return res;
+}
+
+void print(ast::Expression expression, size_t depth) {
+    if (auto access =
+            std::get_if<ast::Expression::MemberAccess>(&expression.value)) {
+        std::cout << tabs(depth) << "MEMBER ACCESS" << std::endl
+                  << tabs(depth) << "preceeding expression: " << std::endl;
+        print(*access->object, depth + 1);
+        std::cout << tabs(depth) << "member: " << access->member.name
+                  << std::endl;
+    }
+    if (auto call =
+            std::get_if<ast::Expression::MethodCall>(&expression.value)) {
+        std::cout << tabs(depth) << "METHOD CALL" << std::endl
+                  << tabs(depth) << "preceeding expression: " << std::endl;
+        print(*call->object, depth + 1);
+        std::cout << tabs(depth) << "member: " << call->method.name
+                  << std::endl;
+        std::cout << tabs(depth) << "arguments: " << std::endl;
+        for (size_t i = 0; i < call->argumens.size(); i++) {
+            auto argument = call->argumens[i];
+            print(argument, depth + 1);
+        }
+    }
+    if (auto identifier = std::get_if<ast::Identifier>(&expression.value)) {
+        std::cout << tabs(depth) << "IDENTIFIER" << std::endl
+                  << tabs(depth) << identifier->name << std::endl;
+    }
+}
 
 int main() {
     ParserContext ctx;
@@ -15,6 +52,11 @@ int main() {
     ctx.src = buffer.str();
     ctx.pos = 0;
 
-    yy::parser p(&ctx);
+    yy::parser p(ctx);
     p.parse();
+
+    for (size_t i = 0; i < ctx.root.size(); i++) {
+        auto expression = ctx.root[i];
+        print(expression, 0);
+    }
 }
