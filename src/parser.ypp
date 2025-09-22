@@ -65,9 +65,12 @@
     LitInt
     LitReal
     Err
+
 %type <std::string> LitStr
 %type <std::string> LitInt
 %type <std::string> LitReal
+%type <ast::Expression::Literal> Literal
+
 %type <std::string> Err
 
 %type <std::string> Identifier
@@ -108,11 +111,22 @@ Expression:
     | Identifier {
         $$ = ast::Expression{ ast::Identifier{$1} };
     }
+    | Literal {
+        $$ = ast::Expression{ $1 };
+    }
 ;
 
 Expressions:
     Expression { $$ = std::vector<ast::Expression> {$1}; }
-    | Expressions Expression { $1.push_back($2); $$ = $1; }
+    | Expressions Comma Expression { $1.push_back($3); $$ = $1; }
+;
+
+Literal:
+    LitStr { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Str, $1}; }
+    | LitInt { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Int, $1}; }
+    | LitReal { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Real, $1}; }
+    | KTrue { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Bool, "true"}; }
+    | KFalse { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Bool, "false"}; }
 ;
 
 %%

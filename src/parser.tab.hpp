@@ -425,15 +425,18 @@ namespace yy {
       // Expression
       char dummy1[sizeof (ast::Expression)];
 
+      // Literal
+      char dummy2[sizeof (ast::Expression::Literal)];
+
       // Identifier
       // LitStr
       // LitInt
       // LitReal
       // Err
-      char dummy2[sizeof (std::string)];
+      char dummy3[sizeof (std::string)];
 
       // Expressions
-      char dummy3[sizeof (std::vector<ast::Expression>)];
+      char dummy4[sizeof (std::vector<ast::Expression>)];
     };
 
     /// The size of the largest semantic type.
@@ -562,7 +565,8 @@ namespace yy {
         S_YYACCEPT = 32,                         // $accept
         S_Program = 33,                          // Program
         S_Expression = 34,                       // Expression
-        S_Expressions = 35                       // Expressions
+        S_Expressions = 35,                      // Expressions
+        S_Literal = 36                           // Literal
       };
     };
 
@@ -599,6 +603,10 @@ namespace yy {
     {
       case symbol_kind::S_Expression: // Expression
         value.move< ast::Expression > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Literal: // Literal
+        value.move< ast::Expression::Literal > (std::move (that.value));
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -641,6 +649,18 @@ namespace yy {
       {}
 #else
       basic_symbol (typename Base::kind_type t, const ast::Expression& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::Expression::Literal&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::Expression::Literal& v)
         : Base (t)
         , value (v)
       {}
@@ -696,6 +716,10 @@ switch (yykind)
     {
       case symbol_kind::S_Expression: // Expression
         value.template destroy< ast::Expression > ();
+        break;
+
+      case symbol_kind::S_Literal: // Literal
+        value.template destroy< ast::Expression::Literal > ();
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -1432,7 +1456,7 @@ switch (yykind)
 
 #if YYDEBUG
     // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-    static const signed char yyrline_[];
+    static const unsigned char yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r) const;
     /// Print the state stack on the debug stream.
@@ -1659,9 +1683,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 9,     ///< Last index in yytable_.
-      yynnts_ = 4,  ///< Number of nonterminal symbols.
-      yyfinal_ = 5 ///< Termination state number.
+      yylast_ = 14,     ///< Last index in yytable_.
+      yynnts_ = 5,  ///< Number of nonterminal symbols.
+      yyfinal_ = 11 ///< Termination state number.
     };
 
 
@@ -1733,6 +1757,10 @@ switch (yykind)
         value.copy< ast::Expression > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_Literal: // Literal
+        value.copy< ast::Expression::Literal > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Identifier: // Identifier
       case symbol_kind::S_LitStr: // LitStr
       case symbol_kind::S_LitInt: // LitInt
@@ -1778,6 +1806,10 @@ switch (yykind)
     {
       case symbol_kind::S_Expression: // Expression
         value.move< ast::Expression > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Literal: // Literal
+        value.move< ast::Expression::Literal > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -1857,7 +1889,7 @@ switch (yykind)
 
 
 } // yy
-#line 1861 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 1893 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 

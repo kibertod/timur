@@ -37,6 +37,24 @@ void print(ast::Expression expression, size_t depth) {
         std::cout << tabs(depth) << "IDENTIFIER" << std::endl
                   << tabs(depth) << identifier->name << std::endl;
     }
+    if (auto literal =
+            std::get_if<ast::Expression::Literal>(&expression.value)) {
+        std::cout << tabs(depth) << "LITERAL ";
+        switch (literal->type) {
+        case ast::Expression::Literal::Int:
+            std::cout << "Integer " << literal->value << std::endl;
+            break;
+        case ast::Expression::Literal::Str:
+            std::cout << "String " << literal->value << std::endl;
+            break;
+        case ast::Expression::Literal::Bool:
+            std::cout << "Boolean " << literal->value << std::endl;
+            break;
+        case ast::Expression::Literal::Real:
+            std::cout << "Real " << literal->value << std::endl;
+            break;
+        }
+    }
 }
 
 int main() {

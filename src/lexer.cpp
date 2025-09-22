@@ -22,7 +22,7 @@ namespace yy {
                     std::isdigit(ctx.src[ctx.pos]) || ctx.src[ctx.pos] == '.') {
                     if (ctx.src[ctx.pos] == '.') {
                         if (real) {
-                            return parser::make_LitInt(buffer);
+                            return parser::make_LitReal(buffer);
                         }
                         real = true;
                     }

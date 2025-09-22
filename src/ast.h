@@ -33,6 +33,7 @@ namespace ast {
         struct Literal {
             enum Type { Int, Str, Bool, Real };
 
+            Type type;
             std::string value;
         };
 
