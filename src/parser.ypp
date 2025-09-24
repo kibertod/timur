@@ -18,7 +18,7 @@
     struct ParserContext {
         size_t pos;
         std::string src;
-        std::vector<ast::Expression> root;
+        std::vector<ast::Class> root;
     };
     
     namespace yy
@@ -74,65 +74,148 @@
 %type <std::string> Err
 
 %type <std::string> Identifier
-%type <std::vector<ast::Identifier>> Identifiers;
+%type <std::vector<ast::Identifier>> Identifiers
 
 %type <ast::TypeName> TypeName
+%type <std::vector<ast::TypeName>> TypeNames
 
 %type <ast::Expression> Expression
 %type <std::vector<ast::Expression>> Expressions
 
+%type <ast::Statement> Statement
+%type <std::vector<ast::Statement>> Statements
+
+%type <ast::Variable> Variable
+
+%type <ast::Statement::If::ElIf> ElIf
+%type <std::vector<ast::Statement::If::ElIf>> ElIfs
+
+%type <ast::MemberDeclaration> MemberDeclaration
+%type <std::vector<ast::MemberDeclaration>> MemberDeclarations
+
+%type <std::pair<ast::TypeName, ast::Identifier>> Argument
+%type <std::vector<std::pair<ast::TypeName, ast::Identifier>>> Arguments
+
+%type <ast::Class> Class
+%type <std::vector<ast::Class>> Classes
+
 %%
 
 Program: 
-    Expressions { ctx.root = $1; }
+    Classes { ctx.root = $1; }
 ;
 
 Identifiers:
-    Identifier { $$ = std::vector<ast::Identifier> {ast::Identifier{$1}}; }
-    | Identifiers Comma Identifier { $1.push_back(ast::Identifier{$3}); $$ = $1; }
+    { $$ = {}; }
+    | Identifier { $$ = {{$1}}; }
+    | Identifiers Comma Identifier { $1.push_back({$3}); $$ = $1; }
 ;
 
 TypeName:
-    Identifier { $$ = ast::TypeName {$1, std::vector<ast::Identifier>()}; }
-    | Identifier LBracket Identifiers RBracket { $$ = ast::TypeName {$1, $3}; }
+    Identifier { $$ = {$1, {}}; }
+    | Identifier LBracket TypeNames RBracket { $$ = {$1, $3}; }
 ;
 
+
+TypeNames:
+    TypeName { $$ = {$1}; }
+    | TypeNames Comma TypeName { $1.push_back($3); $$ = $1; }
+;
+
+
 Expression:
-    Expression Access Identifier {
-        $$ = ast::Expression{
-            ast::Expression::MemberAccess{ std::make_shared<ast::Expression>($1), $3 }
-        };
-    }
-    | Expression Access Identifier LParen Expressions RParen {
-        $$ = ast::Expression{
-            ast::Expression::MethodCall{ std::make_shared<ast::Expression>($1), $3, $5 }
-        }; 
-    }
+    KThis Access Identifier { $$ = {ast::Expression::ThisAccess{ $3 } }; }
+    | KThis LParen Expressions RParen { $$ = {ast::Expression::ThisCall{ $3 }}; }
+    | Expression Access Identifier { $$ = { ast::Expression::MemberAccess{ std::make_shared<ast::Expression>($1), $3 } }; }
+    | Expression Access Identifier LParen Expressions RParen { $$ = { ast::Expression::MethodCall{ std::make_shared<ast::Expression>($1), $3, $5 } }; }
+    | TypeName LParen Expressions RParen { $$ = { ast::Expression::ConstructorCall{ $1, $3 } }; }
+    | KSuper LParen Expressions RParen { $$ = { ast::Expression::SuperCall{ $3 } }; }
     | Identifier {
-        $$ = ast::Expression{ ast::Identifier{$1} };
+        $$ = { ast::Identifier{$1} };
     }
     | Literal {
-        $$ = ast::Expression{ $1 };
+        $$ = { $1 };
     }
 ;
 
 Expressions:
-    Expression { $$ = std::vector<ast::Expression> {$1}; }
+    { $$ = {}; }
+    | Expression { $$ = {$1}; }
     | Expressions Comma Expression { $1.push_back($3); $$ = $1; }
 ;
 
 Literal:
-    LitStr { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Str, $1}; }
-    | LitInt { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Int, $1}; }
-    | LitReal { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Real, $1}; }
-    | KTrue { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Bool, "true"}; }
-    | KFalse { $$ = ast::Expression::Literal{ast::Expression::Literal::Type::Bool, "false"}; }
+    LitStr { $$ = {ast::Expression::Literal::Type::Str, $1}; }
+    | LitInt { $$ = {ast::Expression::Literal::Type::Int, $1}; }
+    | LitReal { $$ = {ast::Expression::Literal::Type::Real, $1}; }
+    | KTrue { $$ = {ast::Expression::Literal::Type::Bool, "true"}; }
+    | KFalse { $$ = {ast::Expression::Literal::Type::Bool, "false"}; }
+;
+
+Variable:
+    KVar Identifier Colon TypeName { $$ = {$4, $2, {}}; }
+    | KVar Identifier Colon TypeName Assign Expression { $$ = {$4, $2, $6}; }
+;
+
+Statement:
+    KReturn Expression { $$ = {ast::Statement::Return{$2}}; }
+    | Expression Assign Expression { $$ = {ast::Statement::Assignment{$1, $3}}; }
+    | Expression { $$ = {$1}; }
+    | Variable { $$ = {$1}; }
+    | KWhile Expression KLoop Statements KEnd { $$ = {ast::Statement::While{$2, $4}}; }
+    | KIf Expression KThen Statements ElIfs KEnd { $$ = {ast::Statement::If{$2, $4, $5, std::vector<ast::Statement>()}}; }
+    | KIf Expression KThen Statements ElIfs KElse Statements KEnd { $$ = {ast::Statement::If{$2, $4, $5, $7}}; }
+;
+
+Statements:
+    { $$ = {}; }
+    | Statements Statement { $1.push_back($2); $$ = $1; }
+;
+
+ElIf:
+    KElse KIf Expression KThen Statements { $$ = ast::Statement::If::ElIf{$3, $5}; }
+;
+
+ElIfs:
+    { $$ = {}; }
+    | ElIfs ElIf { $1.push_back($2); $$ = $1; }
+;
+
+Argument:
+    TypeName Colon Identifier { $$ = std::pair<ast::TypeName, ast::Identifier>($1, $3); }
+;
+
+Arguments:
+    { $$ = {}; }
+    | Argument { $$ = {$1}; }
+    | Arguments Comma Argument { $1.push_back($3); $$ = $1; }
+;
+
+MemberDeclaration:
+    TypeName Identifier LParen Arguments RParen KIs Statements KEnd { $$ = {ast::MemberDeclaration::Method{$2, $1, $4, $7}}; }
+    | KThis LParen Arguments RParen KIs Statements KEnd { $$ = {ast::MemberDeclaration::Constructor{ $3, $6 }}; }
+    | Variable { $$ = {$1}; }
+;
+
+MemberDeclarations:
+    { $$ = {}; }
+    | MemberDeclarations MemberDeclaration { $1.push_back($2); $$ = $1; }
+;
+
+Class:
+    KClass TypeName KExtends Identifiers KIs MemberDeclarations KEnd { $$ = {$2, $4, $6}; }
+    | KClass TypeName KIs MemberDeclarations KEnd { $$ = {$2, {}, $4}; }
+;
+
+Classes:
+    Class { $$ = {$1}; }
+    | Classes Class { $1.push_back($2); $$ = $1; }
 ;
 
 %%
 namespace yy
 {
-    void parser::error(const std::string& msg) //(3+)
+    void parser::error(const std::string& msg)
     {
         std::cout << msg;
     }

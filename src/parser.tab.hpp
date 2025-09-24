@@ -55,7 +55,7 @@
     struct ParserContext {
         size_t pos;
         std::string src;
-        std::vector<ast::Expression> root;
+        std::vector<ast::Class> root;
     };
     
     namespace yy
@@ -422,21 +422,63 @@ namespace yy {
     /// An auxiliary type to compute the largest semantic type.
     union union_type
     {
+      // Class
+      char dummy1[sizeof (ast::Class)];
+
       // Expression
-      char dummy1[sizeof (ast::Expression)];
+      char dummy2[sizeof (ast::Expression)];
 
       // Literal
-      char dummy2[sizeof (ast::Expression::Literal)];
+      char dummy3[sizeof (ast::Expression::Literal)];
+
+      // MemberDeclaration
+      char dummy4[sizeof (ast::MemberDeclaration)];
+
+      // Statement
+      char dummy5[sizeof (ast::Statement)];
+
+      // ElIf
+      char dummy6[sizeof (ast::Statement::If::ElIf)];
+
+      // TypeName
+      char dummy7[sizeof (ast::TypeName)];
+
+      // Variable
+      char dummy8[sizeof (ast::Variable)];
+
+      // Argument
+      char dummy9[sizeof (std::pair<ast::TypeName, ast::Identifier>)];
 
       // Identifier
       // LitStr
       // LitInt
       // LitReal
       // Err
-      char dummy3[sizeof (std::string)];
+      char dummy10[sizeof (std::string)];
+
+      // Classes
+      char dummy11[sizeof (std::vector<ast::Class>)];
 
       // Expressions
-      char dummy4[sizeof (std::vector<ast::Expression>)];
+      char dummy12[sizeof (std::vector<ast::Expression>)];
+
+      // Identifiers
+      char dummy13[sizeof (std::vector<ast::Identifier>)];
+
+      // MemberDeclarations
+      char dummy14[sizeof (std::vector<ast::MemberDeclaration>)];
+
+      // ElIfs
+      char dummy15[sizeof (std::vector<ast::Statement::If::ElIf>)];
+
+      // Statements
+      char dummy16[sizeof (std::vector<ast::Statement>)];
+
+      // TypeNames
+      char dummy17[sizeof (std::vector<ast::TypeName>)];
+
+      // Arguments
+      char dummy18[sizeof (std::vector<std::pair<ast::TypeName, ast::Identifier>>)];
     };
 
     /// The size of the largest semantic type.
@@ -564,9 +606,23 @@ namespace yy {
         S_Err = 31,                              // Err
         S_YYACCEPT = 32,                         // $accept
         S_Program = 33,                          // Program
-        S_Expression = 34,                       // Expression
-        S_Expressions = 35,                      // Expressions
-        S_Literal = 36                           // Literal
+        S_Identifiers = 34,                      // Identifiers
+        S_TypeName = 35,                         // TypeName
+        S_TypeNames = 36,                        // TypeNames
+        S_Expression = 37,                       // Expression
+        S_Expressions = 38,                      // Expressions
+        S_Literal = 39,                          // Literal
+        S_Variable = 40,                         // Variable
+        S_Statement = 41,                        // Statement
+        S_Statements = 42,                       // Statements
+        S_ElIf = 43,                             // ElIf
+        S_ElIfs = 44,                            // ElIfs
+        S_Argument = 45,                         // Argument
+        S_Arguments = 46,                        // Arguments
+        S_MemberDeclaration = 47,                // MemberDeclaration
+        S_MemberDeclarations = 48,               // MemberDeclarations
+        S_Class = 49,                            // Class
+        S_Classes = 50                           // Classes
       };
     };
 
@@ -601,12 +657,40 @@ namespace yy {
       {
         switch (this->kind ())
     {
+      case symbol_kind::S_Class: // Class
+        value.move< ast::Class > (std::move (that.value));
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.move< ast::Expression > (std::move (that.value));
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.move< ast::Expression::Literal > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.move< ast::MemberDeclaration > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.move< ast::Statement > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.move< ast::Statement::If::ElIf > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.move< ast::TypeName > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.move< ast::Variable > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.move< std::pair<ast::TypeName, ast::Identifier> > (std::move (that.value));
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -617,8 +701,36 @@ namespace yy {
         value.move< std::string > (std::move (that.value));
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.move< std::vector<ast::Class> > (std::move (that.value));
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.move< std::vector<ast::Expression> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.move< std::vector<ast::Identifier> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.move< std::vector<ast::MemberDeclaration> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.move< std::vector<ast::Statement::If::ElIf> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.move< std::vector<ast::Statement> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.move< std::vector<ast::TypeName> > (std::move (that.value));
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.move< std::vector<std::pair<ast::TypeName, ast::Identifier>> > (std::move (that.value));
         break;
 
       default:
@@ -639,6 +751,18 @@ namespace yy {
 #else
       basic_symbol (typename Base::kind_type t)
         : Base (t)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::Class&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::Class& v)
+        : Base (t)
+        , value (v)
       {}
 #endif
 
@@ -667,6 +791,78 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::MemberDeclaration&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::MemberDeclaration& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::Statement&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::Statement& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::Statement::If::ElIf&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::Statement::If::ElIf& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::TypeName&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::TypeName& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ast::Variable&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const ast::Variable& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::pair<ast::TypeName, ast::Identifier>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::pair<ast::TypeName, ast::Identifier>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::string&& v)
         : Base (t)
         , value (std::move (v))
@@ -679,12 +875,96 @@ namespace yy {
 #endif
 
 #if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ast::Class>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ast::Class>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
       basic_symbol (typename Base::kind_type t, std::vector<ast::Expression>&& v)
         : Base (t)
         , value (std::move (v))
       {}
 #else
       basic_symbol (typename Base::kind_type t, const std::vector<ast::Expression>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ast::Identifier>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ast::Identifier>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ast::MemberDeclaration>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ast::MemberDeclaration>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ast::Statement::If::ElIf>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ast::Statement::If::ElIf>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ast::Statement>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ast::Statement>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<ast::TypeName>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<ast::TypeName>& v)
+        : Base (t)
+        , value (v)
+      {}
+#endif
+
+#if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::vector<std::pair<ast::TypeName, ast::Identifier>>&& v)
+        : Base (t)
+        , value (std::move (v))
+      {}
+#else
+      basic_symbol (typename Base::kind_type t, const std::vector<std::pair<ast::TypeName, ast::Identifier>>& v)
         : Base (t)
         , value (v)
       {}
@@ -714,12 +994,40 @@ namespace yy {
         // Value type destructor.
 switch (yykind)
     {
+      case symbol_kind::S_Class: // Class
+        value.template destroy< ast::Class > ();
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.template destroy< ast::Expression > ();
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.template destroy< ast::Expression::Literal > ();
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.template destroy< ast::MemberDeclaration > ();
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.template destroy< ast::Statement > ();
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.template destroy< ast::Statement::If::ElIf > ();
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.template destroy< ast::TypeName > ();
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.template destroy< ast::Variable > ();
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.template destroy< std::pair<ast::TypeName, ast::Identifier> > ();
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -730,8 +1038,36 @@ switch (yykind)
         value.template destroy< std::string > ();
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.template destroy< std::vector<ast::Class> > ();
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.template destroy< std::vector<ast::Expression> > ();
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.template destroy< std::vector<ast::Identifier> > ();
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.template destroy< std::vector<ast::MemberDeclaration> > ();
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.template destroy< std::vector<ast::Statement::If::ElIf> > ();
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.template destroy< std::vector<ast::Statement> > ();
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.template destroy< std::vector<ast::TypeName> > ();
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.template destroy< std::vector<std::pair<ast::TypeName, ast::Identifier>> > ();
         break;
 
       default:
@@ -1423,7 +1759,7 @@ switch (yykind)
     // Tables.
     // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
     // STATE-NUM.
-    static const signed char yypact_[];
+    static const short yypact_[];
 
     // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
     // Performed when YYTABLE does not specify something else to do.  Zero
@@ -1431,7 +1767,7 @@ switch (yykind)
     static const signed char yydefact_[];
 
     // YYPGOTO[NTERM-NUM].
-    static const signed char yypgoto_[];
+    static const short yypgoto_[];
 
     // YYDEFGOTO[NTERM-NUM].
     static const signed char yydefgoto_[];
@@ -1683,9 +2019,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 14,     ///< Last index in yytable_.
-      yynnts_ = 5,  ///< Number of nonterminal symbols.
-      yyfinal_ = 11 ///< Termination state number.
+      yylast_ = 168,     ///< Last index in yytable_.
+      yynnts_ = 19,  ///< Number of nonterminal symbols.
+      yyfinal_ = 7 ///< Termination state number.
     };
 
 
@@ -1753,12 +2089,40 @@ switch (yykind)
   {
     switch (this->kind ())
     {
+      case symbol_kind::S_Class: // Class
+        value.copy< ast::Class > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.copy< ast::Expression > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.copy< ast::Expression::Literal > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.copy< ast::MemberDeclaration > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.copy< ast::Statement > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.copy< ast::Statement::If::ElIf > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.copy< ast::TypeName > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.copy< ast::Variable > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.copy< std::pair<ast::TypeName, ast::Identifier> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -1769,8 +2133,36 @@ switch (yykind)
         value.copy< std::string > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.copy< std::vector<ast::Class> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.copy< std::vector<ast::Expression> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.copy< std::vector<ast::Identifier> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.copy< std::vector<ast::MemberDeclaration> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.copy< std::vector<ast::Statement::If::ElIf> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.copy< std::vector<ast::Statement> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.copy< std::vector<ast::TypeName> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.copy< std::vector<std::pair<ast::TypeName, ast::Identifier>> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -1804,12 +2196,40 @@ switch (yykind)
     super_type::move (s);
     switch (this->kind ())
     {
+      case symbol_kind::S_Class: // Class
+        value.move< ast::Class > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.move< ast::Expression > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.move< ast::Expression::Literal > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.move< ast::MemberDeclaration > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.move< ast::Statement > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.move< ast::Statement::If::ElIf > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.move< ast::TypeName > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.move< ast::Variable > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.move< std::pair<ast::TypeName, ast::Identifier> > (YY_MOVE (s.value));
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -1820,8 +2240,36 @@ switch (yykind)
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.move< std::vector<ast::Class> > (YY_MOVE (s.value));
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.move< std::vector<ast::Expression> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.move< std::vector<ast::Identifier> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.move< std::vector<ast::MemberDeclaration> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.move< std::vector<ast::Statement::If::ElIf> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.move< std::vector<ast::Statement> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.move< std::vector<ast::TypeName> > (YY_MOVE (s.value));
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.move< std::vector<std::pair<ast::TypeName, ast::Identifier>> > (YY_MOVE (s.value));
         break;
 
       default:
@@ -1889,7 +2337,7 @@ switch (yykind)
 
 
 } // yy
-#line 1893 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 2341 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 

@@ -10,9 +10,9 @@ chmod +x run.sh
 ./run.sh
 ```
 ###### Idk if this will work on windows ☠️
-For now we only have lexer and parser (which only recognises 'var' keyword 🤨)
+For now we only have lexer and parser
 
-So this will build them and run with test.tmr as input source code
+So this will build them, run with test.tmr as input source code and output an AST
 
 You can change test.tmr it and `./run.sh` again
 ###### You can change anything you want actually...

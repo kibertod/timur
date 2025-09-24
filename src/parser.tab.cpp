@@ -190,12 +190,40 @@ namespace yy {
   {
     switch (that.kind ())
     {
+      case symbol_kind::S_Class: // Class
+        value.YY_MOVE_OR_COPY< ast::Class > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.YY_MOVE_OR_COPY< ast::Expression > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.YY_MOVE_OR_COPY< ast::Expression::Literal > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.YY_MOVE_OR_COPY< ast::MemberDeclaration > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.YY_MOVE_OR_COPY< ast::Statement > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.YY_MOVE_OR_COPY< ast::Statement::If::ElIf > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.YY_MOVE_OR_COPY< ast::TypeName > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.YY_MOVE_OR_COPY< ast::Variable > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.YY_MOVE_OR_COPY< std::pair<ast::TypeName, ast::Identifier> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -206,8 +234,36 @@ namespace yy {
         value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.YY_MOVE_OR_COPY< std::vector<ast::Class> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.YY_MOVE_OR_COPY< std::vector<ast::Expression> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.YY_MOVE_OR_COPY< std::vector<ast::Identifier> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.YY_MOVE_OR_COPY< std::vector<ast::MemberDeclaration> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.YY_MOVE_OR_COPY< std::vector<ast::Statement::If::ElIf> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.YY_MOVE_OR_COPY< std::vector<ast::Statement> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.YY_MOVE_OR_COPY< std::vector<ast::TypeName> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.YY_MOVE_OR_COPY< std::vector<std::pair<ast::TypeName, ast::Identifier>> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -225,12 +281,40 @@ namespace yy {
   {
     switch (that.kind ())
     {
+      case symbol_kind::S_Class: // Class
+        value.move< ast::Class > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.move< ast::Expression > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.move< ast::Expression::Literal > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.move< ast::MemberDeclaration > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.move< ast::Statement > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.move< ast::Statement::If::ElIf > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.move< ast::TypeName > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.move< ast::Variable > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.move< std::pair<ast::TypeName, ast::Identifier> > (YY_MOVE (that.value));
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -241,8 +325,36 @@ namespace yy {
         value.move< std::string > (YY_MOVE (that.value));
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.move< std::vector<ast::Class> > (YY_MOVE (that.value));
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.move< std::vector<ast::Expression> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.move< std::vector<ast::Identifier> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.move< std::vector<ast::MemberDeclaration> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.move< std::vector<ast::Statement::If::ElIf> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.move< std::vector<ast::Statement> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.move< std::vector<ast::TypeName> > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.move< std::vector<std::pair<ast::TypeName, ast::Identifier>> > (YY_MOVE (that.value));
         break;
 
       default:
@@ -260,12 +372,40 @@ namespace yy {
     state = that.state;
     switch (that.kind ())
     {
+      case symbol_kind::S_Class: // Class
+        value.copy< ast::Class > (that.value);
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.copy< ast::Expression > (that.value);
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.copy< ast::Expression::Literal > (that.value);
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.copy< ast::MemberDeclaration > (that.value);
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.copy< ast::Statement > (that.value);
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.copy< ast::Statement::If::ElIf > (that.value);
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.copy< ast::TypeName > (that.value);
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.copy< ast::Variable > (that.value);
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.copy< std::pair<ast::TypeName, ast::Identifier> > (that.value);
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -276,8 +416,36 @@ namespace yy {
         value.copy< std::string > (that.value);
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.copy< std::vector<ast::Class> > (that.value);
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.copy< std::vector<ast::Expression> > (that.value);
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.copy< std::vector<ast::Identifier> > (that.value);
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.copy< std::vector<ast::MemberDeclaration> > (that.value);
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.copy< std::vector<ast::Statement::If::ElIf> > (that.value);
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.copy< std::vector<ast::Statement> > (that.value);
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.copy< std::vector<ast::TypeName> > (that.value);
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.copy< std::vector<std::pair<ast::TypeName, ast::Identifier>> > (that.value);
         break;
 
       default:
@@ -293,12 +461,40 @@ namespace yy {
     state = that.state;
     switch (that.kind ())
     {
+      case symbol_kind::S_Class: // Class
+        value.move< ast::Class > (that.value);
+        break;
+
       case symbol_kind::S_Expression: // Expression
         value.move< ast::Expression > (that.value);
         break;
 
       case symbol_kind::S_Literal: // Literal
         value.move< ast::Expression::Literal > (that.value);
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        value.move< ast::MemberDeclaration > (that.value);
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        value.move< ast::Statement > (that.value);
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        value.move< ast::Statement::If::ElIf > (that.value);
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        value.move< ast::TypeName > (that.value);
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        value.move< ast::Variable > (that.value);
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        value.move< std::pair<ast::TypeName, ast::Identifier> > (that.value);
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -309,8 +505,36 @@ namespace yy {
         value.move< std::string > (that.value);
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        value.move< std::vector<ast::Class> > (that.value);
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         value.move< std::vector<ast::Expression> > (that.value);
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        value.move< std::vector<ast::Identifier> > (that.value);
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        value.move< std::vector<ast::MemberDeclaration> > (that.value);
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        value.move< std::vector<ast::Statement::If::ElIf> > (that.value);
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        value.move< std::vector<ast::Statement> > (that.value);
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        value.move< std::vector<ast::TypeName> > (that.value);
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        value.move< std::vector<std::pair<ast::TypeName, ast::Identifier>> > (that.value);
         break;
 
       default:
@@ -567,12 +791,40 @@ namespace yy {
          when using variants.  */
       switch (yyr1_[yyn])
     {
+      case symbol_kind::S_Class: // Class
+        yylhs.value.emplace< ast::Class > ();
+        break;
+
       case symbol_kind::S_Expression: // Expression
         yylhs.value.emplace< ast::Expression > ();
         break;
 
       case symbol_kind::S_Literal: // Literal
         yylhs.value.emplace< ast::Expression::Literal > ();
+        break;
+
+      case symbol_kind::S_MemberDeclaration: // MemberDeclaration
+        yylhs.value.emplace< ast::MemberDeclaration > ();
+        break;
+
+      case symbol_kind::S_Statement: // Statement
+        yylhs.value.emplace< ast::Statement > ();
+        break;
+
+      case symbol_kind::S_ElIf: // ElIf
+        yylhs.value.emplace< ast::Statement::If::ElIf > ();
+        break;
+
+      case symbol_kind::S_TypeName: // TypeName
+        yylhs.value.emplace< ast::TypeName > ();
+        break;
+
+      case symbol_kind::S_Variable: // Variable
+        yylhs.value.emplace< ast::Variable > ();
+        break;
+
+      case symbol_kind::S_Argument: // Argument
+        yylhs.value.emplace< std::pair<ast::TypeName, ast::Identifier> > ();
         break;
 
       case symbol_kind::S_Identifier: // Identifier
@@ -583,8 +835,36 @@ namespace yy {
         yylhs.value.emplace< std::string > ();
         break;
 
+      case symbol_kind::S_Classes: // Classes
+        yylhs.value.emplace< std::vector<ast::Class> > ();
+        break;
+
       case symbol_kind::S_Expressions: // Expressions
         yylhs.value.emplace< std::vector<ast::Expression> > ();
+        break;
+
+      case symbol_kind::S_Identifiers: // Identifiers
+        yylhs.value.emplace< std::vector<ast::Identifier> > ();
+        break;
+
+      case symbol_kind::S_MemberDeclarations: // MemberDeclarations
+        yylhs.value.emplace< std::vector<ast::MemberDeclaration> > ();
+        break;
+
+      case symbol_kind::S_ElIfs: // ElIfs
+        yylhs.value.emplace< std::vector<ast::Statement::If::ElIf> > ();
+        break;
+
+      case symbol_kind::S_Statements: // Statements
+        yylhs.value.emplace< std::vector<ast::Statement> > ();
+        break;
+
+      case symbol_kind::S_TypeNames: // TypeNames
+        yylhs.value.emplace< std::vector<ast::TypeName> > ();
+        break;
+
+      case symbol_kind::S_Arguments: // Arguments
+        yylhs.value.emplace< std::vector<std::pair<ast::TypeName, ast::Identifier>> > ();
         break;
 
       default:
@@ -601,92 +881,318 @@ namespace yy {
         {
           switch (yyn)
             {
-  case 2: // Program: Expressions
-#line 87 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-                { ctx.root = yystack_[0].value.as < std::vector<ast::Expression> > (); }
-#line 608 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+  case 2: // Program: Classes
+#line 105 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+            { ctx.root = yystack_[0].value.as < std::vector<ast::Class> > (); }
+#line 888 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 3: // Expression: Expression Access Identifier
-#line 101 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-                                 {
-        yylhs.value.as < ast::Expression > () = ast::Expression{
-            ast::Expression::MemberAccess{ std::make_shared<ast::Expression>(yystack_[2].value.as < ast::Expression > ()), yystack_[0].value.as < std::string > () }
-        };
-    }
-#line 618 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+  case 3: // Identifiers: %empty
+#line 109 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+    { yylhs.value.as < std::vector<ast::Identifier> > () = {}; }
+#line 894 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 4: // Expression: Expression Access Identifier LParen Expressions RParen
-#line 106 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-                                                             {
-        yylhs.value.as < ast::Expression > () = ast::Expression{
-            ast::Expression::MethodCall{ std::make_shared<ast::Expression>(yystack_[5].value.as < ast::Expression > ()), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<ast::Expression> > () }
-        }; 
-    }
-#line 628 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+  case 4: // Identifiers: Identifier
+#line 110 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                 { yylhs.value.as < std::vector<ast::Identifier> > () = {{yystack_[0].value.as < std::string > ()}}; }
+#line 900 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 5: // Expression: Identifier
+  case 5: // Identifiers: Identifiers Comma Identifier
 #line 111 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-                 {
-        yylhs.value.as < ast::Expression > () = ast::Expression{ ast::Identifier{yystack_[0].value.as < std::string > ()} };
-    }
-#line 636 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+                                   { yystack_[2].value.as < std::vector<ast::Identifier> > ().push_back({yystack_[0].value.as < std::string > ()}); yylhs.value.as < std::vector<ast::Identifier> > () = yystack_[2].value.as < std::vector<ast::Identifier> > (); }
+#line 906 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 6: // Expression: Literal
-#line 114 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-              {
-        yylhs.value.as < ast::Expression > () = ast::Expression{ yystack_[0].value.as < ast::Expression::Literal > () };
-    }
-#line 644 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+  case 6: // TypeName: Identifier
+#line 115 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+               { yylhs.value.as < ast::TypeName > () = {yystack_[0].value.as < std::string > (), {}}; }
+#line 912 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 7: // Expressions: Expression
-#line 120 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-               { yylhs.value.as < std::vector<ast::Expression> > () = std::vector<ast::Expression> {yystack_[0].value.as < ast::Expression > ()}; }
-#line 650 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+  case 7: // TypeName: Identifier LBracket TypeNames RBracket
+#line 116 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                             { yylhs.value.as < ast::TypeName > () = {yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<ast::TypeName> > ()}; }
+#line 918 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 8: // Expressions: Expressions Comma Expression
+  case 8: // TypeNames: TypeName
 #line 121 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-                                   { yystack_[2].value.as < std::vector<ast::Expression> > ().push_back(yystack_[0].value.as < ast::Expression > ()); yylhs.value.as < std::vector<ast::Expression> > () = yystack_[2].value.as < std::vector<ast::Expression> > (); }
-#line 656 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+             { yylhs.value.as < std::vector<ast::TypeName> > () = {yystack_[0].value.as < ast::TypeName > ()}; }
+#line 924 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 9: // Literal: LitStr
-#line 125 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-           { yylhs.value.as < ast::Expression::Literal > () = ast::Expression::Literal{ast::Expression::Literal::Type::Str, yystack_[0].value.as < std::string > ()}; }
-#line 662 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+  case 9: // TypeNames: TypeNames Comma TypeName
+#line 122 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                               { yystack_[2].value.as < std::vector<ast::TypeName> > ().push_back(yystack_[0].value.as < ast::TypeName > ()); yylhs.value.as < std::vector<ast::TypeName> > () = yystack_[2].value.as < std::vector<ast::TypeName> > (); }
+#line 930 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 10: // Literal: LitInt
-#line 126 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-             { yylhs.value.as < ast::Expression::Literal > () = ast::Expression::Literal{ast::Expression::Literal::Type::Int, yystack_[0].value.as < std::string > ()}; }
-#line 668 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
-    break;
-
-  case 11: // Literal: LitReal
+  case 10: // Expression: KThis Access Identifier
 #line 127 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-              { yylhs.value.as < ast::Expression::Literal > () = ast::Expression::Literal{ast::Expression::Literal::Type::Real, yystack_[0].value.as < std::string > ()}; }
-#line 674 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+                            { yylhs.value.as < ast::Expression > () = {ast::Expression::ThisAccess{ yystack_[0].value.as < std::string > () } }; }
+#line 936 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 12: // Literal: KTrue
+  case 11: // Expression: KThis LParen Expressions RParen
 #line 128 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-            { yylhs.value.as < ast::Expression::Literal > () = ast::Expression::Literal{ast::Expression::Literal::Type::Bool, "true"}; }
-#line 680 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+                                      { yylhs.value.as < ast::Expression > () = {ast::Expression::ThisCall{ yystack_[1].value.as < std::vector<ast::Expression> > () }}; }
+#line 942 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
-  case 13: // Literal: KFalse
+  case 12: // Expression: Expression Access Identifier
 #line 129 "/home/kibertod/dev/uni/timur/src/parser.ypp"
-             { yylhs.value.as < ast::Expression::Literal > () = ast::Expression::Literal{ast::Expression::Literal::Type::Bool, "false"}; }
-#line 686 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+                                   { yylhs.value.as < ast::Expression > () = { ast::Expression::MemberAccess{ std::make_shared<ast::Expression>(yystack_[2].value.as < ast::Expression > ()), yystack_[0].value.as < std::string > () } }; }
+#line 948 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 13: // Expression: Expression Access Identifier LParen Expressions RParen
+#line 130 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                             { yylhs.value.as < ast::Expression > () = { ast::Expression::MethodCall{ std::make_shared<ast::Expression>(yystack_[5].value.as < ast::Expression > ()), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<ast::Expression> > () } }; }
+#line 954 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 14: // Expression: TypeName LParen Expressions RParen
+#line 131 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                         { yylhs.value.as < ast::Expression > () = { ast::Expression::ConstructorCall{ yystack_[3].value.as < ast::TypeName > (), yystack_[1].value.as < std::vector<ast::Expression> > () } }; }
+#line 960 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 15: // Expression: KSuper LParen Expressions RParen
+#line 132 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                       { yylhs.value.as < ast::Expression > () = { ast::Expression::SuperCall{ yystack_[1].value.as < std::vector<ast::Expression> > () } }; }
+#line 966 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 16: // Expression: Identifier
+#line 133 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                 {
+        yylhs.value.as < ast::Expression > () = { ast::Identifier{yystack_[0].value.as < std::string > ()} };
+    }
+#line 974 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 17: // Expression: Literal
+#line 136 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+              {
+        yylhs.value.as < ast::Expression > () = { yystack_[0].value.as < ast::Expression::Literal > () };
+    }
+#line 982 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 18: // Expressions: %empty
+#line 142 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+    { yylhs.value.as < std::vector<ast::Expression> > () = {}; }
+#line 988 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 19: // Expressions: Expression
+#line 143 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                 { yylhs.value.as < std::vector<ast::Expression> > () = {yystack_[0].value.as < ast::Expression > ()}; }
+#line 994 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 20: // Expressions: Expressions Comma Expression
+#line 144 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                   { yystack_[2].value.as < std::vector<ast::Expression> > ().push_back(yystack_[0].value.as < ast::Expression > ()); yylhs.value.as < std::vector<ast::Expression> > () = yystack_[2].value.as < std::vector<ast::Expression> > (); }
+#line 1000 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 21: // Literal: LitStr
+#line 148 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+           { yylhs.value.as < ast::Expression::Literal > () = {ast::Expression::Literal::Type::Str, yystack_[0].value.as < std::string > ()}; }
+#line 1006 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 22: // Literal: LitInt
+#line 149 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+             { yylhs.value.as < ast::Expression::Literal > () = {ast::Expression::Literal::Type::Int, yystack_[0].value.as < std::string > ()}; }
+#line 1012 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 23: // Literal: LitReal
+#line 150 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+              { yylhs.value.as < ast::Expression::Literal > () = {ast::Expression::Literal::Type::Real, yystack_[0].value.as < std::string > ()}; }
+#line 1018 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 24: // Literal: KTrue
+#line 151 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+            { yylhs.value.as < ast::Expression::Literal > () = {ast::Expression::Literal::Type::Bool, "true"}; }
+#line 1024 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 25: // Literal: KFalse
+#line 152 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+             { yylhs.value.as < ast::Expression::Literal > () = {ast::Expression::Literal::Type::Bool, "false"}; }
+#line 1030 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 26: // Variable: KVar Identifier Colon TypeName
+#line 156 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                   { yylhs.value.as < ast::Variable > () = {yystack_[0].value.as < ast::TypeName > (), yystack_[2].value.as < std::string > (), {}}; }
+#line 1036 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 27: // Variable: KVar Identifier Colon TypeName Assign Expression
+#line 157 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                       { yylhs.value.as < ast::Variable > () = {yystack_[2].value.as < ast::TypeName > (), yystack_[4].value.as < std::string > (), yystack_[0].value.as < ast::Expression > ()}; }
+#line 1042 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 28: // Statement: KReturn Expression
+#line 161 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                       { yylhs.value.as < ast::Statement > () = {ast::Statement::Return{yystack_[0].value.as < ast::Expression > ()}}; }
+#line 1048 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 29: // Statement: Expression Assign Expression
+#line 162 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                   { yylhs.value.as < ast::Statement > () = {ast::Statement::Assignment{yystack_[2].value.as < ast::Expression > (), yystack_[0].value.as < ast::Expression > ()}}; }
+#line 1054 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 30: // Statement: Expression
+#line 163 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                 { yylhs.value.as < ast::Statement > () = {yystack_[0].value.as < ast::Expression > ()}; }
+#line 1060 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 31: // Statement: Variable
+#line 164 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+               { yylhs.value.as < ast::Statement > () = {yystack_[0].value.as < ast::Variable > ()}; }
+#line 1066 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 32: // Statement: KWhile Expression KLoop Statements KEnd
+#line 165 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                              { yylhs.value.as < ast::Statement > () = {ast::Statement::While{yystack_[3].value.as < ast::Expression > (), yystack_[1].value.as < std::vector<ast::Statement> > ()}}; }
+#line 1072 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 33: // Statement: KIf Expression KThen Statements ElIfs KEnd
+#line 166 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                 { yylhs.value.as < ast::Statement > () = {ast::Statement::If{yystack_[4].value.as < ast::Expression > (), yystack_[2].value.as < std::vector<ast::Statement> > (), yystack_[1].value.as < std::vector<ast::Statement::If::ElIf> > (), std::vector<ast::Statement>()}}; }
+#line 1078 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 34: // Statement: KIf Expression KThen Statements ElIfs KElse Statements KEnd
+#line 167 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                                  { yylhs.value.as < ast::Statement > () = {ast::Statement::If{yystack_[6].value.as < ast::Expression > (), yystack_[4].value.as < std::vector<ast::Statement> > (), yystack_[3].value.as < std::vector<ast::Statement::If::ElIf> > (), yystack_[1].value.as < std::vector<ast::Statement> > ()}}; }
+#line 1084 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 35: // Statements: %empty
+#line 171 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+    { yylhs.value.as < std::vector<ast::Statement> > () = {}; }
+#line 1090 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 36: // Statements: Statements Statement
+#line 172 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                           { yystack_[1].value.as < std::vector<ast::Statement> > ().push_back(yystack_[0].value.as < ast::Statement > ()); yylhs.value.as < std::vector<ast::Statement> > () = yystack_[1].value.as < std::vector<ast::Statement> > (); }
+#line 1096 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 37: // ElIf: KElse KIf Expression KThen Statements
+#line 176 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                          { yylhs.value.as < ast::Statement::If::ElIf > () = ast::Statement::If::ElIf{yystack_[2].value.as < ast::Expression > (), yystack_[0].value.as < std::vector<ast::Statement> > ()}; }
+#line 1102 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 38: // ElIfs: %empty
+#line 180 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+    { yylhs.value.as < std::vector<ast::Statement::If::ElIf> > () = {}; }
+#line 1108 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 39: // ElIfs: ElIfs ElIf
+#line 181 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                 { yystack_[1].value.as < std::vector<ast::Statement::If::ElIf> > ().push_back(yystack_[0].value.as < ast::Statement::If::ElIf > ()); yylhs.value.as < std::vector<ast::Statement::If::ElIf> > () = yystack_[1].value.as < std::vector<ast::Statement::If::ElIf> > (); }
+#line 1114 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 40: // Argument: TypeName Colon Identifier
+#line 185 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                              { yylhs.value.as < std::pair<ast::TypeName, ast::Identifier> > () = std::pair<ast::TypeName, ast::Identifier>(yystack_[2].value.as < ast::TypeName > (), yystack_[0].value.as < std::string > ()); }
+#line 1120 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 41: // Arguments: %empty
+#line 189 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+    { yylhs.value.as < std::vector<std::pair<ast::TypeName, ast::Identifier>> > () = {}; }
+#line 1126 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 42: // Arguments: Argument
+#line 190 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+               { yylhs.value.as < std::vector<std::pair<ast::TypeName, ast::Identifier>> > () = {yystack_[0].value.as < std::pair<ast::TypeName, ast::Identifier> > ()}; }
+#line 1132 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 43: // Arguments: Arguments Comma Argument
+#line 191 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                               { yystack_[2].value.as < std::vector<std::pair<ast::TypeName, ast::Identifier>> > ().push_back(yystack_[0].value.as < std::pair<ast::TypeName, ast::Identifier> > ()); yylhs.value.as < std::vector<std::pair<ast::TypeName, ast::Identifier>> > () = yystack_[2].value.as < std::vector<std::pair<ast::TypeName, ast::Identifier>> > (); }
+#line 1138 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 44: // MemberDeclaration: TypeName Identifier LParen Arguments RParen KIs Statements KEnd
+#line 195 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                                    { yylhs.value.as < ast::MemberDeclaration > () = {ast::MemberDeclaration::Method{yystack_[6].value.as < std::string > (), yystack_[7].value.as < ast::TypeName > (), yystack_[4].value.as < std::vector<std::pair<ast::TypeName, ast::Identifier>> > (), yystack_[1].value.as < std::vector<ast::Statement> > ()}}; }
+#line 1144 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 45: // MemberDeclaration: KThis LParen Arguments RParen KIs Statements KEnd
+#line 196 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                        { yylhs.value.as < ast::MemberDeclaration > () = {ast::MemberDeclaration::Constructor{ yystack_[4].value.as < std::vector<std::pair<ast::TypeName, ast::Identifier>> > (), yystack_[1].value.as < std::vector<ast::Statement> > () }}; }
+#line 1150 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 46: // MemberDeclaration: Variable
+#line 197 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+               { yylhs.value.as < ast::MemberDeclaration > () = {yystack_[0].value.as < ast::Variable > ()}; }
+#line 1156 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 47: // MemberDeclarations: %empty
+#line 201 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+    { yylhs.value.as < std::vector<ast::MemberDeclaration> > () = {}; }
+#line 1162 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 48: // MemberDeclarations: MemberDeclarations MemberDeclaration
+#line 202 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                           { yystack_[1].value.as < std::vector<ast::MemberDeclaration> > ().push_back(yystack_[0].value.as < ast::MemberDeclaration > ()); yylhs.value.as < std::vector<ast::MemberDeclaration> > () = yystack_[1].value.as < std::vector<ast::MemberDeclaration> > (); }
+#line 1168 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 49: // Class: KClass TypeName KExtends Identifiers KIs MemberDeclarations KEnd
+#line 206 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                                     { yylhs.value.as < ast::Class > () = {yystack_[5].value.as < ast::TypeName > (), yystack_[3].value.as < std::vector<ast::Identifier> > (), yystack_[1].value.as < std::vector<ast::MemberDeclaration> > ()}; }
+#line 1174 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 50: // Class: KClass TypeName KIs MemberDeclarations KEnd
+#line 207 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                                                  { yylhs.value.as < ast::Class > () = {yystack_[3].value.as < ast::TypeName > (), {}, yystack_[1].value.as < std::vector<ast::MemberDeclaration> > ()}; }
+#line 1180 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 51: // Classes: Class
+#line 211 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+          { yylhs.value.as < std::vector<ast::Class> > () = {yystack_[0].value.as < ast::Class > ()}; }
+#line 1186 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+    break;
+
+  case 52: // Classes: Classes Class
+#line 212 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+                    { yystack_[1].value.as < std::vector<ast::Class> > ().push_back(yystack_[0].value.as < ast::Class > ()); yylhs.value.as < std::vector<ast::Class> > () = yystack_[1].value.as < std::vector<ast::Class> > (); }
+#line 1192 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
     break;
 
 
-#line 690 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 1196 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
             default:
               break;
@@ -875,69 +1381,136 @@ namespace yy {
 
 
 
-  const signed char parser::yypact_ninf_ = -22;
+  const signed char parser::yypact_ninf_ = -63;
 
-  const signed char parser::yytable_ninf_ = -1;
+  const signed char parser::yytable_ninf_ = -7;
 
-  const signed char
+  const short
   parser::yypact_[] =
   {
-     -16,   -22,   -22,   -22,   -22,   -22,   -22,     5,   -14,   -18,
-     -22,   -22,   -11,   -16,   -13,   -14,   -16,   -21,   -22
+       1,    20,    35,   -63,     1,    26,    -5,   -63,   -63,    20,
+     -63,    37,   -63,   -18,   142,   -63,     2,    20,   -63,    40,
+     -63,    41,    74,   -63,   -63,   -63,    75,   -63,    86,    20,
+      89,   148,   -63,    20,   100,   -63,   -10,    20,   -63,   105,
+     108,   120,    20,    -7,   125,   -63,   -63,   -63,   134,    14,
+     106,   -63,   -63,   -16,   -63,   -63,   -63,   124,   130,   -63,
+      51,   -63,   138,   125,   125,   125,   140,   125,   125,   -63,
+     125,    56,   -63,   -63,    68,   -63,   130,    19,    39,    50,
+     141,     9,    30,   130,   125,   -63,   -63,   125,   -63,   -63,
+     125,   -63,   -63,   130,   130,    67,    85,   119,   -63,   -63,
+      99,   154,   -63,   -63,   125,   102,    31,   -63,   -63,   119
   };
 
   const signed char
   parser::yydefact_[] =
   {
-       0,    12,    13,     5,     9,    10,    11,     0,     7,     2,
-       6,     1,     0,     0,     3,     8,     0,     0,     4
+       0,     0,     0,    51,     2,     6,     0,     1,    52,     0,
+      47,     3,     8,     0,     0,     4,     0,     0,     7,     0,
+      50,     0,     0,    46,    48,    47,     0,     9,     0,    41,
+       0,     0,     5,     0,     0,    42,     0,    41,    49,    26,
+       0,     0,     0,     0,     0,    40,    35,    43,     0,     0,
+       0,    24,    25,    16,    21,    22,    23,     0,    27,    17,
+       0,    35,     0,    18,    18,    18,     0,     0,     0,    45,
+       0,    30,    31,    36,     0,    10,    19,     0,     0,     0,
+      12,     0,     0,    28,     0,    44,    11,     0,    15,    14,
+      18,    35,    35,    29,    20,     0,     0,    38,    13,    32,
+       0,    35,    33,    39,     0,     0,     0,    34,    35,    37
   };
 
-  const signed char
+  const short
   parser::yypgoto_[] =
   {
-     -22,   -22,    -3,    -5,   -22
+     -63,   -63,   -63,    16,   -63,   -44,   -62,   -63,    -9,   -63,
+     -60,   -63,   -63,   122,   128,   -63,   143,   162,   -63
   };
 
   const signed char
   parser::yydefgoto_[] =
   {
-       0,     7,     8,     9,    10
+       0,     2,    16,    57,    13,    71,    77,    59,    72,    73,
+      60,   103,   100,    35,    36,    24,    14,     3,     4
   };
 
   const signed char
   parser::yytable_[] =
   {
-       1,     2,    18,     3,    13,    11,    12,    13,    14,    16,
-      15,    17,     4,     5,     6
+      58,    74,    78,    79,    10,    23,    -6,    17,    11,    18,
+       9,    25,     1,    41,    91,    42,    48,     6,    42,    76,
+      76,    76,    23,    81,    82,    12,    83,    26,    95,    66,
+      22,    96,    97,    27,    62,     7,    63,    92,   108,     5,
+      93,   105,    86,    94,    87,    34,    76,    22,   109,    39,
+      66,    66,     9,    34,    19,    67,    15,    68,    34,    28,
+     106,    69,    88,    29,    87,    49,    50,    51,    52,    70,
+      53,    19,    67,    89,    68,    87,    66,    84,    85,    54,
+      55,    56,    49,    50,    51,    52,    70,    53,    19,    67,
+      98,    68,    87,    30,    32,    99,    54,    55,    56,    49,
+      50,    51,    52,    70,    53,    19,    67,   101,    68,   102,
+      33,    37,   107,    54,    55,    56,    49,    50,    51,    52,
+      70,    53,    19,    67,    40,    68,    44,    45,    64,    46,
+      54,    55,    56,    49,    50,    51,    52,    70,    53,    49,
+      50,    51,    52,    61,    53,    19,    65,    54,    55,    56,
+      66,    19,    20,    54,    55,    56,    21,    75,    38,    80,
+     104,     5,    21,    90,    47,    43,     8,     5,    31
   };
 
   const signed char
   parser::yycheck_[] =
   {
-      16,    17,    23,    19,    25,     0,    20,    25,    19,    22,
-      13,    16,    28,    29,    30
+      44,    61,    64,    65,     9,    14,    22,    25,    13,    27,
+      26,     9,    11,    23,     5,    25,    23,     1,    25,    63,
+      64,    65,    31,    67,    68,     9,    70,    25,    90,    20,
+      14,    91,    92,    17,    20,     0,    22,     7,     7,    19,
+      84,   101,    23,    87,    25,    29,    90,    31,   108,    33,
+      20,    20,    26,    37,     3,     4,    19,     6,    42,    19,
+     104,    10,    23,    22,    25,    14,    15,    16,    17,    18,
+      19,     3,     4,    23,     6,    25,    20,    21,    10,    28,
+      29,    30,    14,    15,    16,    17,    18,    19,     3,     4,
+      23,     6,    25,    19,    19,    10,    28,    29,    30,    14,
+      15,    16,    17,    18,    19,     3,     4,     8,     6,    10,
+      24,    22,    10,    28,    29,    30,    14,    15,    16,    17,
+      18,    19,     3,     4,    24,     6,    21,    19,    22,     9,
+      28,    29,    30,    14,    15,    16,    17,    18,    19,    14,
+      15,    16,    17,     9,    19,     3,    22,    28,    29,    30,
+      20,     3,    10,    28,    29,    30,    14,    19,    10,    19,
+       6,    19,    14,    22,    42,    37,     4,    19,    25
   };
 
   const signed char
   parser::yystos_[] =
   {
-       0,    16,    17,    19,    28,    29,    30,    33,    34,    35,
-      36,     0,    20,    25,    19,    34,    22,    35,    23
+       0,    11,    33,    49,    50,    19,    35,     0,    49,    26,
+       9,    13,    35,    36,    48,    19,    34,    25,    27,     3,
+      10,    14,    35,    40,    47,     9,    25,    35,    19,    22,
+      19,    48,    19,    24,    35,    45,    46,    22,    10,    35,
+      24,    23,    25,    46,    21,    19,     9,    45,    23,    14,
+      15,    16,    17,    19,    28,    29,    30,    35,    37,    39,
+      42,     9,    20,    22,    22,    22,    20,     4,     6,    10,
+      18,    37,    40,    41,    42,    19,    37,    38,    38,    38,
+      19,    37,    37,    37,    21,    10,    23,    25,    23,    23,
+      22,     5,     7,    37,    37,    38,    42,    42,    23,    10,
+      44,     8,    10,    43,     6,    42,    37,    10,     7,    42
   };
 
   const signed char
   parser::yyr1_[] =
   {
-       0,    32,    33,    34,    34,    34,    34,    35,    35,    36,
-      36,    36,    36,    36
+       0,    32,    33,    34,    34,    34,    35,    35,    36,    36,
+      37,    37,    37,    37,    37,    37,    37,    37,    38,    38,
+      38,    39,    39,    39,    39,    39,    40,    40,    41,    41,
+      41,    41,    41,    41,    41,    42,    42,    43,    44,    44,
+      45,    46,    46,    46,    47,    47,    47,    48,    48,    49,
+      49,    50,    50
   };
 
   const signed char
   parser::yyr2_[] =
   {
-       0,     2,     1,     3,     6,     1,     1,     1,     3,     1,
-       1,     1,     1,     1
+       0,     2,     1,     0,     1,     3,     1,     4,     1,     3,
+       3,     4,     3,     6,     4,     4,     1,     1,     0,     1,
+       3,     1,     1,     1,     1,     1,     4,     6,     2,     3,
+       1,     1,     5,     6,     8,     0,     2,     5,     0,     2,
+       3,     0,     1,     3,     8,     7,     1,     0,     2,     7,
+       5,     1,     2
   };
 
 
@@ -952,7 +1525,10 @@ namespace yy {
   "KExtends", "KThis", "KSuper", "KTrue", "KFalse", "KReturn",
   "Identifier", "Access", "Assign", "LParen", "RParen", "Colon", "Comma",
   "LBracket", "RBracket", "LitStr", "LitInt", "LitReal", "Err", "$accept",
-  "Program", "Expression", "Expressions", "Literal", YY_NULLPTR
+  "Program", "Identifiers", "TypeName", "TypeNames", "Expression",
+  "Expressions", "Literal", "Variable", "Statement", "Statements", "ElIf",
+  "ElIfs", "Argument", "Arguments", "MemberDeclaration",
+  "MemberDeclarations", "Class", "Classes", YY_NULLPTR
   };
 #endif
 
@@ -961,8 +1537,12 @@ namespace yy {
   const unsigned char
   parser::yyrline_[] =
   {
-       0,    87,    87,   101,   106,   111,   114,   120,   121,   125,
-     126,   127,   128,   129
+       0,   105,   105,   109,   110,   111,   115,   116,   121,   122,
+     127,   128,   129,   130,   131,   132,   133,   136,   142,   143,
+     144,   148,   149,   150,   151,   152,   156,   157,   161,   162,
+     163,   164,   165,   166,   167,   171,   172,   176,   180,   181,
+     185,   189,   190,   191,   195,   196,   197,   201,   202,   206,
+     207,   211,   212
   };
 
   void
@@ -994,13 +1574,13 @@ namespace yy {
 
 
 } // yy
-#line 998 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
+#line 1578 "/home/kibertod/dev/uni/timur/src/parser.tab.cpp"
 
-#line 132 "/home/kibertod/dev/uni/timur/src/parser.ypp"
+#line 215 "/home/kibertod/dev/uni/timur/src/parser.ypp"
 
 namespace yy
 {
-    void parser::error(const std::string& msg) //(3+)
+    void parser::error(const std::string& msg)
     {
         std::cout << msg;
     }

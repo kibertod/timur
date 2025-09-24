@@ -15,7 +15,7 @@ namespace ast {
 
     struct TypeName {
         Identifier name;
-        std::vector<Identifier> generic_arguments;
+        std::vector<TypeName> generic_arguments;
     };
 
     struct Expression {
@@ -27,7 +27,24 @@ namespace ast {
         struct MethodCall {
             Ptr<Expression> object;
             Identifier method;
-            std::vector<Expression> argumens;
+            std::vector<Expression> arguments;
+        };
+
+        struct ThisAccess {
+            Identifier member;
+        };
+
+        struct ThisCall {
+            std::vector<Expression> arguments;
+        };
+
+        struct ConstructorCall {
+            TypeName type_name;
+            std::vector<Expression> arguments;
+        };
+
+        struct SuperCall {
+            std::vector<Expression> arguments;
         };
 
         struct Literal {
@@ -37,7 +54,9 @@ namespace ast {
             std::string value;
         };
 
-        std::variant<Identifier, MemberAccess, MethodCall, Literal> value;
+        std::variant<Identifier, MemberAccess, MethodCall, ConstructorCall,
+            SuperCall, Literal, ThisAccess, ThisCall>
+            value;
     };
 
     struct Variable {
@@ -59,34 +78,43 @@ namespace ast {
             std::vector<Statement> else_body;
         };
 
-        struct Assignment {
-            Expression left;
-            Expression right;
-        };
-
         struct While {
             Expression condition;
             std::vector<Statement> body;
+        };
+
+        struct Assignment {
+            Expression left;
+            Expression right;
         };
 
         struct Return {
             Expression value;
         };
 
-        std::variant<If, While, Return, Variable, Expression> value;
+        std::variant<If, While, Assignment, Return, Variable, Expression> value;
     };
 
-    struct Method {
-        Identifier name;
-        std::vector<std::pair<TypeName, Identifier>> arguments;
-        std::vector<Statement> body;
+    struct MemberDeclaration {
+        struct Method {
+            Identifier name;
+            TypeName return_type;
+            std::vector<std::pair<TypeName, Identifier>> arguments;
+            std::vector<Statement> body;
+        };
+
+        struct Constructor {
+            std::vector<std::pair<TypeName, Identifier>> arguments;
+            std::vector<Statement> body;
+        };
+
+        std::variant<Variable, Method, Constructor> value;
     };
 
     struct Class {
-        Identifier name;
-        std::vector<Identifier> generic_arguments;
-        std::optional<Identifier> extends;
-        std::vector<std::variant<Variable, Method>> body;
+        TypeName name;
+        std::vector<Identifier> extends;
+        std::vector<MemberDeclaration> body;
     };
 
     struct Root {
