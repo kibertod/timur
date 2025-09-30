@@ -45,7 +45,6 @@
     KIs
     KEnd
     KClass
-    KMethod
     KExtends
     KThis
     KSuper
