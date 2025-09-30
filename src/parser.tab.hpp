@@ -531,10 +531,10 @@ namespace yy {
     KIf = 261,                     // KIf
     KThen = 262,                   // KThen
     KElse = 263,                   // KElse
-    KIs = 264,                     // KIs
-    KEnd = 265,                    // KEnd
-    KClass = 266,                  // KClass
-    KMethod = 267,                 // KMethod
+    KElif = 264,                   // KElif
+    KIs = 265,                     // KIs
+    KEnd = 266,                    // KEnd
+    KClass = 267,                  // KClass
     KExtends = 268,                // KExtends
     KThis = 269,                   // KThis
     KSuper = 270,                  // KSuper
@@ -581,10 +581,10 @@ namespace yy {
         S_KIf = 6,                               // KIf
         S_KThen = 7,                             // KThen
         S_KElse = 8,                             // KElse
-        S_KIs = 9,                               // KIs
-        S_KEnd = 10,                             // KEnd
-        S_KClass = 11,                           // KClass
-        S_KMethod = 12,                          // KMethod
+        S_KElif = 9,                             // KElif
+        S_KIs = 10,                              // KIs
+        S_KEnd = 11,                             // KEnd
+        S_KClass = 12,                           // KClass
         S_KExtends = 13,                         // KExtends
         S_KThis = 14,                            // KThis
         S_KSuper = 15,                           // KSuper
@@ -1373,6 +1373,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_KElif ()
+      {
+        return symbol_type (token::KElif);
+      }
+#else
+      static
+      symbol_type
+      make_KElif ()
+      {
+        return symbol_type (token::KElif);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_KIs ()
       {
         return symbol_type (token::KIs);
@@ -1413,21 +1428,6 @@ switch (yykind)
       make_KClass ()
       {
         return symbol_type (token::KClass);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_KMethod ()
-      {
-        return symbol_type (token::KMethod);
-      }
-#else
-      static
-      symbol_type
-      make_KMethod ()
-      {
-        return symbol_type (token::KMethod);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -2019,7 +2019,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 168,     ///< Last index in yytable_.
+      yylast_ = 184,     ///< Last index in yytable_.
       yynnts_ = 19,  ///< Number of nonterminal symbols.
       yyfinal_ = 7 ///< Termination state number.
     };

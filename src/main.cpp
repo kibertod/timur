@@ -176,6 +176,7 @@ void print(ast::Statement statement, size_t depth) {
         for (size_t i = 0; i < if_->body.size(); i++) {
             print(if_->body[i], depth + 1);
         }
+        std::print("{0}{1}\n", tabs(depth), ident("elifs:"));
         for (size_t i = 0; i < if_->elifs.size(); i++) {
             std::print("{0}{1}\n{0}{2}\n", tabs(depth + 1),
                 statement_heading("ELSE IF"), ident("condition:"));

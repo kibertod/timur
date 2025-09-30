@@ -13,12 +13,14 @@ class Program is
         your_machine.timur.consume(environment.collect(ram.full, cpu.blow_up_value, 1, true, false, 3.14, "eternity", 3.14.Plus(0.86)))
         if some_int.Equals(123) then
             Pipe().WriteLn("Hello World!")
-        else if true then
+        elif true then
             lal()
-        else if false then
+        elif false then
             lel()
         else
-            Pipe().WriteLn("123 != 123")
+            if false then
+                Pipe().WriteLn("123 != 123")
+            end
         end
         while some_int.Equals(124).Not() loop
             Pipe().WriteLn(some_int.ToString())

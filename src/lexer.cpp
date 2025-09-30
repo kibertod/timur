@@ -113,6 +113,8 @@ namespace yy {
                     return parser::make_KEnd();
                 if (buffer == "class")
                     return parser::make_KClass();
+                if (buffer == "elif")
+                    return parser::make_KElif();
                 if (buffer == "extends")
                     return parser::make_KExtends();
                 if (buffer == "this")

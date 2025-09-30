@@ -42,6 +42,7 @@
     KIf
     KThen
     KElse
+    KElif
     KIs
     KEnd
     KClass
@@ -172,7 +173,7 @@ Statements:
 ;
 
 ElIf:
-    KElse KIf Expression KThen Statements { $$ = ast::Statement::If::ElIf{$3, $5}; }
+    KElif Expression KThen Statements { $$ = ast::Statement::If::ElIf{$2, $4}; }
 ;
 
 ElIfs:
