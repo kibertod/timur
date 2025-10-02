@@ -1,5 +1,6 @@
 %require "3.2"
 %language "C++"
+%locations
 
 %define api.value.type variant
 %define api.token.constructor
@@ -17,6 +18,8 @@
 
     struct ParserContext {
         size_t pos;
+        size_t row;
+        size_t row_pos;
         std::string src;
         std::vector<ast::Class> root;
     };
@@ -32,6 +35,7 @@
     namespace yy
     {
         parser::symbol_type yylex(ParserContext& ctx);
+        std::string point_err(ParserContext& ctx, size_t row, size_t col);
     }
 }
 
@@ -215,8 +219,10 @@ Classes:
 %%
 namespace yy
 {
-    void parser::error(const std::string& msg)
+        void parser::error(const location& loc, const std::string& msg)
     {
-        std::cout << msg;
+        std::cerr << "Error at " 
+                  << loc.begin.line << ":" << loc.begin.column
+                  << " - " << msg << "\n" << yy::point_err(ctx, loc.begin.line, loc.begin.column);
     }
 }

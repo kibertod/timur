@@ -254,6 +254,7 @@ void print(ast::Class class_, size_t depth) {
 
 int main() {
     ParserContext ctx;
+    ctx.row = 1;
 
     std::ifstream file("test.tmr");
     if (!file) {
