@@ -16,3 +16,5 @@ So this will build them, run with test.tmr as input source code and output an AS
 
 You can change test.tmr it and `./run.sh` again
 ###### You can change anything you want actually...
+
+### [Nvim plugin for syntax highlihgting](https://github.com/kibertod/nvim-treesitter-timur)
