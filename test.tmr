@@ -10,7 +10,7 @@ class Program is
         list.Assign(0, 2)
     end
     Integer[OMG, GENERIC_INTEGER[WITH_GENERICS_INSIDE]] DoSomething(List[Integer]: some_list, Str: some_str) is
-        your_machine.timur.consume(environment.collect(ram.full, cpu.blow_up_value, 1, true, false, 3.14, "eternity", 3.14.Plus(0.86)))
+        your_machine.programs.timur.consume(environment.collect(ram.full, cpu.blow_up_value, 1, true, false, 3.14, "eternity", 3.14.Plus(0.86).Minus(1)))
         if some_int.Equals(123) then
             Pipe().WriteLn("Hello World!")
         elif true then
