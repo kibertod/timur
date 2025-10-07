@@ -1620,7 +1620,7 @@ namespace yy {
 
 namespace yy
 {
-        void parser::error(const location& loc, const std::string& msg)
+    void parser::error(const location& loc, const std::string& msg)
     {
         std::cerr << "Error at " 
                   << loc.begin.line << ":" << loc.begin.column

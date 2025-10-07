@@ -140,7 +140,7 @@ void print(ast::Variable* variable, size_t depth) {
         std::cout << std::endl;
         print(*variable->value, depth + 1);
     } else {
-        std::cout << "undefined";
+        std::cout << "undefined\n";
     }
 }
 
