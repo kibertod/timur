@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -94,6 +96,8 @@ namespace ast {
 
         std::variant<If, While, Assignment, Return, Variable, Expression> value;
     };
+
+    typedef std::vector<std::pair<TypeName, Identifier>> Arguments;
 
     struct MemberDeclaration {
         struct Method {

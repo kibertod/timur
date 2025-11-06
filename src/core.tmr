@@ -1,0 +1,54 @@
+class Void is this() is end end
+
+class Integer is
+    this() is end
+    Integer Plus(Integer: other) is return 1 end
+    Integer Minus(Integer: other) is return 1 end
+    Integer Divide(Integer: other) is return 1 end
+    Integer Multiply(Integer: other) is return 1 end
+    Bool Equals(Integer: other) is return true end // that's the true ending
+end
+
+class Real is
+    this() is end
+    this(Integer: from) is end
+    Real Plus(Real: other) is return 1.0 end
+    Real Minus(Real: other) is return 1.0 end
+    Real Divide(Real: other) is return 1.0 end
+    Real Multiply(Real: other) is return 1.0 end
+    Real Ceil() is return 1.0 end
+    Real Flor() is return 1.0 end
+    Bool Equals(Real: other) is return true end
+end
+
+class Bool is
+    this() is end
+    Bool And(Bool: other) is return true end
+    Bool Or(Bool: other) is return true end
+    Bool Xor(Bool: other) is return true end
+end
+
+class String is
+    this() is end
+    String Concat(String: other) is return "stroka" end
+end
+
+class Array[T] is
+    this(Integer: size) is end
+    Void Set(Integer: i, T: value) is return Void() end
+    // T Get(Integer: i) is return T() end that's impossible without actual implementation
+end
+
+class List[T] is
+    this() is end
+    Void Add(T: value) is return Void() end
+    Void Remove(Integer: i) is return Void() end
+    Void Assign(Integer: i, T: value) is return Void() end
+    //T Get(Integer: i) is return T() end
+    //T Pop(Integer: i) is
+    //    var value: T := this.Get(i)
+    //    this.Remove(i)
+    //    return value
+    //end
+    // same goes here
+end

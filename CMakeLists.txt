@@ -24,7 +24,9 @@ endif()
 
 set(SOURCES src/main.cpp
     src/lexer.cpp
+    src/seman.cpp
     ${BISON_parser_OUTPUTS})
 add_executable(timur
     ${SOURCES}
 )
+target_compile_options(timur PRIVATE -ggdb)
