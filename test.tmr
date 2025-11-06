@@ -31,7 +31,7 @@ class Program is
 end
 
 class MyClass extends Default is
-    var int: Integer := "str"
+    var int: Integer := 1
     this() is super() end // this is super end :(
 
     MyClass Default() is

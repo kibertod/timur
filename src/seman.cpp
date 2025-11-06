@@ -61,13 +61,8 @@ bool Analyzer::check_arguments(ast::Arguments arguments,
 ast::TypeName Analyzer::check_expression(
     const ast::Expression& expression, Variables& variables) {
     if (auto identifier = std::get_if<ast::Identifier>(&expression.value)) {
-        if (variables.contains(identifier->name)) {
-            VariableState variable = variables[identifier->name];
-            if (variable.set) {
-                return variable.type;
-            } else
-                return void_;
-        }
+        if (variables.contains(identifier->name))
+            return variables[identifier->name].type_name;
         std::print("ERROR use of undeclared identifier {}", identifier->name);
         return void_;
     }
@@ -140,6 +135,57 @@ ast::TypeName Analyzer::check_expression(
     return void_;
 }
 
+void Analyzer::check_statements(
+    const std::vector<ast::Statement>& statements, Variables& variables) {
+    std::vector<std::string> scope_variables {};
+    for (size_t k = 0; k < statements.size(); k++) {
+        ast::Statement statement = statements[k];
+        if (auto if_statement =
+                std::get_if<ast::Statement::If>(&statement.value)) {
+            if (check_expression(if_statement->condition, variables)
+                    .name.name != "Bool") {
+                print(statement, 0);
+                std::print("ERROR condition expected to be of type Bool\n");
+            }
+            check_statements(if_statement->body, variables);
+            for (size_t h = 0; h < if_statement->elifs.size(); h++) {
+                if (check_expression(
+                        if_statement->elifs[h].condition, variables)
+                        .name.name != "Bool") {
+                    print(statement, 0);
+                    std::print("ERROR condition expected to be of type Bool\n");
+                }
+                check_statements(if_statement->elifs[h].body, variables);
+            }
+            check_statements(if_statement->else_body, variables);
+        }
+        if (auto while_statement =
+                std::get_if<ast::Statement::While>(&statement.value)) {
+            if (check_expression(while_statement->condition, variables)
+                    .name.name == "Bool") {
+                print(statement, 0);
+                std::print("ERROR conditoin expected to be of type Bool\n");
+            }
+            check_statements(while_statement->body, variables);
+        }
+        if (auto variable = std::get_if<ast::Variable>(&statement.value)) {
+            if (variable->value.has_value()) {
+                Variables variables {};
+                std::string expression_type =
+                    check_expression(variable->value.value(), variables)
+                        .name.name;
+                if (expression_type != variable->type_name.name.name) {
+                    print(&(*variable), 0);
+                    std::print("ERROR expected type {}, got {}\n",
+                        variable->type_name.name.name, expression_type);
+                }
+            }
+            variables[variable->name.name] = *variable;
+            scope_variables.push_back(variable->name.name);
+        }
+    }
+}
+
 void Analyzer::analyze() {
     for (size_t i = 0; i < ast.classes.size(); i++) {
         const ast::Class& class_ = ast.classes[i];
@@ -181,6 +227,15 @@ void Analyzer::analyze() {
                         std::print("ERROR expected type {}, got {}\n",
                             variable->type_name.name.name, expression_type);
                     }
+                }
+            }
+            if (auto method = std::get_if<ast::MemberDeclaration::Method>(
+                    &member.value)) {
+                Variables variables {};
+                for (size_t k = 0; k < method->arguments.size(); k++) {
+                    variables[method->arguments[i].second.name] =
+                        ast::Variable { method->arguments[i].first,
+                            method->arguments[i].second, {} };
                 }
             }
         }
