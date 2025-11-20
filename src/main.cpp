@@ -13,8 +13,15 @@ int main() {
         std::cerr << "Failed to open file.\n";
         exit(1);
     }
+
+    std::ifstream core("src/core.tmr");
+    if (!core) {
+        std::cerr << "Failed to open file.\n";
+        exit(1);
+    }
+
     std::stringstream buffer;
-    buffer << file.rdbuf();
+    buffer << core.rdbuf() << file.rdbuf();
     ctx.src = buffer.str();
     ctx.pos = 0;
 

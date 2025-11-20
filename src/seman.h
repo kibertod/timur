@@ -1,34 +1,65 @@
 #pragma once
 
 #include "ast.h"
+#include <map>
 #include <optional>
 #include <unordered_map>
 
-static ast::TypeName void_ { { "Void" }, {} };
+using namespace ast;
 
-typedef std::unordered_map<std::string, ast::Variable> Variables;
+static TypeName void_ { { "Void" }, {} };
+
+struct VariableState {
+    std::string name;
+    TypeName type;
+    bool set;
+};
 
 class Analyzer {
 private:
-    ast::TypeName check_expression(
-        const ast::Expression& expression, Variables& variables);
+    std::unordered_map<std::string, VariableState> m_variables;
+    std::unordered_map<std::string, VariableState> m_members;
+    Root m_ast;
+    std::unordered_map<std::string, Class> m_classes;
+    std::unordered_map<std::string, std::map<std::string, TypeName>> m_properties;
+    std::unordered_map<std::string,
+        std::map<std::string, std::vector<std::pair<std::vector<TypeName>, TypeName>>>>
+        m_methods;
+    std::unordered_map<std::string, std::vector<std::vector<TypeName>>> m_constructors;
+    std::optional<Class> m_class;
+    std::optional<MemberDeclaration::Method> m_method;
 
-    bool check_arguments(ast::Arguments arguments,
-        std::vector<ast::Expression> expressions, Variables& variables);
+    TypeName substitute_generics(
+        const TypeName& declaration, const TypeName& instance, const TypeName& type);
+    std::vector<TypeName> substitute_generics(
+        const TypeName& declaration, const TypeName& instance, const std::vector<TypeName>& types);
+    std::optional<Class> type_exists(const TypeName& name);
+    std::optional<TypeName> get_property(const TypeName& type, const Identifier& property);
+    std::optional<TypeName> get_method(
+        const TypeName& type, const Identifier& method, const std::vector<TypeName>& arguments);
 
-    std::optional<ast::MemberDeclaration> get_memeber(
-        const ast::TypeName& class_, const ast::Identifier& identifier);
+    std::optional<TypeName> check_expression(const Expression& expression);
+    TypeName check_literal(const Expression::Literal& literal);
+    std::optional<TypeName> check_member_access(const Expression::MemberAccess& access);
+    std::optional<TypeName> check_this_access(const Expression::ThisAccess& access);
+    std::optional<TypeName> check_method_call(const Expression::MethodCall& call);
+    std::optional<TypeName> check_this_call(const Expression::ThisCall& call);
+    std::optional<TypeName> check_constructor_call(const Expression::ConstructorCall& call);
 
-    std::optional<ast::MemberDeclaration::Constructor> get_constructor(
-        const ast::TypeName& class_);
+    void check_statement(const Statement& statement);
+    void check_if(const Statement::If& if_);
+    void check_while(const Statement::While& while_);
+    void check_assignment(const Statement::Assignment& assignment);
+    void check_super_call(const Statement::SuperCall& call);
+    void check_return(const Statement::Return& return_);
 
-    void check_statements(
-        const std::vector<ast::Statement>& statements, Variables& variables);
+    std::optional<VariableState> check_variable(const Variable& variable);
 
-    ast::Root ast;
+    void check_class(const Class& class_);
+    void check_method(const MemberDeclaration::Method& method);
+    void check_constructor(const MemberDeclaration::Constructor& constructor);
 
 public:
     void analyze();
-    Analyzer(ast::Root ast) :
-        ast(ast) { };
+    Analyzer(Root ast);
 };

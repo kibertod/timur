@@ -7,6 +7,7 @@ class Integer is
     Integer Divide(Integer: other) is return 1 end
     Integer Multiply(Integer: other) is return 1 end
     Bool Equals(Integer: other) is return true end // that's the true ending
+    Bool LessEq(Integer: other) is return true end
 end
 
 class Real is
@@ -26,6 +27,7 @@ class Bool is
     Bool And(Bool: other) is return true end
     Bool Or(Bool: other) is return true end
     Bool Xor(Bool: other) is return true end
+    Bool Not() is return false end
 end
 
 class String is
@@ -41,9 +43,11 @@ end
 
 class List[T] is
     this() is end
-    Void Add(T: value) is return Void() end
-    Void Remove(Integer: i) is return Void() end
-    Void Assign(Integer: i, T: value) is return Void() end
+    Void Add(T: value) is end
+    Void Remove(Integer: i) is end
+    Void Assign(Integer: i, T: value) is end
+    Integer Size() is return 1 end
+    Void Swap(Integer: first, Integer: second) is end
     //T Get(Integer: i) is return T() end
     //T Pop(Integer: i) is
     //    var value: T := this.Get(i)

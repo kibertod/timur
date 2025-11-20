@@ -1,241 +1,507 @@
-#pragma once
-
-#include <vector>
 #include <print>
+#include <set>
+#include <string>
 #include "seman.h"
 #include "print.hpp"
 
-std::optional<ast::MemberDeclaration> Analyzer::get_memeber(
-    const ast::TypeName& class_, const ast::Identifier& identifier) {
-    for (size_t i = 0; i < ast.classes.size(); i++) {
-        if (ast.classes[i].name.name.name == class_.name.name) {
-            for (size_t j = 0; j < ast.classes[i].body.size(); j++) {
-                ast::MemberDeclaration member = ast.classes[i].body[j];
-                if (auto variable = std::get_if<ast::Variable>(&member.value)) {
-                    if (variable->name.name == identifier.name)
-                        return member;
-                }
-                if (auto method = std::get_if<ast::MemberDeclaration::Method>(
-                        &member.value)) {
-                    if (method->name.name == identifier.name)
-                        return member;
-                }
-            }
+using namespace ast;
+
+TypeName Analyzer::substitute_generics(
+    const TypeName& declaration, const TypeName& instance, const TypeName& type) {
+    TypeName res = type;
+    if (declaration.generic_arguments.size() != instance.generic_arguments.size())
+        return res;
+
+    std::map<std::string, TypeName> substitutions;
+    for (size_t i = 0; i < declaration.generic_arguments.size(); i++)
+        substitutions[declaration.generic_arguments[i].name.name] = instance.generic_arguments[i];
+
+    if (substitutions.contains(res.name.name))
+        res = substitutions[res.name.name];
+
+    for (size_t i = 0; i < res.generic_arguments.size(); i++)
+        if (substitutions.contains(res.generic_arguments[i].name.name))
+            res.generic_arguments[i] = substitutions[res.generic_arguments[i].name.name];
+
+    return res;
+}
+
+std::vector<TypeName> Analyzer::substitute_generics(
+    const TypeName& declaration, const TypeName& instance, const std::vector<TypeName>& types) {
+    std::vector res = types;
+    for (size_t i = 0; i < types.size(); i++) {
+        res[i] = substitute_generics(declaration, instance, types[i]);
+    }
+    return res;
+}
+
+std::optional<Class> Analyzer::type_exists(const TypeName& name) {
+    if (m_class.has_value())
+        for (const TypeName& generic : m_class.value().name.generic_arguments)
+            if (generic == name)
+                return Class { generic, {}, {} };
+    if (m_classes.contains(name.name.name)) {
+        Class class_ = m_classes[name.name.name];
+        if (class_.name.generic_arguments.size() == name.generic_arguments.size())
+            return class_;
+    }
+    return {};
+}
+
+std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Identifier& identifier) {
+    if (!m_classes.contains(type.name.name))
+        return {};
+
+    if (!m_properties[type.name.name].contains(identifier.name)) {
+        std::print("ERROR class {} doesn't have property {}\n", type.name.name, identifier.name);
+        return {};
+    }
+
+    Class class_ = m_classes[type.name.name];
+    TypeName property_type = m_properties[type.name.name][identifier.name];
+    return substitute_generics(class_.name, type, property_type);
+}
+
+std::optional<TypeName> Analyzer::get_method(
+    const TypeName& type, const Identifier& identifier, const std::vector<TypeName>& arguments) {
+    if (!m_classes.contains(type.name.name))
+        return {};
+    if (!m_methods[type.name.name].contains(identifier.name)) {
+        bool from_extended = false;
+        if (m_classes[type.name.name].extends.has_value())
+            from_extended =
+                m_methods[m_classes[type.name.name].extends.value().name].contains(identifier.name);
+        if (!from_extended) {
+            std::print("ERROR class {} doesn't have method {}\n", stringify(type), identifier.name);
             return {};
         }
     }
+
+    Class class_ = m_classes[type.name.name];
+    auto overloads = m_methods[type.name.name][identifier.name];
+    for (auto overload : overloads)
+        if (substitute_generics(class_.name, type, overload.first) == arguments)
+            return substitute_generics(class_.name, type, overload.second);
+    if (m_classes[type.name.name].extends.has_value()) {
+        auto overloads = m_methods[m_classes[type.name.name].extends.value().name][identifier.name];
+        for (auto overload : overloads)
+            if (substitute_generics(class_.name, type, overload.first) == arguments)
+                return substitute_generics(class_.name, type, overload.second);
+    }
+
+    std::print("ERROR method {}.{} doesnt have an overload with arguments ({})\n", stringify(type),
+        identifier.name, stringify(arguments));
     return {};
 }
 
-std::optional<ast::MemberDeclaration::Constructor> Analyzer::get_constructor(
-    const ast::TypeName& class_) {
-    for (size_t i = 0; i < ast.classes.size(); i++) {
-        if (ast.classes[i].name.name.name == class_.name.name) {
-            for (size_t j = 0; j < ast.classes[i].body.size(); j++) {
-                ast::MemberDeclaration member = ast.classes[i].body[j];
-                if (auto constructor =
-                        std::get_if<ast::MemberDeclaration::Constructor>(
-                            &member.value)) {
-                    return *constructor;
-                }
-            }
-        }
+TypeName Analyzer::check_literal(const Expression::Literal& literal) {
+    switch (literal.type) {
+    case Expression::Literal::Int:
+        return TypeName { { "Integer" }, {} };
+    case Expression::Literal::Str:
+        return TypeName { { "String" }, {} };
+    case Expression::Literal::Bool:
+        return TypeName { { "Bool" }, {} };
+    case Expression::Literal::Real:
+        return TypeName { { "Real" }, {} };
     }
     return {};
 }
 
-bool Analyzer::check_arguments(ast::Arguments arguments,
-    std::vector<ast::Expression> expressions, Variables& variables) {
-    if (arguments.size() != expressions.size())
-        return false;
-    for (size_t i = 0; i < expressions.size(); i++) {
-        ast::TypeName type = check_expression(expressions[i], variables);
-        // TODO: generics
-        if (arguments[i].first.name.name != type.name.name) {
-            return false;
-        }
-    }
-    return true;
+std::optional<TypeName> Analyzer::check_member_access(const Expression::MemberAccess& access) {
+    auto object = check_expression(*access.object);
+    if (!object.has_value())
+        return {};
+    return get_property(object.value(), access.member);
 }
 
-ast::TypeName Analyzer::check_expression(
-    const ast::Expression& expression, Variables& variables) {
-    if (auto identifier = std::get_if<ast::Identifier>(&expression.value)) {
-        if (variables.contains(identifier->name))
-            return variables[identifier->name].type_name;
-        std::print("ERROR use of undeclared identifier {}", identifier->name);
-        return void_;
+std::optional<TypeName> Analyzer::check_this_access(const Expression::ThisAccess& access) {
+    if (!m_class.has_value()) {
+        std::print("ERROR 'this' can be accessed only inside methods\n");
+        return {};
     }
-    if (auto access =
-            std::get_if<ast::Expression::MemberAccess>(&expression.value)) {
-        ast::TypeName object_type =
-            check_expression(*access->object, variables);
-        std::optional<ast::MemberDeclaration> member =
-            get_memeber(object_type, access->member);
-        if (member.has_value()) {
-            if (auto variable =
-                    std::get_if<ast::Variable>(&member.value().value)) {
-                return variable->type_name;
-            } else {
-                return void_;
-            }
-        } else
-            return void_;
-    }
-    if (auto method_call =
-            std::get_if<ast::Expression::MethodCall>(&expression.value)) {
-        ast::TypeName object_type =
-            check_expression(*method_call->object, variables);
-        std::optional<ast::MemberDeclaration> member =
-            get_memeber(object_type, method_call->method);
-        if (member.has_value()) {
-            if (auto method = std::get_if<ast::MemberDeclaration::Method>(
-                    &member.value().value)) {
-                if (check_arguments(
-                        method->arguments, method_call->arguments, variables))
-                    return method->return_type;
-                else
-                    return void_;
-            } else {
-                return void_;
-            }
-        } else
-            return void_;
-    }
-    if (auto literal =
-            std::get_if<ast::Expression::Literal>(&expression.value)) {
-        switch (literal->type) {
-
-        case ast::Expression::Literal::Int:
-            return ast::TypeName { { "Integer" }, {} };
-        case ast::Expression::Literal::Str:
-            return ast::TypeName { { "String" }, {} };
-        case ast::Expression::Literal::Bool:
-            return ast::TypeName { { "Bool" }, {} };
-        case ast::Expression::Literal::Real:
-            return ast::TypeName { { "Real" }, {} };
-        }
-    }
-    if (auto constructor_call =
-            std::get_if<ast::Expression::ConstructorCall>(&expression.value)) {
-        auto constructor = get_constructor(constructor_call->type_name);
-        if (constructor.has_value()) {
-            if (check_arguments(constructor->arguments,
-                    constructor_call->arguments, variables))
-                return constructor_call->type_name;
-            else
-                return void_;
-        } else {
-            if (constructor_call->arguments.empty())
-                return constructor_call->type_name;
-            else
-                return void_;
-        }
-    }
-    return void_;
+    return get_property(m_class.value().name, access.member);
 }
 
-void Analyzer::check_statements(
-    const std::vector<ast::Statement>& statements, Variables& variables) {
-    std::vector<std::string> scope_variables {};
-    for (size_t k = 0; k < statements.size(); k++) {
-        ast::Statement statement = statements[k];
-        if (auto if_statement =
-                std::get_if<ast::Statement::If>(&statement.value)) {
-            if (check_expression(if_statement->condition, variables)
-                    .name.name != "Bool") {
-                print(statement, 0);
-                std::print("ERROR condition expected to be of type Bool\n");
-            }
-            check_statements(if_statement->body, variables);
-            for (size_t h = 0; h < if_statement->elifs.size(); h++) {
-                if (check_expression(
-                        if_statement->elifs[h].condition, variables)
-                        .name.name != "Bool") {
-                    print(statement, 0);
-                    std::print("ERROR condition expected to be of type Bool\n");
-                }
-                check_statements(if_statement->elifs[h].body, variables);
-            }
-            check_statements(if_statement->else_body, variables);
-        }
-        if (auto while_statement =
-                std::get_if<ast::Statement::While>(&statement.value)) {
-            if (check_expression(while_statement->condition, variables)
-                    .name.name == "Bool") {
-                print(statement, 0);
-                std::print("ERROR conditoin expected to be of type Bool\n");
-            }
-            check_statements(while_statement->body, variables);
-        }
-        if (auto variable = std::get_if<ast::Variable>(&statement.value)) {
-            if (variable->value.has_value()) {
-                Variables variables {};
-                std::string expression_type =
-                    check_expression(variable->value.value(), variables)
-                        .name.name;
-                if (expression_type != variable->type_name.name.name) {
-                    print(&(*variable), 0);
-                    std::print("ERROR expected type {}, got {}\n",
-                        variable->type_name.name.name, expression_type);
-                }
-            }
-            variables[variable->name.name] = *variable;
-            scope_variables.push_back(variable->name.name);
-        }
+std::optional<TypeName> Analyzer::check_method_call(const Expression::MethodCall& call) {
+    auto object = check_expression(*call.object);
+    if (!object.has_value())
+        return {};
+    std::vector<TypeName> arguments {};
+    for (Expression expr : call.arguments) {
+        std::optional<TypeName> type = check_expression(expr);
+        if (type.has_value())
+            arguments.push_back(type.value());
+        else
+            return {};
     }
+    return get_method(object.value(), call.method, arguments);
+}
+
+std::optional<TypeName> Analyzer::check_this_call(const Expression::ThisCall& call) {
+    if (!m_class.has_value()) {
+        std::print("ERROR 'this' can be accessed only inside methods\n");
+        return {};
+    }
+    std::vector<TypeName> arguments {};
+    for (Expression expr : call.arguments) {
+        std::optional<TypeName> type = check_expression(expr);
+        if (type.has_value())
+            arguments.push_back(type.value());
+        else
+            return {};
+    }
+    return get_method(m_class.value().name, call.method, arguments);
+}
+
+std::optional<TypeName> Analyzer::check_constructor_call(const Expression::ConstructorCall& call) {
+    std::vector<TypeName> arguments {};
+    for (Expression expr : call.arguments) {
+        std::optional<TypeName> type = check_expression(expr);
+        if (type.has_value())
+            arguments.push_back(type.value());
+        else
+            return {};
+    }
+    for (std::vector<TypeName> overload : m_constructors[call.type_name.name.name])
+        if (substitute_generics(
+                m_classes[call.type_name.name.name].name, call.type_name, overload) == arguments)
+            return call.type_name;
+    std::print("ERROR class {} doesn't have a custructor with arguments ({})\n",
+        stringify(call.type_name), stringify(arguments));
+    return {};
+}
+
+std::optional<TypeName> Analyzer::check_expression(const Expression& expression) {
+    if (auto literal = std::get_if<Expression::Literal>(&expression.value))
+        return check_literal(*literal);
+    if (auto member_access = std::get_if<Expression::MemberAccess>(&expression.value))
+        return check_member_access(*member_access);
+    if (auto this_access = std::get_if<Expression::ThisAccess>(&expression.value))
+        return check_this_access(*this_access);
+    if (auto method_call = std::get_if<Expression::MethodCall>(&expression.value))
+        return check_method_call(*method_call);
+    if (auto this_call = std::get_if<Expression::ThisCall>(&expression.value))
+        return check_this_call(*this_call);
+    if (auto constructor_call = std::get_if<Expression::ConstructorCall>(&expression.value))
+        return check_constructor_call(*constructor_call);
+    if (auto identifier = std::get_if<Identifier>(&expression.value)) {
+        if (!m_variables.contains(identifier->name))
+            std::print("ERROR variable {} doesn't exist in this scope\n", identifier->name);
+        else if (!m_variables[identifier->name].set)
+            std::print("ERROR variable {} hasn't a value assigned\n", identifier->name);
+        else
+            return m_variables[identifier->name].type;
+    }
+    return {};
+}
+
+std::optional<VariableState> Analyzer::check_variable(const Variable& variable) {
+    if (!type_exists(variable.type_name)) {
+        std::print("ERROR class {} doesn't exist\n", stringify(variable.type_name));
+        return {};
+    }
+
+    VariableState state { variable.name.name, variable.type_name, false };
+    if (variable.value.has_value()) {
+        auto value = check_expression(variable.value.value());
+        if (!value.has_value()) {
+            print(&variable, 0);
+            return state;
+        } else if (value.value() != variable.type_name) {
+            std::print("ERROR expression doesn't match with variable type\n");
+            print(&variable, 0);
+            return state;
+        }
+        state.set = true;
+    }
+    return state;
+}
+
+void Analyzer::check_if(const Statement::If& if_) {
+    bool errors = false;
+    if (check_expression(if_.condition) != TypeName { { "Bool" }, {} }) {
+        std::print("ERROR if statement condition is not bool\n");
+        errors = true;
+    }
+
+    std::set<std::string> variables;
+    for (auto variable : m_variables)
+        variables.insert(variable.first);
+    for (Statement statement : if_.body)
+        check_statement(statement);
+    for (auto variable : m_variables)
+        if (!variables.contains(variable.first))
+            m_variables.erase(variable.first);
+
+    for (Statement::If::ElIf elif : if_.elifs) {
+        if (check_expression(elif.condition) != TypeName { { "Bool" }, {} }) {
+            std::print("ERROR elif statement condition is not bool\n");
+            errors = true;
+        }
+        for (Statement statement : elif.body)
+            check_statement(statement);
+        for (auto variable : m_variables)
+            if (!variables.contains(variable.first))
+                m_variables.erase(variable.first);
+    }
+
+    for (Statement statement : if_.else_body)
+        check_statement(statement);
+    for (auto variable : m_variables)
+        if (!variables.contains(variable.first))
+            m_variables.erase(variable.first);
+
+    if (errors)
+        print(Statement { if_ }, 0);
+}
+
+void Analyzer::check_while(const Statement::While& while_) {
+    if (check_expression(while_.condition) != TypeName { { "Bool" }, {} }) {
+        std::print("ERROR while statement condition is not bool\n");
+        print(Statement { { while_ } }, 0);
+    }
+
+    std::set<std::string> variables;
+    for (auto variable : m_variables)
+        variables.insert(variable.first);
+    for (Statement statement : while_.body)
+        check_statement(statement);
+    for (auto variable : m_variables)
+        if (!variables.contains(variable.first))
+            m_variables.erase(variable.first);
+}
+
+void Analyzer::check_assignment(const Statement::Assignment& assignment) {
+    std::optional<TypeName> type;
+    if (auto _ = std::get_if<Expression::MemberAccess>(&assignment.left.value))
+        type = check_expression(assignment.left);
+    else if (auto _ = std::get_if<Expression::ThisAccess>(&assignment.left.value))
+        type = check_expression(assignment.left);
+    else if (auto _ = std::get_if<Identifier>(&assignment.left.value))
+        type = check_expression(assignment.left);
+    else {
+        std::print("ERROR assignment operation is only allowed for variables and properties\n");
+        print(Statement { assignment }, 0);
+        return;
+    }
+    if (!type.has_value())
+        return;
+    if (type != check_expression(assignment.right)) {
+        std::print("ERROR lhs type doesn't match with rhs\n");
+        print(Statement { assignment }, 0);
+        return;
+    }
+    if (auto variable = std::get_if<Identifier>(&assignment.left.value))
+        m_variables[variable->name].set = true;
+}
+
+void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
+    if (!m_class.has_value()) {
+        std::print("ERROR super can be called only inside methods\n");
+        return;
+    }
+    if (!m_class.value().extends.has_value()) {
+        std::print("ERROR super can be called only for chlasses that extends smth.\nbruh..\n");
+        return;
+    }
+
+    std::vector<TypeName> arguments {};
+    for (auto argument : super_call.arguments) {
+        std::optional<TypeName> type = check_expression(argument);
+        if (!type.has_value()) {
+            return;
+        }
+        arguments.push_back(type.value());
+    }
+
+    bool exists = false;
+    for (std::vector<TypeName> constructor : m_constructors[m_class.value().extends.value().name])
+        if (constructor == arguments) {
+            exists = true;
+            break;
+        }
+    if (!exists) {
+        std::print("ERROR class {} doesn't have matching constructor\n",
+            m_class.value().extends.value().name);
+        print(Statement { super_call }, 0);
+    }
+}
+
+void Analyzer::check_return(const Statement::Return& return_) {
+    if (!m_method.has_value()) {
+        std::print("ERROR return statement outside of method\n");
+        print(Statement { return_ }, 0);
+        return;
+    }
+
+    std::optional<TypeName> type = check_expression(return_.value);
+    if (!type.has_value())
+        return;
+
+    if (type.value() != m_method.value().return_type) {
+        std::print("ERROR return value doesn't match return type\n");
+        print(Statement { return_ }, 0);
+    }
+}
+
+void Analyzer::check_statement(const Statement& statement) {
+    if (auto if_ = std::get_if<Statement::If>(&statement.value))
+        check_if(*if_);
+    if (auto while_ = std::get_if<Statement::While>(&statement.value))
+        check_while(*while_);
+    if (auto assignment = std::get_if<Statement::Assignment>(&statement.value))
+        check_assignment(*assignment);
+    if (auto super_call = std::get_if<Statement::SuperCall>(&statement.value))
+        check_super_call(*super_call);
+    if (auto return_ = std::get_if<Statement::Return>(&statement.value))
+        check_return(*return_);
+    if (auto expression = std::get_if<Expression>(&statement.value))
+        check_expression(*expression);
+    if (auto variable = std::get_if<Variable>(&statement.value)) {
+        auto state = check_variable(*variable);
+        if (!state.has_value()) {
+            print(statement, 0);
+            return;
+        }
+        if (m_variables.contains(state.value().name)) {
+            std::print("ERROR variable {} already exists in this scope\n", state.value().name);
+            print(statement, 0);
+            return;
+        }
+        m_variables[state.value().name] = state.value();
+    }
+}
+
+void Analyzer::check_method(const MemberDeclaration::Method& method) {
+    m_variables = {};
+    m_method = method;
+    for (std::pair<TypeName, Identifier> argument : method.arguments) {
+        if (m_variables.contains(argument.second.name)) {
+            std::print("ERROR overlaping identifiers in method arguments\n");
+            print(MemberDeclaration { method }, 0);
+        } else
+            m_variables[argument.second.name] = { argument.second.name, argument.first, true };
+    }
+    for (Statement statement : method.body)
+        check_statement(statement);
+    m_method = {};
+    m_variables = {};
+}
+
+void Analyzer::check_constructor(const MemberDeclaration::Constructor& constructor) {
+    m_variables = {};
+    for (std::pair<TypeName, Identifier> argument : constructor.arguments) {
+        if (m_variables.contains(argument.second.name)) {
+            std::print("ERROR overlaping identifiers in constructor arguments\n");
+            print(MemberDeclaration { constructor }, 0);
+        } else
+            m_variables[argument.second.name] = { argument.second.name, argument.first, true };
+    }
+    for (Statement statement : constructor.body)
+        check_statement(statement);
+    m_variables = {};
+}
+
+void Analyzer::check_class(const Class& class_) {
+    if (class_.extends.has_value()) {
+        if (!m_classes.contains(class_.extends.value().name))
+            std::print("ERROR 'class {0} extends {1}' class {1} doesn't exist\n",
+                class_.name.name.name, class_.extends.value().name);
+        if (class_.extends == class_.name.name)
+            std::print("ERROR class {0} can't extend itself\n", class_.name.name.name);
+    }
+
+    for (TypeName generic : class_.name.generic_arguments) {
+        if (m_classes.contains(generic.name.name))
+            std::print("ERROR generic identifier {} overlaps with class {}\n", generic.name.name,
+                m_classes[generic.name.name].name.name.name);
+    }
+
+    m_class = class_;
+    for (MemberDeclaration member : class_.body)
+        if (auto variable = std::get_if<Variable>(&member.value))
+            check_variable(*variable);
+
+    for (MemberDeclaration member : class_.body) {
+        if (auto method = std::get_if<MemberDeclaration::Method>(&member.value))
+            check_method(*method);
+        if (auto constructor = std::get_if<MemberDeclaration::Constructor>(&member.value))
+            check_constructor(*constructor);
+    }
+    m_class = {};
 }
 
 void Analyzer::analyze() {
-    for (size_t i = 0; i < ast.classes.size(); i++) {
-        const ast::Class& class_ = ast.classes[i];
-        // check redefinitions
-        for (size_t j = 0; j < i; j++) {
-            if (class_.name.name.name == ast.classes[j].name.name.name &&
-                i != j) {
+    for (Class class_ : m_ast.classes) {
+        check_class(class_);
+    }
+}
 
-                std::print("ERROR multiple definitions of class {}\n",
-                    class_.name.name.name);
-                break;
-            }
-        }
-        // check inheritance
-        for (size_t j = 0; j < class_.extends.size(); j++) {
-            const std::string& extends = class_.extends[j].name;
-            bool exists = false;
-            for (size_t k = 0; k < ast.classes.size(); k++) {
-                if (ast.classes[k].name.name.name == extends) {
-                    exists = true;
-                    break;
-                }
-            }
-            if (!exists)
-                std::print("ERROR '{0} extends {1}' class {1} doesn't exist\n",
-                    class_.name.name.name, extends);
-        }
-        // check declarations
-        for (size_t j = 0; j < class_.body.size(); j++) {
-            const ast::MemberDeclaration& member = class_.body[j];
-            if (auto variable = std::get_if<ast::Variable>(&member.value)) {
-                if (variable->value.has_value()) {
-                    Variables variables {};
-                    std::string expression_type =
-                        check_expression(variable->value.value(), variables)
-                            .name.name;
-                    if (expression_type != variable->type_name.name.name) {
-                        print(&(*variable), 0);
-                        std::print("ERROR expected type {}, got {}\n",
-                            variable->type_name.name.name, expression_type);
+Analyzer::Analyzer(Root ast) {
+    m_ast = ast;
+    for (Class class_ : ast.classes) {
+        std::string classname = class_.name.name.name;
+        if (m_classes.contains(classname)) {
+            std::print("ERROR redeclaration of class {}\n", classname);
+        } else {
+            m_classes[classname] = class_;
+            m_properties[classname] = {};
+            m_methods[classname] = {};
+            m_constructors[classname] = {};
+
+            for (MemberDeclaration member : class_.body) {
+                if (auto property = std::get_if<Variable>(&member.value)) {
+                    if (m_properties[classname].contains(property->name.name)) {
+                        std::print("ERROR duplicate properties {} in class {}\n",
+                            property->name.name, classname);
+                    } else {
+                        m_properties[classname][property->name.name] = property->type_name;
                     }
                 }
-            }
-            if (auto method = std::get_if<ast::MemberDeclaration::Method>(
-                    &member.value)) {
-                Variables variables {};
-                for (size_t k = 0; k < method->arguments.size(); k++) {
-                    variables[method->arguments[i].second.name] =
-                        ast::Variable { method->arguments[i].first,
-                            method->arguments[i].second, {} };
+                if (auto method = std::get_if<MemberDeclaration::Method>(&member.value)) {
+                    std::vector<TypeName> arguments {};
+                    for (auto pair : method->arguments)
+                        arguments.push_back(pair.first);
+                    if (m_methods[classname].contains(method->name.name)) {
+                        bool overload_exists = false;
+                        for (auto overload : m_methods[classname][method->name.name]) {
+                            if (overload.first == arguments) {
+                                overload_exists = true;
+                                std::print("ERROR duplicate methods {}({}) in class {}\n",
+                                    method->name.name, stringify(arguments), classname);
+                                break;
+                            }
+                        }
+                        if (!overload_exists) {
+                            m_methods[classname][method->name.name].push_back(
+                                { arguments, method->return_type });
+                        }
+                    } else {
+                        m_methods[classname][method->name.name] = { { arguments,
+                            method->return_type } };
+                    }
+                }
+                if (auto constructor = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
+                    std::vector<TypeName> arguments {};
+                    for (auto pair : constructor->arguments)
+                        arguments.push_back(pair.first);
+                    if (m_constructors.contains(classname)) {
+                        bool overload_exists = false;
+                        for (std::vector<TypeName> overload : m_constructors[classname]) {
+                            if (overload == arguments) {
+                                overload_exists = true;
+                                std::print(
+                                    "ERROR duplicate constructor overload ({}) in class {}\n",
+                                    stringify(arguments), classname);
+                                break;
+                            }
+                        }
+                        if (!overload_exists)
+                            m_constructors[classname].push_back(arguments);
+                    } else {
+                        m_constructors[classname] = { arguments };
+                    }
                 }
             }
         }
