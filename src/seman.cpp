@@ -63,7 +63,8 @@ std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Ident
                 return substitute_generics(parent_decl, extent_parent, property_type);
             }
         }
-        std::print("ERROR class {} doesn't have property {}\n", type.name.name, identifier.name);
+        print_error(std::format(
+            "ERROR class {} doesn't have property {}\n", type.name.name, identifier.name));
         return {};
     }
 
@@ -81,7 +82,8 @@ std::optional<TypeName> Analyzer::get_method(
             from_extended = m_methods[m_classes[type.name.name].extends.value().name.name].contains(
                 identifier.name);
         if (!from_extended) {
-            std::print("ERROR class {} doesn't have method {}\n", stringify(type), identifier.name);
+            print_error(std::format(
+                "ERROR class {} doesn't have method {}\n", stringify(type), identifier.name));
             return {};
         }
     }
@@ -102,8 +104,8 @@ std::optional<TypeName> Analyzer::get_method(
                 return substitute_generics(parent_decl, extent_parent, overload.second);
     }
 
-    std::print("ERROR method {}.{} doesn't have an overload with arguments ({})\n", stringify(type),
-        identifier.name, stringify(arguments));
+    print_error(std::format("ERROR method {}.{} doesn't have an overload with arguments ({})\n",
+        stringify(type), identifier.name, stringify(arguments)));
     return {};
 }
 
@@ -130,7 +132,7 @@ std::optional<TypeName> Analyzer::check_member_access(const Expression::MemberAc
 
 std::optional<TypeName> Analyzer::check_this_access(const Expression::ThisAccess& access) {
     if (!m_class.has_value()) {
-        std::print("ERROR 'this' can be accessed only inside methods\n");
+        print_error(std::format("ERROR 'this' can be accessed only inside methods\n"));
         return {};
     }
     return get_property(m_class.value().name, access.member);
@@ -153,7 +155,7 @@ std::optional<TypeName> Analyzer::check_method_call(const Expression::MethodCall
 
 std::optional<TypeName> Analyzer::check_this_call(const Expression::ThisCall& call) {
     if (!m_class.has_value()) {
-        std::print("ERROR 'this' can be accessed only inside methods\n");
+        print_error(std::format("ERROR 'this' can be accessed only inside methods\n"));
         return {};
     }
     std::vector<TypeName> arguments {};
@@ -177,7 +179,7 @@ std::optional<TypeName> Analyzer::check_constructor_call(const Expression::Const
             return {};
     }
     if (!m_classes.contains(call.type_name.name.name)) {
-        std::print("ERROR class {} doesn't exist\n", stringify(call.type_name));
+        print_error(std::format("ERROR class {} doesn't exist\n", stringify(call.type_name)));
         print(Expression { call }, 0);
         return {};
     }
@@ -185,8 +187,8 @@ std::optional<TypeName> Analyzer::check_constructor_call(const Expression::Const
         if (substitute_generics(
                 m_classes[call.type_name.name.name].name, call.type_name, overload) == arguments)
             return call.type_name;
-    std::print("ERROR class {} doesn't have a custructor with arguments ({})\n",
-        stringify(call.type_name), stringify(arguments));
+    print_error(std::format("ERROR class {} doesn't have a custructor with arguments ({}))\n",
+        stringify(call.type_name), stringify(arguments)));
     return {};
 }
 
@@ -205,9 +207,11 @@ std::optional<TypeName> Analyzer::check_expression(const Expression& expression)
         return check_constructor_call(*constructor_call);
     if (auto identifier = std::get_if<Identifier>(&expression.value)) {
         if (!m_variables.contains(identifier->name))
-            std::print("ERROR variable {} doesn't exist in this scope\n", identifier->name);
+            print_error(
+                std::format("ERROR variable {} doesn't exist in this scope\n", identifier->name));
         else if (!m_variables[identifier->name].set)
-            std::print("ERROR variable {} hasn't a value assigned\n", identifier->name);
+            print_error(
+                std::format("ERROR variable {} hasn't a value assigned\n", identifier->name));
         else
             return m_variables[identifier->name].type;
     }
@@ -216,7 +220,7 @@ std::optional<TypeName> Analyzer::check_expression(const Expression& expression)
 
 std::optional<VariableState> Analyzer::check_variable(const Variable& variable) {
     if (!type_exists(variable.type_name)) {
-        std::print("ERROR class {} doesn't exist\n", stringify(variable.type_name));
+        print_error(std::format("ERROR class {} doesn't exist\n", stringify(variable.type_name)));
         return {};
     }
 
@@ -227,7 +231,7 @@ std::optional<VariableState> Analyzer::check_variable(const Variable& variable) 
             print(&variable, 0);
             return state;
         } else if (value.value() != variable.type_name) {
-            std::print("ERROR expression doesn't match with variable type\n");
+            print_error(std::format("ERROR expression doesn't match with variable type\n"));
             print(&variable, 0);
             return state;
         }
@@ -239,7 +243,7 @@ std::optional<VariableState> Analyzer::check_variable(const Variable& variable) 
 void Analyzer::check_if(const Statement::If& if_) {
     bool errors = false;
     if (check_expression(if_.condition) != TypeName { { "Bool" }, {} }) {
-        std::print("ERROR if statement condition is not bool\n");
+        print_error(std::format("ERROR if statement condition is not bool\n"));
         errors = true;
     }
 
@@ -254,7 +258,7 @@ void Analyzer::check_if(const Statement::If& if_) {
 
     for (Statement::If::ElIf elif : if_.elifs) {
         if (check_expression(elif.condition) != TypeName { { "Bool" }, {} }) {
-            std::print("ERROR elif statement condition is not bool\n");
+            print_error(std::format("ERROR elif statement condition is not bool\n"));
             errors = true;
         }
         for (Statement statement : elif.body)
@@ -276,7 +280,7 @@ void Analyzer::check_if(const Statement::If& if_) {
 
 void Analyzer::check_while(const Statement::While& while_) {
     if (check_expression(while_.condition) != TypeName { { "Bool" }, {} }) {
-        std::print("ERROR while statement condition is not bool\n");
+        print_error(std::format("ERROR while statement condition is not bool\n"));
         print(Statement { { while_ } }, 0);
     }
 
@@ -299,14 +303,15 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
     else if (auto _ = std::get_if<Identifier>(&assignment.left.value))
         type = check_expression(assignment.left);
     else {
-        std::print("ERROR assignment operation is only allowed for variables and properties\n");
+        print_error(std::format(
+            "ERROR assignment operation is only allowed for variables and properties\n"));
         print(Statement { assignment }, 0);
         return;
     }
     if (!type.has_value())
         return;
     if (type != check_expression(assignment.right)) {
-        std::print("ERROR lhs type doesn't match with rhs\n");
+        print_error(std::format("ERROR lhs type doesn't match with rhs\n"));
         print(Statement { assignment }, 0);
         return;
     }
@@ -316,11 +321,12 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
 
 void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
     if (!m_class.has_value()) {
-        std::print("ERROR super can be called only inside methods\n");
+        print_error(std::format("ERROR super can be called only inside methods\n"));
         return;
     }
     if (!m_class.value().extends.has_value()) {
-        std::print("ERROR super can be called only for classes that extends smth.\nbruh..\n");
+        print_error(
+            std::format("ERROR super can be called only for classes that extends smth.\nbruh..\n"));
         return;
     }
 
@@ -341,15 +347,15 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
             break;
         }
     if (!exists) {
-        std::print("ERROR class {} doesn't have matching constructor\n",
-            stringify(m_class.value().extends.value()));
+        print_error(std::format("ERROR class {} doesn't have matching constructor\n",
+            stringify(m_class.value().extends.value())));
         print(Statement { super_call }, 0);
     }
 }
 
 void Analyzer::check_return(const Statement::Return& return_) {
     if (!m_method.has_value()) {
-        std::print("ERROR return statement outside of method\n");
+        print_error(std::format("ERROR return statement outside of method\n"));
         print(Statement { return_ }, 0);
         return;
     }
@@ -359,7 +365,7 @@ void Analyzer::check_return(const Statement::Return& return_) {
         return;
 
     if (type.value() != m_method.value().return_type) {
-        std::print("ERROR return value doesn't match return type\n");
+        print_error(std::format("ERROR return value doesn't match return type\n"));
         print(Statement { return_ }, 0);
     }
 }
@@ -384,7 +390,8 @@ void Analyzer::check_statement(const Statement& statement) {
             return;
         }
         if (m_variables.contains(state.value().name)) {
-            std::print("ERROR variable {} already exists in this scope\n", state.value().name);
+            print_error(std::format(
+                "ERROR variable {} already exists in this scope\n", state.value().name));
             print(statement, 0);
             return;
         }
@@ -397,7 +404,7 @@ void Analyzer::check_method(const MemberDeclaration::Method& method) {
     m_method = method;
     for (std::pair<TypeName, Identifier> argument : method.arguments) {
         if (m_variables.contains(argument.second.name)) {
-            std::print("ERROR overlaping identifiers in method arguments\n");
+            print_error(std::format("ERROR overlaping identifiers in method arguments\n"));
             print(MemberDeclaration { method }, 0);
         } else
             m_variables[argument.second.name] = { argument.second.name, argument.first, true };
@@ -412,7 +419,7 @@ void Analyzer::check_constructor(const MemberDeclaration::Constructor& construct
     m_variables = {};
     for (std::pair<TypeName, Identifier> argument : constructor.arguments) {
         if (m_variables.contains(argument.second.name)) {
-            std::print("ERROR overlaping identifiers in constructor arguments\n");
+            print_error(std::format("ERROR overlaping identifiers in constructor arguments\n"));
             print(MemberDeclaration { constructor }, 0);
         } else
             m_variables[argument.second.name] = { argument.second.name, argument.first, true };
@@ -425,16 +432,17 @@ void Analyzer::check_constructor(const MemberDeclaration::Constructor& construct
 void Analyzer::check_class(const Class& class_) {
     if (class_.extends.has_value()) {
         if (!m_classes.contains(class_.extends.value().name.name))
-            std::print("ERROR 'class {0} extends {1}' class {1} doesn't exist\n",
-                class_.name.name.name, class_.extends.value().name.name);
+            print_error(std::format("ERROR 'class {0} extends {1}' class {1} doesn't exist\n",
+                class_.name.name.name, class_.extends.value().name.name));
         if (class_.extends.value().name == class_.name.name)
-            std::print("ERROR class {0} can't extend itself\n", class_.name.name.name);
+            print_error(
+                std::format("ERROR class {0} can't extend itself\n", class_.name.name.name));
     }
 
     for (TypeName generic : class_.name.generic_arguments) {
         if (m_classes.contains(generic.name.name))
-            std::print("ERROR generic identifier {} overlaps with class {}\n", generic.name.name,
-                m_classes[generic.name.name].name.name.name);
+            print_error(std::format("ERROR generic identifier {} overlaps with class {}\n",
+                generic.name.name, m_classes[generic.name.name].name.name.name));
     }
 
     m_class = class_;
@@ -449,20 +457,17 @@ void Analyzer::check_class(const Class& class_) {
             check_constructor(*constructor);
     }
     m_class = {};
+
+    if (m_constructors[class_.name.name.name].size() == 0)
+        print_error(std::format(
+            "ERROR class {} doesn't define a single constructor", stringify(class_.name)));
 }
 
 void Analyzer::analyze() {
     for (Class class_ : m_ast.classes) {
-        check_class(class_);
-    }
-}
-
-Analyzer::Analyzer(Root ast) {
-    m_ast = ast;
-    for (Class class_ : ast.classes) {
         std::string classname = class_.name.name.name;
         if (m_classes.contains(classname)) {
-            std::print("ERROR redeclaration of class {}\n", classname);
+            print_error(std::format("ERROR redeclaration of class {}\n", classname));
         } else {
             m_classes[classname] = class_;
             m_properties[classname] = {};
@@ -472,8 +477,8 @@ Analyzer::Analyzer(Root ast) {
             for (MemberDeclaration member : class_.body) {
                 if (auto property = std::get_if<Variable>(&member.value)) {
                     if (m_properties[classname].contains(property->name.name)) {
-                        std::print("ERROR duplicate properties {} in class {}\n",
-                            property->name.name, classname);
+                        print_error(std::format("ERROR duplicate properties {} in class {}\n",
+                            property->name.name, classname));
                     } else {
                         m_properties[classname][property->name.name] = property->type_name;
                     }
@@ -487,8 +492,9 @@ Analyzer::Analyzer(Root ast) {
                         for (auto overload : m_methods[classname][method->name.name]) {
                             if (overload.first == arguments) {
                                 overload_exists = true;
-                                std::print("ERROR duplicate methods {}({}) in class {}\n",
-                                    method->name.name, stringify(arguments), classname);
+                                print_error(
+                                    std::format("ERROR duplicate methods {}({})) in class {}\n",
+                                        method->name.name, stringify(arguments), classname));
                                 break;
                             }
                         }
@@ -510,9 +516,9 @@ Analyzer::Analyzer(Root ast) {
                         for (std::vector<TypeName> overload : m_constructors[classname]) {
                             if (overload == arguments) {
                                 overload_exists = true;
-                                std::print(
+                                print_error(std::format(
                                     "ERROR duplicate constructor overload ({}) in class {}\n",
-                                    stringify(arguments), classname);
+                                    stringify(arguments), classname));
                                 break;
                             }
                         }
@@ -525,4 +531,19 @@ Analyzer::Analyzer(Root ast) {
             }
         }
     }
+
+    for (Class class_ : m_ast.classes) {
+        check_class(class_);
+    }
+
+    if (!m_classes.contains("Program")) {
+        print_error("ERROR class Program is not defined\n");
+    }
 }
+
+void Analyzer::print_error(std::string error) {
+    std::print("{}", error);
+    this->error = true;
+}
+
+Analyzer::Analyzer(Root ast) { m_ast = ast; }

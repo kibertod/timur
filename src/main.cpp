@@ -2,7 +2,7 @@
 #include <sstream>
 #include <fstream>
 #include "seman.h"
-#include "print.hpp"
+#include "codegen.h"
 
 int main() {
     ParserContext ctx;
@@ -34,4 +34,8 @@ int main() {
     // }
     Analyzer analyzer(ast::Root { ctx.root });
     analyzer.analyze();
+    if (!analyzer.error) {
+        Codegen codegen { ast::Root { ctx.root } };
+        codegen.generate();
+    }
 }

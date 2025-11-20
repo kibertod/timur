@@ -59,7 +59,11 @@ private:
     void check_method(const MemberDeclaration::Method& method);
     void check_constructor(const MemberDeclaration::Constructor& constructor);
 
+    void print_error(std::string error);
+
 public:
+    bool error = false;
+
     void analyze();
     Analyzer(Root ast);
 };
