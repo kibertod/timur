@@ -249,7 +249,7 @@ inline void print(ast::Class class_, size_t depth) {
     print(class_.name, depth + 1);
     if (class_.extends.has_value()) {
         std::print("{0}{1}\n", tabs(depth), ident("extends:"));
-        std::print("{0}{1}\n", tabs(depth + 1), class_.extends.value().name);
+        print(class_.extends.value(), depth + 1);
     }
     std::print("{0}{1}\n", tabs(depth), ident("members:"));
     for (size_t i = 0; i < class_.body.size(); i++) {

@@ -198,7 +198,7 @@ MemberDeclarations:
 ;
 
 Class:
-    KClass TypeName KExtends Identifier KIs MemberDeclarations KEnd { $$ = {$2, ast::Identifier {$4}, $6}; }
+    KClass TypeName KExtends TypeName KIs MemberDeclarations KEnd { $$ = {$2, $4, $6}; }
     | KClass TypeName KIs MemberDeclarations KEnd { $$ = {$2, {}, $4}; }
 ;
 

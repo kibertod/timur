@@ -138,7 +138,7 @@ namespace ast {
 
     struct Class {
         TypeName name;
-        std::optional<Identifier> extends;
+        std::optional<TypeName> extends;
         std::vector<MemberDeclaration> body;
         bool operator==(const Class&) const = default;
     };

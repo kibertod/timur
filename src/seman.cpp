@@ -20,8 +20,8 @@ TypeName Analyzer::substitute_generics(
         res = substitutions[res.name.name];
 
     for (size_t i = 0; i < res.generic_arguments.size(); i++)
-        if (substitutions.contains(res.generic_arguments[i].name.name))
-            res.generic_arguments[i] = substitutions[res.generic_arguments[i].name.name];
+        res.generic_arguments[i] =
+            substitute_generics(declaration, instance, res.generic_arguments[i]);
 
     return res;
 }
@@ -52,12 +52,21 @@ std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Ident
     if (!m_classes.contains(type.name.name))
         return {};
 
+    Class class_ = m_classes[type.name.name];
     if (!m_properties[type.name.name].contains(identifier.name)) {
+        if (m_classes[type.name.name].extends.has_value()) {
+            TypeName parent = m_classes[type.name.name].extends.value();
+            TypeName parent_decl = m_classes[parent.name.name].name;
+            TypeName extent_parent = substitute_generics(class_.name, type, parent);
+            if (m_properties[parent.name.name].contains(identifier.name)) {
+                TypeName property_type = m_properties[parent.name.name][identifier.name];
+                return substitute_generics(parent_decl, extent_parent, property_type);
+            }
+        }
         std::print("ERROR class {} doesn't have property {}\n", type.name.name, identifier.name);
         return {};
     }
 
-    Class class_ = m_classes[type.name.name];
     TypeName property_type = m_properties[type.name.name][identifier.name];
     return substitute_generics(class_.name, type, property_type);
 }
@@ -69,8 +78,8 @@ std::optional<TypeName> Analyzer::get_method(
     if (!m_methods[type.name.name].contains(identifier.name)) {
         bool from_extended = false;
         if (m_classes[type.name.name].extends.has_value())
-            from_extended =
-                m_methods[m_classes[type.name.name].extends.value().name].contains(identifier.name);
+            from_extended = m_methods[m_classes[type.name.name].extends.value().name.name].contains(
+                identifier.name);
         if (!from_extended) {
             std::print("ERROR class {} doesn't have method {}\n", stringify(type), identifier.name);
             return {};
@@ -83,13 +92,17 @@ std::optional<TypeName> Analyzer::get_method(
         if (substitute_generics(class_.name, type, overload.first) == arguments)
             return substitute_generics(class_.name, type, overload.second);
     if (m_classes[type.name.name].extends.has_value()) {
-        auto overloads = m_methods[m_classes[type.name.name].extends.value().name][identifier.name];
+        auto overloads =
+            m_methods[m_classes[type.name.name].extends.value().name.name][identifier.name];
+        TypeName parent = m_classes[type.name.name].extends.value();
+        TypeName parent_decl = m_classes[parent.name.name].name;
+        TypeName extent_parent = substitute_generics(class_.name, type, parent);
         for (auto overload : overloads)
-            if (substitute_generics(class_.name, type, overload.first) == arguments)
-                return substitute_generics(class_.name, type, overload.second);
+            if (substitute_generics(parent_decl, extent_parent, overload.first) == arguments)
+                return substitute_generics(parent_decl, extent_parent, overload.second);
     }
 
-    std::print("ERROR method {}.{} doesnt have an overload with arguments ({})\n", stringify(type),
+    std::print("ERROR method {}.{} doesn't have an overload with arguments ({})\n", stringify(type),
         identifier.name, stringify(arguments));
     return {};
 }
@@ -162,6 +175,11 @@ std::optional<TypeName> Analyzer::check_constructor_call(const Expression::Const
             arguments.push_back(type.value());
         else
             return {};
+    }
+    if (!m_classes.contains(call.type_name.name.name)) {
+        std::print("ERROR class {} doesn't exist\n", stringify(call.type_name));
+        print(Expression { call }, 0);
+        return {};
     }
     for (std::vector<TypeName> overload : m_constructors[call.type_name.name.name])
         if (substitute_generics(
@@ -302,7 +320,7 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
         return;
     }
     if (!m_class.value().extends.has_value()) {
-        std::print("ERROR super can be called only for chlasses that extends smth.\nbruh..\n");
+        std::print("ERROR super can be called only for classes that extends smth.\nbruh..\n");
         return;
     }
 
@@ -316,14 +334,15 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
     }
 
     bool exists = false;
-    for (std::vector<TypeName> constructor : m_constructors[m_class.value().extends.value().name])
+    for (std::vector<TypeName> constructor :
+        m_constructors[m_class.value().extends.value().name.name])
         if (constructor == arguments) {
             exists = true;
             break;
         }
     if (!exists) {
         std::print("ERROR class {} doesn't have matching constructor\n",
-            m_class.value().extends.value().name);
+            stringify(m_class.value().extends.value()));
         print(Statement { super_call }, 0);
     }
 }
@@ -405,10 +424,10 @@ void Analyzer::check_constructor(const MemberDeclaration::Constructor& construct
 
 void Analyzer::check_class(const Class& class_) {
     if (class_.extends.has_value()) {
-        if (!m_classes.contains(class_.extends.value().name))
+        if (!m_classes.contains(class_.extends.value().name.name))
             std::print("ERROR 'class {0} extends {1}' class {1} doesn't exist\n",
-                class_.name.name.name, class_.extends.value().name);
-        if (class_.extends == class_.name.name)
+                class_.name.name.name, class_.extends.value().name.name);
+        if (class_.extends.value().name == class_.name.name)
             std::print("ERROR class {0} can't extend itself\n", class_.name.name.name);
     }
 
