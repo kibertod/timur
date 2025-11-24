@@ -20,6 +20,6 @@ class Program is
 //        list.v := 1.0
         var first: Integer := 1
         var second: Integer := first
-//        c := a.Plus(b)
+        var third: Integer := first.Plus(second)
     end
 end

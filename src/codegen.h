@@ -21,6 +21,7 @@ private:
     unsigned long long m_var_count;
 
     std::unordered_map<std::string, llvm::StructType*> m_structs;
+    std::unordered_map<std::string, std::unordered_map<std::string, llvm::Function*>> m_functions;
 
     llvm::LLVMContext m_context;
     llvm::IRBuilder<> m_builder;
