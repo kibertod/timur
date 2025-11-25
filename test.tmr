@@ -1,3 +1,6 @@
+class Storage is
+end
+
 class Program is
     this() is
         var first: Integer := 1

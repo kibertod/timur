@@ -26,6 +26,7 @@ set(SOURCES
     src/lexer.cpp
     src/seman.cpp
     src/codegen.cpp
+    src/codegen_stdlib.cpp
     ${BISON_parser_OUTPUTS}
 )
 
