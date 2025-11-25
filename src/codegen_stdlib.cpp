@@ -275,4 +275,43 @@ void Codegen::generate_bool_methods() {
         res = m_builder.CreateInsertValue(res, val, 0);
         m_builder.CreateRet(res);
     }
+
+    // and
+    {
+        llvm::Function* fn = generate_function_entry(bool_, { bool_, bool_ }, "And", "Bool");
+        auto arg_iter = fn->arg_begin();
+        llvm::Value* val = &*arg_iter++;
+        llvm::Value* other = &*arg_iter++;
+        val = m_builder.CreateAnd(
+            m_builder.CreateExtractValue(val, 0), m_builder.CreateExtractValue(other, 0));
+        llvm::Value* res = llvm::UndefValue::get(bool_);
+        res = m_builder.CreateInsertValue(res, val, 0);
+        m_builder.CreateRet(res);
+    }
+
+    // or
+    {
+        llvm::Function* fn = generate_function_entry(bool_, { bool_, bool_ }, "Or", "Bool");
+        auto arg_iter = fn->arg_begin();
+        llvm::Value* val = &*arg_iter++;
+        llvm::Value* other = &*arg_iter++;
+        val = m_builder.CreateOr(
+            m_builder.CreateExtractValue(val, 0), m_builder.CreateExtractValue(other, 0));
+        llvm::Value* res = llvm::UndefValue::get(bool_);
+        res = m_builder.CreateInsertValue(res, val, 0);
+        m_builder.CreateRet(res);
+    }
+
+    // xor
+    {
+        llvm::Function* fn = generate_function_entry(bool_, { bool_, bool_ }, "Xor", "Bool");
+        auto arg_iter = fn->arg_begin();
+        llvm::Value* val = &*arg_iter++;
+        llvm::Value* other = &*arg_iter++;
+        val = m_builder.CreateXor(
+            m_builder.CreateExtractValue(val, 0), m_builder.CreateExtractValue(other, 0));
+        llvm::Value* res = llvm::UndefValue::get(bool_);
+        res = m_builder.CreateInsertValue(res, val, 0);
+        m_builder.CreateRet(res);
+    }
 }

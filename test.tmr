@@ -27,9 +27,9 @@ class Program is
     this() is
         var stdio: StdIO := StdIO()
 
-        if false then
+        if true.Xor(true) then
             stdio.PrintLn("false blin")
-        elif false then
+        elif false.Or(true) then
             stdio.PrintLn("Unexpected")
         elif true then
             stdio.PrintLn("I know that")
@@ -38,7 +38,7 @@ class Program is
         end
 
         var i: Integer := 0
-        while i.Great(100).Not() loop
+        while i.Great(10).Not().And(true) loop
             stdio.Print(i)
             if i.Eq(10).Not() then stdio.Print(", ") end
             i := i.Plus(1)
