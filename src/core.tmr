@@ -62,4 +62,5 @@ class StdIO is
     this() is end
     Void PrintLn(Integer: value) is return Void() end
     Void PrintLn(String: value) is return Void() end
+    Void PrintLn(Bool: value) is return Void() end
 end

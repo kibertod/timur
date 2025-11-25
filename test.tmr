@@ -3,8 +3,14 @@ class Program is
         var first: Integer := 1
         var second: Integer := first.Plus(1).Mult(3)
         var stdio: StdIO := StdIO()
+        var string: String
+        string := "str"
+        stdio.PrintLn(string)
+        string := "abababababababababab"
+        stdio.PrintLn(string)
         stdio.PrintLn(second)
-        stdio.PrintLn((0).Div(4))
-        stdio.PrintLn("str")
+        stdio.PrintLn((10).Div(4))
+        stdio.PrintLn((0).Great(1))
+        stdio.PrintLn((1).Great(0))
     end
 end

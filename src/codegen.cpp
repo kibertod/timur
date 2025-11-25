@@ -5,6 +5,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 #include <format>
+#include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <memory>
 #include <variant>
@@ -77,6 +78,24 @@ void Codegen::generate_stdio_methods() {
 
         llvm::Value* fmt = m_builder.CreateGlobalString("%s\n");
         m_builder.CreateCall(fn_printf, { fmt, a_val });
+
+        m_builder.CreateRetVoid();
+    }
+
+    // print bool
+    {
+        llvm::Function* fn = generate_function_entry(llvm::Type::getVoidTy(m_context),
+            { m_structs["StdIO"], m_structs["Bool"] }, "PrintLn", "StdIO");
+        auto arg_iter = fn->arg_begin();
+        llvm::Value* a = &*(++arg_iter);
+        llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
+
+        llvm::Value* true_ = m_builder.CreateGlobalString("true");
+        llvm::Value* false_ = m_builder.CreateGlobalString("false");
+        llvm::Value* val = m_builder.CreateSelect(a_val, true_, false_);
+
+        llvm::Value* fmt = m_builder.CreateGlobalString("%s\n");
+        m_builder.CreateCall(fn_printf, { fmt, val });
 
         m_builder.CreateRetVoid();
     }
@@ -214,25 +233,20 @@ llvm::Type* Codegen::get_type(const TypeName& type) {
 
 llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
     if (literal.type == Expression::Literal::Type::Int) {
-        llvm::Value* var = m_builder.CreateAlloca(m_structs["Integer"], nullptr);
-        llvm::Value* val = m_builder.CreateStructGEP(m_structs["Integer"], var, 0);
-        m_builder.CreateStore(m_builder.getInt32(std::stoi(literal.value)), val);
-        return m_builder.CreateLoad(m_structs["Integer"], var);
+        llvm::Value* val = llvm::UndefValue::get(m_structs["Integer"]);
+        return m_builder.CreateInsertValue(
+            val, m_builder.getInt32(std::stoi(literal.value)), { 0 });
     }
     if (literal.type == Expression::Literal::Type::Bool) {
-        llvm::Value* var = m_builder.CreateAlloca(m_structs["Bool"], nullptr);
-        llvm::Value* val = m_builder.CreateStructGEP(m_structs["Bool"], var, 0);
+        llvm::Value* val = llvm::UndefValue::get(m_structs["Bool"]);
         if (literal.value == "true")
-            m_builder.CreateStore(m_builder.getInt1(true), val);
+            return m_builder.CreateInsertValue(val, m_builder.getInt1(true), { 0 });
         else
-            m_builder.CreateStore(m_builder.getInt1(false), val);
-        return m_builder.CreateLoad(m_structs["Bool"], var);
+            return m_builder.CreateInsertValue(val, m_builder.getInt1(false), { 0 });
     }
     if (literal.type == Expression::Literal::Type::Str) {
-        llvm::Value* var = m_builder.CreateAlloca(m_structs["String"], nullptr);
-        llvm::Value* val = m_builder.CreateStructGEP(m_structs["String"], var, 0);
-        m_builder.CreateStore(m_builder.CreateGlobalString(literal.value), val);
-        return m_builder.CreateLoad(m_structs["String"], var);
+        llvm::Value* val = llvm::UndefValue::get(m_structs["String"]);
+        return m_builder.CreateInsertValue(val, m_builder.CreateGlobalString(literal.value), { 0 });
     }
 };
 
@@ -297,11 +311,16 @@ void Codegen::generate_variable(const Variable& variable) {
     llvm::AllocaInst* alloc = m_builder.CreateAlloca(type, nullptr, name);
 
     if (variable.value.has_value()) {
-        llvm::Value* val = generate_expression(variable.value.value()); // i32
-        llvm::Value* field_ptr = m_builder.CreateStructGEP(type, alloc, 0);
-        m_builder.CreateStore(val, field_ptr);
+        llvm::Value* val = generate_expression(variable.value.value());
+        m_builder.CreateStore(val, alloc);
     }
     m_variables[variable.name.name] = { alloc, name };
+}
+
+void Codegen::generate_assignment(const Statement::Assignment& assign) {
+    if (auto ident = std::get_if<Identifier>(&assign.left.value)) {
+        m_builder.CreateStore(generate_expression(assign.right), m_variables[ident->name].first);
+    }
 }
 
 void Codegen::generate_statement(const Statement& stmt) {
@@ -309,6 +328,8 @@ void Codegen::generate_statement(const Statement& stmt) {
         generate_variable(*var);
     if (auto expr = std::get_if<Expression>(&stmt.value))
         generate_expression(*expr);
+    if (auto assign = std::get_if<Statement::Assignment>(&stmt.value))
+        generate_assignment(*assign);
 }
 
 void Codegen::generate() {
@@ -341,12 +362,13 @@ void Codegen::generate() {
             }
         }
     }
+
+    m_module->print(llvm::outs(), nullptr);
     if (llvm::verifyModule(*m_module, &llvm::errs())) {
         llvm::errs() << "Error constructing LLVM module!\n";
         return;
     }
 
-    m_module->print(llvm::outs(), nullptr);
     std::error_code EC;
     llvm::raw_fd_ostream dest("program.bc", EC);
     llvm::WriteBitcodeToFile(*m_module, dest);

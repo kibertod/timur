@@ -4,7 +4,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
 
 #include "ast.h"
@@ -51,6 +50,7 @@ private:
     llvm::Value* generate_expression(const Expression& expr);
 
     void generate_variable(const Variable& var);
+    void generate_assignment(const Statement::Assignment& assign);
     void generate_statement(const Statement& stmt);
 
     llvm::Type* get_type(const TypeName& type);

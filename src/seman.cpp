@@ -211,7 +211,7 @@ std::optional<TypeName> Analyzer::check_expression(const Expression& expression)
                 std::format("ERROR variable {} doesn't exist in this scope\n", identifier->name));
         else if (!m_variables[identifier->name].set)
             print_error(
-                std::format("ERROR variable {} hasn't a value assigned\n", identifier->name));
+                std::format("ERROR variable {} doesn't have a value assigned\n", identifier->name));
         else
             return m_variables[identifier->name].type;
     }
@@ -300,23 +300,31 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
         type = check_expression(assignment.left);
     else if (auto _ = std::get_if<Expression::ThisAccess>(&assignment.left.value))
         type = check_expression(assignment.left);
-    else if (auto _ = std::get_if<Identifier>(&assignment.left.value))
-        type = check_expression(assignment.left);
-    else {
+    else if (auto identifier = std::get_if<Identifier>(&assignment.left.value)) {
+        if (!m_variables.contains(identifier->name)) {
+            print_error(
+                std::format("ERROR variable {} doesn't exist in this scope\n", identifier->name));
+            return;
+        } else {
+            type = m_variables[identifier->name].type;
+        }
+    } else {
         print_error(std::format(
             "ERROR assignment operation is only allowed for variables and properties\n"));
         print(Statement { assignment }, 0);
         return;
     }
-    if (!type.has_value())
+    if (!type.has_value()) {
         return;
+    }
     if (type != check_expression(assignment.right)) {
         print_error(std::format("ERROR lhs type doesn't match with rhs\n"));
         print(Statement { assignment }, 0);
         return;
     }
-    if (auto variable = std::get_if<Identifier>(&assignment.left.value))
+    if (auto variable = std::get_if<Identifier>(&assignment.left.value)) {
         m_variables[variable->name].set = true;
+    }
 }
 
 void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
