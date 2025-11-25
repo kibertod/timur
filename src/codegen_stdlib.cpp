@@ -260,15 +260,19 @@ void Codegen::generate_string_methods() {
         res = m_builder.CreateInsertValue(res, new_size, 1);
         m_builder.CreateRet(res);
     }
+}
 
-    // destruct
+void Codegen::generate_bool_methods() {
+    llvm::Type* bool_ = m_structs["Bool"];
+
+    // not
     {
-        llvm::Function* fn =
-            generate_function_entry(m_builder.getVoidTy(), { string }, "~", "String");
+        llvm::Function* fn = generate_function_entry(bool_, { bool_ }, "Not", "Bool");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* str = &*arg_iter++;
-        llvm::Value* ptr = m_builder.CreateExtractValue(str, 0);
-        m_builder.CreateFree(ptr);
-        m_builder.CreateRetVoid();
+        llvm::Value* val = &*arg_iter++;
+        val = m_builder.CreateNot(m_builder.CreateExtractValue(val, 0));
+        llvm::Value* res = llvm::UndefValue::get(bool_);
+        res = m_builder.CreateInsertValue(res, val, 0);
+        m_builder.CreateRet(res);
     }
 }

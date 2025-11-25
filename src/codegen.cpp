@@ -269,6 +269,54 @@ void Codegen::generate_return(const Statement::Return& ret) {
     m_builder.CreateRet(generate_expression(ret.value));
 }
 
+void Codegen::generate_if(const Statement::If& if_) {
+    llvm::Function* fn = m_builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock* then = llvm::BasicBlock::Create(m_context, var_name(), fn);
+    llvm::BasicBlock* else_ = llvm::BasicBlock::Create(m_context, var_name(), fn);
+    llvm::BasicBlock* merge = llvm::BasicBlock::Create(m_context, var_name(), fn);
+
+    llvm::Value* cond = generate_expression(if_.condition);
+    m_builder.CreateCondBr(m_builder.CreateExtractValue(cond, 0), then, else_);
+
+    m_builder.SetInsertPoint(then);
+    for (const Statement& stmt : if_.body)
+        generate_statement(stmt);
+    m_builder.CreateBr(merge);
+
+    m_builder.SetInsertPoint(else_);
+    if (if_.elifs.empty())
+        for (const Statement& stmt : if_.else_body)
+            generate_statement(stmt);
+    else {
+        Expression condition = if_.elifs[0].condition;
+        std::vector<Statement> body = if_.elifs[0].body;
+        std::vector<Statement::If::ElIf> elifs = if_.elifs;
+        elifs.erase(elifs.begin());
+        Statement::If reduced = { condition, body, elifs, if_.else_body };
+        generate_if(reduced);
+    };
+    m_builder.CreateBr(merge);
+
+    m_builder.SetInsertPoint(merge);
+}
+
+void Codegen::generate_while(const Statement::While& while_) {
+    llvm::Function* fn = m_builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock* do_ = llvm::BasicBlock::Create(m_context, var_name(), fn);
+    llvm::BasicBlock* merge = llvm::BasicBlock::Create(m_context, var_name(), fn);
+
+    llvm::Value* cond = generate_expression(while_.condition);
+    m_builder.CreateCondBr(m_builder.CreateExtractValue(cond, 0), do_, merge);
+
+    m_builder.SetInsertPoint(do_);
+    for (const Statement& stmt : while_.body)
+        generate_statement(stmt);
+    cond = generate_expression(while_.condition);
+    m_builder.CreateCondBr(m_builder.CreateExtractValue(cond, 0), do_, merge);
+
+    m_builder.SetInsertPoint(merge);
+}
+
 void Codegen::generate_statement(const Statement& stmt) {
     if (auto var = std::get_if<Variable>(&stmt.value))
         generate_variable(*var);
@@ -278,6 +326,10 @@ void Codegen::generate_statement(const Statement& stmt) {
         generate_assignment(*assign);
     if (auto ret = std::get_if<Statement::Return>(&stmt.value))
         generate_return(*ret);
+    if (auto if_ = std::get_if<Statement::If>(&stmt.value))
+        generate_if(*if_);
+    if (auto while_ = std::get_if<Statement::While>(&stmt.value))
+        generate_while(*while_);
 }
 
 void Codegen::generate() {
@@ -290,6 +342,7 @@ void Codegen::generate() {
     generate_stdio_methods();
     generate_integer_methods();
     generate_string_methods();
+    generate_bool_methods();
 
     generate_classes();
 

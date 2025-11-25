@@ -44,6 +44,7 @@ private:
     void generate_stdio_methods();
     void generate_integer_methods();
     void generate_string_methods();
+    void generate_bool_methods();
 
     void generate_classes();
     void generate_class(const Class& class_);
@@ -62,8 +63,10 @@ private:
 
     void generate_variable(const Variable& var);
     void generate_assignment(const Statement::Assignment& assign);
-    void generate_statement(const Statement& stmt);
+    void generate_if(const Statement::If& if_);
+    void generate_while(const Statement::While& while_);
     void generate_return(const Statement::Return& ret);
+    void generate_statement(const Statement& stmt);
 
     llvm::Type* get_type(const TypeName& type);
 

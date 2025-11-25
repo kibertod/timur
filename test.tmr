@@ -7,28 +7,48 @@ class Storage is
         this.int := int
     end
 
+    this(Integer: int) is
+        this.str := "undefined"
+        this.int := int
+    end
+
     Void Print() is
         StdIO().Print(this.str.Concat(": "))
+        StdIO().PrintLn(this.int)
+    end
+
+    Void Print(String: sep) is
+        StdIO().Print(this.str.Concat(sep))
         StdIO().PrintLn(this.int)
     end
 end
 
 class Program is
     this() is
-        var first: Integer := 1
-        var second: Integer := first.Plus(1).Mult(3)
         var stdio: StdIO := StdIO()
-        var string: String
-        string := "str"
-        stdio.PrintLn(string)
-        string := "abababababababababab"
-        stdio.PrintLn(string)
-        stdio.PrintLn(second)
-        stdio.PrintLn((10).Div(4))
-        stdio.PrintLn((0).Great(1))
-        stdio.PrintLn((1).Great(0))
+
+        if false then
+            stdio.PrintLn("false blin")
+        elif false then
+            stdio.PrintLn("Unexpected")
+        elif true then
+            stdio.PrintLn("I know that")
+        else
+            stdio.PrintLn("Unexpected")
+        end
+
+        var i: Integer := 0
+        while i.Great(100).Not() loop
+            stdio.Print(i)
+            if i.Eq(10).Not() then stdio.Print(", ") end
+            i := i.Plus(1)
+        end
+        stdio.PrintLn("")
+
         var storage: Storage := Storage("number", 14)
         storage.Print()
+        storage.Print(" + ")
+        Storage(89725).Print()
         stdio.PrintLn(storage.str)
     end
 end
