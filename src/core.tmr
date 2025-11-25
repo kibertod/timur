@@ -4,10 +4,10 @@ class Integer is
     this() is end
     Integer Plus(Integer: other) is return 1 end
     Integer Minus(Integer: other) is return 1 end
-    Integer Divide(Integer: other) is return 1 end
-    Integer Multiply(Integer: other) is return 1 end
-    Bool Equals(Integer: other) is return true end // that's the true ending
-    Bool LessEq(Integer: other) is return true end
+    Integer Div(Integer: other) is return 1 end
+    Integer Mult(Integer: other) is return 1 end
+    Bool Eq(Integer: other) is return true end
+    Bool Great(Integer: other) is return true end
 end
 
 class Real is
@@ -15,11 +15,12 @@ class Real is
     this(Integer: from) is end
     Real Plus(Real: other) is return 1.0 end
     Real Minus(Real: other) is return 1.0 end
-    Real Divide(Real: other) is return 1.0 end
-    Real Multiply(Real: other) is return 1.0 end
+    Real Div(Real: other) is return 1.0 end
+    Real Mult(Real: other) is return 1.0 end
     Real Ceil() is return 1.0 end
-    Real Flor() is return 1.0 end
-    Bool Equals(Real: other) is return true end
+    Real Floor() is return 1.0 end
+    Bool Eq(Real: other) is return true end
+    Bool Great(Real: other) is return true end
 end
 
 class Bool is
@@ -38,7 +39,7 @@ end
 class Array[T] is
     this(Integer: size) is end
     Void Set(Integer: i, T: value) is return Void() end
-    // T Get(Integer: i) is return T() end that's impossible without actual implementation
+    T Get(Integer: i) is end
 end
 
 class List[T] is
@@ -49,11 +50,16 @@ class List[T] is
     Void Remove(Integer: i) is end
     Void Assign(Integer: i, T: value) is end
     Void Swap(Integer: first, Integer: second) is end
-    //T Get(Integer: i) is return T() end
-    //T Pop(Integer: i) is
-    //    var value: T := this.Get(i)
-    //    this.Remove(i)
-    //    return value
-    //end
-    // same goes here
+    T Get(Integer: i) is end
+    T Pop(Integer: i) is
+        var value: T := this.Get(i)
+        this.Remove(i)
+        return value
+    end
+end
+
+class StdIO is
+    this() is end
+    Void PrintLn(Integer: value) is return Void() end
+    Void PrintLn(String: value) is return Void() end
 end

@@ -38,7 +38,6 @@ private:
     std::optional<TypeName> get_method(
         const TypeName& type, const Identifier& method, const std::vector<TypeName>& arguments);
 
-    std::optional<TypeName> check_expression(const Expression& expression);
     TypeName check_literal(const Expression::Literal& literal);
     std::optional<TypeName> check_member_access(const Expression::MemberAccess& access);
     std::optional<TypeName> check_this_access(const Expression::ThisAccess& access);
@@ -65,5 +64,6 @@ public:
     bool error = false;
 
     void analyze();
+    std::optional<TypeName> check_expression(const Expression& expression);
     Analyzer(Root ast);
 };

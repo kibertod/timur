@@ -1,25 +1,10 @@
-//class Foo[T, V] extends List[List[T]] is
-//    var t: T
-//    var v: V
-//    this() is super() end
-//    Void Reverse() is
-//        var i: Integer := 0
-//        while (i.LessEq(this.Size.Divide(2))) loop
-//            this.Swap(i, this.Size.Minus(i.Plus(1)))
-//        end
-//    end
-//end
-
 class Program is
     this() is
-//        var list: Foo[String, Real] := Foo[String, Real]()
-//        list.Add(List[String]())
-//        list.Add(List[String]())
-//        list.Reverse()
-//        list.t := "str"
-//        list.v := 1.0
         var first: Integer := 1
-        var second: Integer := first
-        var third: Integer := first.Plus(second)
+        var second: Integer := first.Plus(1).Mult(3)
+        var stdio: StdIO := StdIO()
+        stdio.PrintLn(second)
+        stdio.PrintLn((0).Div(4))
+        stdio.PrintLn("str")
     end
 end

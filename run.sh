@@ -9,3 +9,5 @@ echo "
 
 "
 build/timur
+clang program.bc
+./a.out
