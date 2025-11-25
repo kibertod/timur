@@ -28,6 +28,103 @@ std::string Codegen::var_name() {
     return name;
 }
 
+void Codegen::generate_classes() {
+    for (const Class& class_ : m_ast.classes)
+        if (class_.name.name.name != "Program")
+            generate_class(class_);
+    for (const Class& class_ : m_ast.classes)
+        if (class_.name.name.name != "Program")
+            generate_class_properties(class_);
+    for (const Class& class_ : m_ast.classes)
+        if (class_.name.name.name != "Program")
+            generate_class_methods(class_);
+}
+
+void Codegen::generate_class(const Class& class_) {
+    llvm::StructType* struct_ = llvm::StructType::create(m_context, class_.name.name.name);
+    m_structs[class_.name.name.name] = struct_;
+    m_props[class_.name.name.name] = {};
+}
+
+void Codegen::generate_class_properties(const Class& class_) {
+    std::vector<llvm::Type*> types {};
+    for (const MemberDeclaration& member : class_.body)
+        if (auto prop = std::get_if<Variable>(&member.value)) {
+            types.push_back(m_structs[prop->type_name.name.name]);
+            m_props[class_.name.name.name][prop->name.name] = m_props[class_.name.name.name].size();
+        }
+    m_structs[class_.name.name.name]->setBody(types);
+}
+
+void Codegen::generate_class_methods(const Class& class_) {
+    for (const MemberDeclaration& member : class_.body) {
+        if (auto constructor = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
+            auto variables_bak = m_variables;
+            m_variables = {};
+
+            std::vector<llvm::Type*> args {};
+            for (const auto& arg : constructor->arguments)
+                args.push_back(m_structs[arg.first.name.name]);
+            llvm::Function* fn = generate_function_entry(m_structs[class_.name.name.name], args,
+                std::format("{}_this", class_.name.name.name), class_.name.name.name);
+            m_this = { m_builder.CreateAlloca(m_structs[class_.name.name.name]),
+                m_structs[class_.name.name.name] };
+            auto arg_iter = fn->arg_begin();
+            for (const auto& arg : constructor->arguments) {
+                m_variables[arg.second.name] = {
+                    m_builder.CreateAlloca(m_structs[arg.first.name.name]), var_name()
+                };
+                m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].first);
+            }
+            for (const Statement& stmt : constructor->body) {
+                generate_statement(stmt);
+            }
+            m_builder.CreateRet(
+                m_builder.CreateLoad(m_structs[class_.name.name.name], m_this.value().first));
+
+            m_this = {};
+            m_variables = variables_bak;
+            m_functions[class_.name.name.name]["this"].push_back({ args, fn });
+        }
+        if (auto method = std::get_if<MemberDeclaration::Method>(&member.value)) {
+            auto variables_bak = m_variables;
+            m_variables = {};
+
+            std::vector<llvm::Type*> args { m_structs[class_.name.name.name] };
+            for (const auto& arg : method->arguments)
+                args.push_back(m_structs[arg.first.name.name]);
+            llvm::Type* return_type;
+            if (method->return_type.name.name == "Void")
+                return_type = llvm::Type::getVoidTy(m_context);
+            else
+                return_type = m_structs[method->return_type.name.name];
+            llvm::Function* fn = generate_function_entry(
+                return_type, args, method->name.name, class_.name.name.name);
+
+            auto arg_iter = fn->arg_begin();
+            m_this = { m_builder.CreateAlloca(m_structs[class_.name.name.name]),
+                m_structs[class_.name.name.name] };
+            m_builder.CreateStore(&*arg_iter++, m_this.value().first);
+            for (const auto& arg : method->arguments) {
+                m_variables[arg.second.name] = {
+                    m_builder.CreateAlloca(m_structs[arg.first.name.name]), var_name()
+                };
+                m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].first);
+            }
+            for (const Statement& stmt : method->body) {
+                generate_statement(stmt);
+            }
+
+            if (method->return_type == TypeName { { "Void" }, {} })
+                m_builder.CreateRetVoid();
+
+            m_this = {};
+            m_variables = variables_bak;
+            m_functions[class_.name.name.name][method->name.name].push_back({ args, fn });
+        }
+    }
+}
+
 llvm::Function* Codegen::generate_function_entry(llvm::Type* return_type,
     std::vector<llvm::Type*> args, std::string method_name, std::string struct_name) {
 
@@ -65,7 +162,9 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
     }
     if (literal.type == Expression::Literal::Type::Str) {
         llvm::Value* val = llvm::UndefValue::get(m_structs["String"]);
-        return m_builder.CreateInsertValue(val, m_builder.CreateGlobalString(literal.value), { 0 });
+        val = m_builder.CreateInsertValue(val, m_builder.CreateGlobalString(literal.value), 0);
+        val = m_builder.CreateInsertValue(val, m_builder.getInt32(literal.value.size()), 1);
+        return val;
     }
 };
 
@@ -111,6 +210,18 @@ llvm::Value* Codegen::generate_constructor_call(const Expression::ConstructorCal
     return fn_call;
 }
 
+llvm::Value* Codegen::generate_this_access(const Expression::ThisAccess& access) {
+    int index = m_props[m_this.value().second->getStructName().str()][access.member.name];
+    llvm::Value* val = m_builder.CreateLoad(m_this.value().second, m_this.value().first);
+    return m_builder.CreateExtractValue(val, index);
+}
+
+llvm::Value* Codegen::generate_member_access(const Expression::MemberAccess& access) {
+    llvm::Value* object = generate_expression(*access.object);
+    int index = m_props[object->getType()->getStructName().str()][access.member.name];
+    return m_builder.CreateExtractValue(object, index);
+}
+
 llvm::Value* Codegen::generate_expression(const Expression& expr) {
     if (auto literal = std::get_if<Expression::Literal>(&expr.value))
         return generate_literal(*literal);
@@ -121,6 +232,12 @@ llvm::Value* Codegen::generate_expression(const Expression& expr) {
         return generate_method_call(*call);
     if (auto call = std::get_if<Expression::ConstructorCall>(&expr.value)) {
         return generate_constructor_call(*call);
+    }
+    if (auto access = std::get_if<Expression::ThisAccess>(&expr.value)) {
+        return generate_this_access(*access);
+    }
+    if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
+        return generate_member_access(*access);
     }
 }
 
@@ -140,6 +257,16 @@ void Codegen::generate_assignment(const Statement::Assignment& assign) {
     if (auto ident = std::get_if<Identifier>(&assign.left.value)) {
         m_builder.CreateStore(generate_expression(assign.right), m_variables[ident->name].first);
     }
+    if (auto access = std::get_if<Expression::ThisAccess>(&assign.left.value)) {
+        int index = m_props[m_this.value().second->getStructName().str()][access->member.name];
+        llvm::Value* val =
+            m_builder.CreateStructGEP(m_this.value().second, m_this.value().first, index);
+        m_builder.CreateStore(generate_expression(assign.right), val);
+    }
+}
+
+void Codegen::generate_return(const Statement::Return& ret) {
+    m_builder.CreateRet(generate_expression(ret.value));
 }
 
 void Codegen::generate_statement(const Statement& stmt) {
@@ -149,6 +276,8 @@ void Codegen::generate_statement(const Statement& stmt) {
         generate_expression(*expr);
     if (auto assign = std::get_if<Statement::Assignment>(&stmt.value))
         generate_assignment(*assign);
+    if (auto ret = std::get_if<Statement::Return>(&stmt.value))
+        generate_return(*ret);
 }
 
 void Codegen::generate() {
@@ -156,10 +285,15 @@ void Codegen::generate() {
     generate_bool();
     generate_stdio();
     generate_string();
+    generate_void();
 
     generate_stdio_methods();
     generate_integer_methods();
+    generate_string_methods();
 
+    generate_classes();
+
+    m_module->print(llvm::outs(), nullptr);
     for (const Class& class_ : m_ast.classes) {
         if (class_.name.name.name == "Program") {
             for (const MemberDeclaration& member : class_.body) {

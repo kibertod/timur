@@ -1,4 +1,16 @@
 class Storage is
+    var str: String
+    var int: Integer
+
+    this(String: string, Integer: int) is
+        this.str := string
+        this.int := int
+    end
+
+    Void Print() is
+        StdIO().Print(this.str.Concat(": "))
+        StdIO().PrintLn(this.int)
+    end
 end
 
 class Program is
@@ -15,5 +27,8 @@ class Program is
         stdio.PrintLn((10).Div(4))
         stdio.PrintLn((0).Great(1))
         stdio.PrintLn((1).Great(0))
+        var storage: Storage := Storage("number", 14)
+        storage.Print()
+        stdio.PrintLn(storage.str)
     end
 end

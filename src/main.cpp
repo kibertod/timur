@@ -5,9 +5,6 @@
 #include "codegen.h"
 
 int main() {
-    ParserContext ctx;
-    ctx.row = 1;
-
     std::ifstream file("test.tmr");
     if (!file) {
         std::cerr << "Failed to open file.\n";
@@ -20,13 +17,18 @@ int main() {
         exit(1);
     }
 
-    std::stringstream buffer;
-    buffer << core.rdbuf() << file.rdbuf();
-    ctx.src = buffer.str();
-    ctx.pos = 0;
+    std::stringstream core_src;
+    std::stringstream test_src;
+    core_src << core.rdbuf();
+    test_src << file.rdbuf();
 
-    yy::parser p(ctx);
-    p.parse();
+    ParserContext ctx;
+    ctx.row = 1;
+    ctx.src = core_src.str();
+    ctx.src += test_src.str();
+    ctx.pos = 0;
+    yy::parser parser(ctx);
+    parser.parse();
 
     // for (size_t i = 0; i < ctx.root.size(); i++) {
     //     auto node = ctx.root[i];
@@ -35,6 +37,13 @@ int main() {
     Analyzer analyzer(ast::Root { ctx.root });
     analyzer.analyze();
     if (!analyzer.error) {
+        ctx = {};
+        ctx.row = 1;
+        ctx.src += test_src.str();
+        ctx.pos = 0;
+        yy::parser parser(ctx);
+        parser.parse();
+
         Codegen codegen { ast::Root { ctx.root } };
         codegen.generate();
     }

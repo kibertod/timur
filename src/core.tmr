@@ -38,7 +38,7 @@ end
 
 class Array[T] is
     this(Integer: size) is end
-    Void Set(Integer: i, T: value) is return Void() end
+    Void Set(Integer: i, T: value) is end
     T Get(Integer: i) is end
 end
 
@@ -60,7 +60,12 @@ end
 
 class StdIO is
     this() is end
-    Void PrintLn(Integer: value) is return Void() end
-    Void PrintLn(String: value) is return Void() end
-    Void PrintLn(Bool: value) is return Void() end
+    Void Print(Integer: value) is end
+    Void Print(Real: value) is end
+    Void Print(String: value) is end
+    Void Print(Bool: value) is end
+    Void PrintLn(Integer: value) is end
+    Void PrintLn(Real: value) is end
+    Void PrintLn(String: value) is end
+    Void PrintLn(Bool: value) is end
 end

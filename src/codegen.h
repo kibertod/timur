@@ -17,6 +17,7 @@ class Codegen {
 private:
     Root m_ast;
 
+    std::optional<std::pair<llvm::AllocaInst*, llvm::Type*>> m_this;
     std::unordered_map<std::string, std::pair<llvm::AllocaInst*, std::string>> m_variables;
     unsigned long long m_var_count;
 
@@ -25,6 +26,7 @@ private:
         std::unordered_map<std::string,
             std::vector<std::pair<std::vector<llvm::Type*>, llvm::Function*>>>>
         m_functions;
+    std::unordered_map<std::string, std::unordered_map<std::string, int>> m_props;
 
     llvm::LLVMContext m_context;
     llvm::IRBuilder<> m_builder;
@@ -37,9 +39,16 @@ private:
     void generate_string();
     void generate_integer();
     void generate_bool();
+    void generate_void();
 
     void generate_stdio_methods();
     void generate_integer_methods();
+    void generate_string_methods();
+
+    void generate_classes();
+    void generate_class(const Class& class_);
+    void generate_class_properties(const Class& class_);
+    void generate_class_methods(const Class& class_);
 
     llvm::Function* generate_function_entry(llvm::Type* return_type, std::vector<llvm::Type*> args,
         std::string method_name, std::string struct_name);
@@ -47,11 +56,14 @@ private:
     llvm::Value* generate_literal(const Expression::Literal& literal);
     llvm::Value* generate_method_call(const Expression::MethodCall& call);
     llvm::Value* generate_constructor_call(const Expression::ConstructorCall& call);
+    llvm::Value* generate_this_access(const Expression::ThisAccess& access);
+    llvm::Value* generate_member_access(const Expression::MemberAccess& access);
     llvm::Value* generate_expression(const Expression& expr);
 
     void generate_variable(const Variable& var);
     void generate_assignment(const Statement::Assignment& assign);
     void generate_statement(const Statement& stmt);
+    void generate_return(const Statement::Return& ret);
 
     llvm::Type* get_type(const TypeName& type);
 
