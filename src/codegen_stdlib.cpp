@@ -36,7 +36,7 @@ void Codegen::generate_stdio_methods() {
         llvm::Function::Create(printf_type, llvm::Function::ExternalLinkage, "printf", *m_module);
     // this
     {
-        llvm::Function* fn = generate_function_entry(m_structs["StdIO"], {}, "this", "StdIO");
+        generate_function_entry(m_structs["StdIO"], {}, "this", "StdIO");
         llvm::Value* val = m_builder.CreateAlloca(m_structs["StdIO"]);
         llvm::Value* field = m_builder.CreateStructGEP(m_structs["StdIO"], val, 0);
         m_builder.CreateStore(m_builder.getInt1(true), field);

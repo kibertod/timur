@@ -142,10 +142,7 @@ llvm::Function* Codegen::generate_function_entry(llvm::Type* return_type,
     return fn;
 }
 
-llvm::Type* Codegen::get_type(const TypeName& type) {
-    if (type.generic_arguments.size() == 0)
-        return m_structs[type.name.name];
-}
+llvm::Type* Codegen::get_type(const TypeName& type) { return m_structs[type.name.name]; }
 
 llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
     if (literal.type == Expression::Literal::Type::Int) {
@@ -166,6 +163,7 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
         val = m_builder.CreateInsertValue(val, m_builder.getInt32(literal.value.size()), 1);
         return val;
     }
+    return m_builder.getInt1(true);
 };
 
 llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
@@ -239,6 +237,7 @@ llvm::Value* Codegen::generate_expression(const Expression& expr) {
     if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
         return generate_member_access(*access);
     }
+    return m_builder.getInt1(true);
 }
 
 void Codegen::generate_variable(const Variable& variable) {

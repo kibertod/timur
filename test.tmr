@@ -21,6 +21,10 @@ class Storage is
         StdIO().Print(this.str.Concat(sep))
         StdIO().PrintLn(this.int)
     end
+
+    String Return() is
+        return this.str
+    end
 end
 
 class Program is
@@ -50,5 +54,6 @@ class Program is
         storage.Print(" + ")
         Storage(89725).Print()
         stdio.PrintLn(storage.str)
+        stdio.PrintLn(storage.Return())
     end
 end
