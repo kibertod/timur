@@ -11,6 +11,7 @@ chmod +x run.sh
 ```
 ###### Idk if this will work on windows ☠️
 Example of code is in the test.tmr file.
+
 It's being compiled and ran by run.sh
 You can change test.tmr it and `./run.sh` again
 ###### You can change anything you want actually...
