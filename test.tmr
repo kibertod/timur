@@ -58,7 +58,6 @@ class Program is
         storage.int := 0
         storage.Print()
         while storage.int.Great(1000).Not() loop
-            storage.str := storage.Return()
             storage.int := storage.int.Plus(1)
             storage.Print()
         end
