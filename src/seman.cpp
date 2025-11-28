@@ -1,10 +1,20 @@
 #include <print>
 #include <set>
 #include <string>
+#include <variant>
 #include "seman.h"
 #include "print.hpp"
 
 using namespace ast;
+
+bool Analyzer::lvalue_accessible(const Expression& expr) {
+    if (std::holds_alternative<Identifier>(expr.value) ||
+        std::holds_alternative<Expression::ThisAccess>(expr.value))
+        return true;
+    if (auto access = std::get_if<Expression::MemberAccess>(&expr.value))
+        return lvalue_accessible(*access->object);
+    return false;
+}
 
 TypeName Analyzer::substitute_generics(
     const TypeName& declaration, const TypeName& instance, const TypeName& type) {
@@ -296,6 +306,10 @@ void Analyzer::check_while(const Statement::While& while_) {
 
 void Analyzer::check_assignment(const Statement::Assignment& assignment) {
     std::optional<TypeName> type;
+    if (!lvalue_accessible(assignment.left)) {
+        print_error("ERROR lhs of an assignment operation should be an lvalue\n");
+        print(Statement { assignment }, 0);
+    }
     if (auto _ = std::get_if<Expression::MemberAccess>(&assignment.left.value))
         type = check_expression(assignment.left);
     else if (auto _ = std::get_if<Expression::ThisAccess>(&assignment.left.value))

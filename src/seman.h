@@ -29,6 +29,7 @@ private:
     std::optional<Class> m_class;
     std::optional<MemberDeclaration::Method> m_method;
 
+    bool lvalue_accessible(const Expression& expr);
     TypeName substitute_generics(
         const TypeName& declaration, const TypeName& instance, const TypeName& type);
     std::vector<TypeName> substitute_generics(

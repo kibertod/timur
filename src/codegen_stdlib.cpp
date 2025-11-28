@@ -249,9 +249,7 @@ void Codegen::generate_string_methods() {
         llvm::Value* b_size = m_builder.CreateExtractValue(b, 1);
         llvm::Value* new_size = m_builder.CreateAdd(m_builder.getInt32(1), a_size);
         new_size = m_builder.CreateAdd(new_size, b_size);
-        llvm::Value* new_ptr = m_builder.CreateMalloc(m_builder.getInt8Ty(),
-            llvm::Type::getInt8Ty(m_context), m_builder.getInt64(1),
-            m_builder.CreateZExt(new_size, llvm::Type::getInt64Ty(m_context)));
+        llvm::Value* new_ptr = m_builder.CreateAlloca(m_builder.getInt8Ty(), new_size);
         m_builder.CreateStore(m_builder.getInt8(0), new_ptr);
         m_builder.CreateCall(strcat, { new_ptr, a_ptr });
         m_builder.CreateCall(strcat, { new_ptr, b_ptr });

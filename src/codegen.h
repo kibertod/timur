@@ -17,8 +17,14 @@ class Codegen {
 private:
     Root m_ast;
 
+    struct VarInfo {
+        llvm::AllocaInst* ptr;
+        std::string gen_name;
+        llvm::Type* type;
+    };
+
     std::optional<std::pair<llvm::AllocaInst*, llvm::Type*>> m_this;
-    std::unordered_map<std::string, std::pair<llvm::AllocaInst*, std::string>> m_variables;
+    std::unordered_map<std::string, VarInfo> m_variables;
     unsigned long long m_var_count;
 
     std::unordered_map<std::string, llvm::StructType*> m_structs;
@@ -60,6 +66,7 @@ private:
     llvm::Value* generate_this_access(const Expression::ThisAccess& access);
     llvm::Value* generate_member_access(const Expression::MemberAccess& access);
     llvm::Value* generate_expression(const Expression& expr);
+    std::pair<llvm::Value*, llvm::Type*> generate_lvalue(const Expression& expr);
 
     void generate_variable(const Variable& var);
     void generate_assignment(const Statement::Assignment& assign);

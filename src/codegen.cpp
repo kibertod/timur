@@ -71,10 +71,10 @@ void Codegen::generate_class_methods(const Class& class_) {
                 m_structs[class_.name.name.name] };
             auto arg_iter = fn->arg_begin();
             for (const auto& arg : constructor->arguments) {
-                m_variables[arg.second.name] = {
-                    m_builder.CreateAlloca(m_structs[arg.first.name.name]), var_name()
-                };
-                m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].first);
+                m_variables[arg.second.name] = { m_builder.CreateAlloca(
+                                                     m_structs[arg.first.name.name]),
+                    var_name(), m_structs[class_.name.name.name] };
+                m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].ptr);
             }
             for (const Statement& stmt : constructor->body) {
                 generate_statement(stmt);
@@ -106,10 +106,10 @@ void Codegen::generate_class_methods(const Class& class_) {
                 m_structs[class_.name.name.name] };
             m_builder.CreateStore(&*arg_iter++, m_this.value().first);
             for (const auto& arg : method->arguments) {
-                m_variables[arg.second.name] = {
-                    m_builder.CreateAlloca(m_structs[arg.first.name.name]), var_name()
-                };
-                m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].first);
+                m_variables[arg.second.name] = { m_builder.CreateAlloca(
+                                                     m_structs[arg.first.name.name]),
+                    var_name(), m_structs[class_.name.name.name] };
+                m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].ptr);
             }
             for (const Statement& stmt : method->body) {
                 generate_statement(stmt);
@@ -163,7 +163,7 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
         val = m_builder.CreateInsertValue(val, m_builder.getInt32(literal.value.size()), 1);
         return val;
     }
-    return m_builder.getInt1(true);
+    llvm_unreachable("generate_literal called on non-literal");
 };
 
 llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
@@ -224,8 +224,8 @@ llvm::Value* Codegen::generate_expression(const Expression& expr) {
     if (auto literal = std::get_if<Expression::Literal>(&expr.value))
         return generate_literal(*literal);
     if (auto ident = std::get_if<Identifier>(&expr.value))
-        return m_builder.CreateLoad(m_variables[ident->name].first->getAllocatedType(),
-            m_variables[ident->name].first, (m_variables[ident->name].second + "_val"));
+        return m_builder.CreateLoad(m_variables[ident->name].ptr->getAllocatedType(),
+            m_variables[ident->name].ptr, (m_variables[ident->name].gen_name + "_val"));
     if (auto call = std::get_if<Expression::MethodCall>(&expr.value))
         return generate_method_call(*call);
     if (auto call = std::get_if<Expression::ConstructorCall>(&expr.value)) {
@@ -237,7 +237,25 @@ llvm::Value* Codegen::generate_expression(const Expression& expr) {
     if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
         return generate_member_access(*access);
     }
-    return m_builder.getInt1(true);
+    llvm_unreachable("generate_expression called on non-expression");
+}
+
+std::pair<llvm::Value*, llvm::Type*> Codegen::generate_lvalue(const Expression& expr) {
+    if (auto ident = std::get_if<Identifier>(&expr.value)) {
+        return { m_variables[ident->name].ptr, m_variables[ident->name].type };
+    }
+    if (auto access = std::get_if<Expression::ThisAccess>(&expr.value)) {
+        int index = m_props[m_this.value().second->getStructName().str()][access->member.name];
+        return { m_builder.CreateStructGEP(m_this.value().second, m_this.value().first, index),
+            m_this.value().second->getStructElementType(index) };
+    }
+    if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
+        auto [ptr, type] = generate_lvalue(*access->object);
+        int index = m_props[type->getStructName().str()][access->member.name];
+        return { m_builder.CreateStructGEP(type, ptr, index), type->getStructElementType(index) };
+    }
+
+    llvm_unreachable("generate_lvalue called on non-lvalue expression");
 }
 
 void Codegen::generate_variable(const Variable& variable) {
@@ -249,19 +267,11 @@ void Codegen::generate_variable(const Variable& variable) {
         llvm::Value* val = generate_expression(variable.value.value());
         m_builder.CreateStore(val, alloc);
     }
-    m_variables[variable.name.name] = { alloc, name };
+    m_variables[variable.name.name] = { alloc, name, type };
 }
 
 void Codegen::generate_assignment(const Statement::Assignment& assign) {
-    if (auto ident = std::get_if<Identifier>(&assign.left.value)) {
-        m_builder.CreateStore(generate_expression(assign.right), m_variables[ident->name].first);
-    }
-    if (auto access = std::get_if<Expression::ThisAccess>(&assign.left.value)) {
-        int index = m_props[m_this.value().second->getStructName().str()][access->member.name];
-        llvm::Value* val =
-            m_builder.CreateStructGEP(m_this.value().second, m_this.value().first, index);
-        m_builder.CreateStore(generate_expression(assign.right), val);
-    }
+    m_builder.CreateStore(generate_expression(assign.right), generate_lvalue(assign.left).first);
 }
 
 void Codegen::generate_return(const Statement::Return& ret) {
