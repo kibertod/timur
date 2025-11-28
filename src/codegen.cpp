@@ -66,7 +66,7 @@ void Codegen::generate_class_methods(const Class& class_) {
             for (const auto& arg : constructor->arguments)
                 args.push_back(m_structs[arg.first.name.name]);
             llvm::Function* fn = generate_function_entry(m_structs[class_.name.name.name], args,
-                std::format("{}_this", class_.name.name.name), class_.name.name.name);
+                std::format("this", class_.name.name.name), class_.name.name.name);
             m_this = { m_builder.CreateAlloca(m_structs[class_.name.name.name]),
                 m_structs[class_.name.name.name] };
             auto arg_iter = fn->arg_begin();
@@ -95,7 +95,7 @@ void Codegen::generate_class_methods(const Class& class_) {
                 args.push_back(m_structs[arg.first.name.name]);
             llvm::Type* return_type;
             if (method->return_type.name.name == "Void")
-                return_type = llvm::Type::getVoidTy(m_context);
+                return_type = m_builder.getVoidTy();
             else
                 return_type = m_structs[method->return_type.name.name];
             llvm::Function* fn = generate_function_entry(
@@ -148,7 +148,7 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
     if (literal.type == Expression::Literal::Type::Int) {
         llvm::Value* val = llvm::UndefValue::get(m_structs["Integer"]);
         return m_builder.CreateInsertValue(
-            val, m_builder.getInt32(std::stoi(literal.value)), { 0 });
+            val, m_builder.getInt64(std::stoi(literal.value)), { 0 });
     }
     if (literal.type == Expression::Literal::Type::Bool) {
         llvm::Value* val = llvm::UndefValue::get(m_structs["Bool"]);
@@ -160,8 +160,12 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
     if (literal.type == Expression::Literal::Type::Str) {
         llvm::Value* val = llvm::UndefValue::get(m_structs["String"]);
         val = m_builder.CreateInsertValue(val, m_builder.CreateGlobalString(literal.value), 0);
-        val = m_builder.CreateInsertValue(val, m_builder.getInt32(literal.value.size()), 1);
+        val = m_builder.CreateInsertValue(val, m_builder.getInt64(literal.value.size()), 1);
         return val;
+    }
+    if (literal.type == Expression::Literal::Type::Real) {
+        return m_builder.CreateInsertValue(llvm::UndefValue::get(m_structs["Real"]),
+            llvm::ConstantFP::get(m_builder.getDoubleTy(), std::stof(literal.value)), 0);
     }
     llvm_unreachable("generate_literal called on non-literal");
 };
@@ -343,6 +347,7 @@ void Codegen::generate_statement(const Statement& stmt) {
 
 void Codegen::generate() {
     generate_integer();
+    generate_real();
     generate_bool();
     generate_stdio();
     generate_string();
@@ -350,6 +355,7 @@ void Codegen::generate() {
 
     generate_stdio_methods();
     generate_integer_methods();
+    generate_real_methods();
     generate_string_methods();
     generate_bool_methods();
 
@@ -361,7 +367,7 @@ void Codegen::generate() {
             for (const MemberDeclaration& member : class_.body) {
                 if (auto constructor = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
                     llvm::FunctionType* func_type =
-                        llvm::FunctionType::get(llvm::Type::getVoidTy(m_context), false);
+                        llvm::FunctionType::get(m_builder.getVoidTy(), false);
 
                     llvm::Function* program_fn = llvm::Function::Create(
                         func_type, llvm::Function::ExternalLinkage, "main", m_module.get());

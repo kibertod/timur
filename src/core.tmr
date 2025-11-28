@@ -21,6 +21,7 @@ class Real is
     Real Floor() is return 1.0 end
     Bool Eq(Real: other) is return true end
     Bool Great(Real: other) is return true end
+    Integer Int() is return 1 end
 end
 
 class Bool is

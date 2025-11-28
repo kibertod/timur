@@ -44,11 +44,13 @@ private:
     void generate_stdio();
     void generate_string();
     void generate_integer();
+    void generate_real();
     void generate_bool();
     void generate_void();
 
     void generate_stdio_methods();
     void generate_integer_methods();
+    void generate_real_methods();
     void generate_string_methods();
     void generate_bool_methods();
 
