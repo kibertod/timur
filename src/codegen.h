@@ -35,7 +35,6 @@ private:
             std::vector<std::pair<std::vector<llvm::Type*>, llvm::Function*>>>>
         m_functions;
     std::unordered_map<std::string, std::unordered_map<std::string, int>> m_props;
-    std::unordered_map<std::string, TypeName> m_generics;
 
     llvm::LLVMContext m_context;
     llvm::IRBuilder<> m_builder;
@@ -43,7 +42,6 @@ private:
     Analyzer m_analyzer;
 
     std::string var_name();
-    TypeName substitute_generics(const TypeName&);
 
     void generate_stdio();
     void generate_string();
@@ -81,8 +79,6 @@ private:
     void generate_while(const Statement::While&);
     void generate_return(const Statement::Return&);
     void generate_statement(const Statement&);
-
-    llvm::StructType* get_or_create_struct(const TypeName&);
 
 public:
     Codegen(Root root);
