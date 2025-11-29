@@ -30,7 +30,7 @@ std::string Codegen::var_name() {
 }
 
 void Codegen::generate_classes() {
-    std::set<std::string> exists = { "Program", "Void" };
+    std::set<std::string> exists = { "Program" };
     for (const Class& class_ : m_ast.classes) {
         if (m_structs.contains(stringify(class_.name))) {
             exists.insert(stringify(class_.name));
@@ -94,10 +94,10 @@ void Codegen::generate_class_method_definitions(Class class_) {
             for (const auto& arg : method.arguments)
                 args.push_back(m_structs[stringify(arg.first)]);
             llvm::Type* return_type;
-            if (method.return_type.name.name == "Void")
-                return_type = m_builder.getVoidTy();
+            if (method.return_type)
+                return_type = m_structs[stringify(*method.return_type)];
             else
-                return_type = m_structs[stringify(method.return_type)];
+                return_type = m_builder.getVoidTy();
 
             generate_function_entry(
                 return_type, args, method.name.name, stringify(class_.name), false);
@@ -147,7 +147,7 @@ void Codegen::generate_class_method_implementations(Class class_) {
                 generate_statement(stmt);
             }
             m_builder.CreateRet(
-                m_builder.CreateLoad(m_structs[stringify(class_.name)], m_this.value().first));
+                m_builder.CreateLoad(m_structs[stringify(class_.name)], m_this->first));
 
             m_this = {};
             m_variables = variables_bak;
@@ -192,7 +192,7 @@ void Codegen::generate_class_method_implementations(Class class_) {
                 generate_statement(stmt);
             }
 
-            if (method.return_type == TypeName { { "Void" }, {} })
+            if (!method.return_type)
                 m_builder.CreateRetVoid();
 
             m_this = {};
@@ -293,8 +293,8 @@ llvm::Value* Codegen::generate_constructor_call(const Expression::ConstructorCal
 }
 
 llvm::Value* Codegen::generate_this_access(const Expression::ThisAccess& access) {
-    int index = m_props[m_this.value().second->getStructName().str()][access.member.name];
-    llvm::Value* val = m_builder.CreateLoad(m_this.value().second, m_this.value().first);
+    int index = m_props[m_this->second->getStructName().str()][access.member.name];
+    llvm::Value* val = m_builder.CreateLoad(m_this->second, m_this->first);
     return m_builder.CreateExtractValue(val, index);
 }
 
@@ -329,9 +329,9 @@ std::pair<llvm::Value*, llvm::Type*> Codegen::generate_lvalue(const Expression& 
     if (auto ident = std::get_if<Identifier>(&expr.value)) {
         return { m_variables[ident->name].ptr, m_variables[ident->name].type };
     } else if (auto access = std::get_if<Expression::ThisAccess>(&expr.value)) {
-        int index = m_props[m_this.value().second->getStructName().str()][access->member.name];
-        return { m_builder.CreateStructGEP(m_this.value().second, m_this.value().first, index),
-            m_this.value().second->getStructElementType(index) };
+        int index = m_props[m_this->second->getStructName().str()][access->member.name];
+        return { m_builder.CreateStructGEP(m_this->second, m_this->first, index),
+            m_this->second->getStructElementType(index) };
     } else if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
         auto [ptr, type] = generate_lvalue(*access->object);
         int index = m_props[type->getStructName().str()][access->member.name];
@@ -353,8 +353,8 @@ void Codegen::generate_variable(const Variable& variable) {
     llvm::Type* type = m_structs[stringify(type_name)];
     llvm::AllocaInst* alloc = m_builder.CreateAlloca(type, nullptr, name);
 
-    if (variable.value.has_value()) {
-        llvm::Value* val = generate_expression(variable.value.value());
+    if (variable.value) {
+        llvm::Value* val = generate_expression(*variable.value);
         m_builder.CreateStore(val, alloc);
     }
     m_variables[variable.name.name] = { alloc, name, type };
@@ -365,7 +365,10 @@ void Codegen::generate_assignment(const Statement::Assignment& assign) {
 }
 
 void Codegen::generate_return(const Statement::Return& ret) {
-    m_builder.CreateRet(generate_expression(ret.value));
+    if (ret.value)
+        m_builder.CreateRet(generate_expression(*ret.value));
+    else
+        m_builder.CreateRetVoid();
 }
 
 void Codegen::generate_if(const Statement::If& if_) {
@@ -437,7 +440,6 @@ void Codegen::generate() {
     generate_bool();
     generate_stdio();
     generate_string();
-    generate_void();
 
     generate_stdio_methods();
     generate_integer_methods();

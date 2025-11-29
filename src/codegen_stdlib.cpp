@@ -9,11 +9,6 @@
 
 #include "codegen.h"
 
-void Codegen::generate_void() {
-    generate_function_entry(m_builder.getVoidTy(), {}, "this", "Void");
-    m_builder.CreateRetVoid();
-}
-
 void Codegen::generate_string() {
     llvm::StructType* string = llvm::StructType::create(m_context, "String");
     string->setBody({ llvm::PointerType::get(llvm::PointerType::getInt8Ty(m_context), 0),

@@ -68,7 +68,8 @@ inline std::string stringify(const std::vector<ast::TypeName> arguments) {
     for (ast::TypeName type : arguments) {
         res += std::format("{}, ", stringify(type));
     }
-    res.erase(res.size() - 2);
+    if (arguments.size() > 0)
+        res.erase(res.size() - 2);
     return res;
 }
 
@@ -141,7 +142,7 @@ inline void print(const ast::Variable* variable, size_t depth) {
     print(variable->type_name, depth + 1);
     std::print("{0}{1} {2}\n", tabs(depth), ident("name:"), variable->name.name);
     std::print("{0}{1} ", tabs(depth), ident("assigned value:"));
-    if (variable->value.has_value()) {
+    if (variable->value) {
         std::cout << std::endl;
         print(*variable->value, depth + 1);
     } else {
@@ -205,7 +206,10 @@ inline void print(ast::Statement statement, size_t depth) {
     if (auto return_ = std::get_if<ast::Statement::Return>(&statement.value)) {
         std::print(
             "{0}{1}\n{0}{2}\n", tabs(depth), statement_heading("RETURN"), ident("expression:"));
-        print(return_->value, depth + 1);
+        if (return_->value)
+            print(*return_->value, depth + 1);
+        else
+            std::print("{}void", tabs(depth + 1));
     }
 }
 
@@ -222,7 +226,10 @@ inline void print(ast::MemberDeclaration declaration, size_t depth) {
     if (auto method = std::get_if<ast::MemberDeclaration::Method>(&declaration.value)) {
         std::print("{0}{1}\n{0}{2} {3}\n{0}{4}\n", tabs(depth), member_heading("METHOD"),
             ident("name:"), method->name.name, ident("return type:"));
-        print(method->return_type, depth + 1);
+        if (method->return_type)
+            print(*method->return_type, depth + 1);
+        else
+            std::print("{}void", tabs(depth + 1));
         std::print("{0}{1}\n", tabs(depth), ident("arguments:"));
         print(method->arguments, depth + 1);
         std::print("{0}{1}\n", tabs(depth), ident("body:"));
@@ -247,9 +254,9 @@ inline void print(ast::MemberDeclaration declaration, size_t depth) {
 inline void print(ast::Class class_, size_t depth) {
     std::print("{0}{1}\n{2} \n", tabs(depth), class_heading("CLASS"), ident("type_name:"));
     print(class_.name, depth + 1);
-    if (class_.extends.has_value()) {
+    if (class_.extends) {
         std::print("{0}{1}\n", tabs(depth), ident("extends:"));
-        print(class_.extends.value(), depth + 1);
+        print(*class_.extends, depth + 1);
     }
     std::print("{0}{1}\n", tabs(depth), ident("members:"));
     for (size_t i = 0; i < class_.body.size(); i++) {

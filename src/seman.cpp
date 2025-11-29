@@ -30,8 +30,8 @@ TypeName Analyzer::substitute_generics(TypeName type_name) {
 
 Class Analyzer::substitute_generics(Class class_) {
     class_.name = substitute_generics(class_.name);
-    if (class_.extends.has_value())
-        class_.extends = substitute_generics(class_.extends.value());
+    if (class_.extends)
+        class_.extends = substitute_generics(*class_.extends);
 
     for (MemberDeclaration& decl : class_.body) {
         decl = substitute_generics(decl);
@@ -52,8 +52,8 @@ MemberDeclaration Analyzer::substitute_generics(MemberDeclaration decl) {
 
 Variable Analyzer::substitute_generics(Variable var) {
     var.type_name = substitute_generics(var.type_name);
-    if (var.value.has_value())
-        var.value = substitute_generics(var.value.value());
+    if (var.value)
+        var.value = substitute_generics(*var.value);
     return var;
 }
 
@@ -67,7 +67,8 @@ MemberDeclaration::Constructor Analyzer::substitute_generics(
 }
 
 MemberDeclaration::Method Analyzer::substitute_generics(MemberDeclaration::Method method) {
-    method.return_type = substitute_generics(method.return_type);
+    if (method.return_type)
+        method.return_type = substitute_generics(*method.return_type);
     for (auto& arg : method.arguments)
         arg.first = substitute_generics(arg.first);
     for (Statement& stmt : method.body)
@@ -79,7 +80,8 @@ Statement Analyzer::substitute_generics(Statement stmt) {
     if (auto var = std::get_if<Variable>(&stmt.value))
         return { substitute_generics(*var) };
     if (auto ret = std::get_if<Statement::Return>(&stmt.value)) {
-        ret->value = substitute_generics(ret->value);
+        if (ret->value)
+            ret->value = substitute_generics(*ret->value);
         return { *ret };
     }
     if (auto expr = std::get_if<Expression>(&stmt.value)) {
@@ -162,9 +164,9 @@ std::optional<Class> Analyzer::type_exists(const TypeName& name) {
             for (size_t i = 0; i < class_.name.generic_arguments.size(); i++) {
                 TypeName generic = class_.name.generic_arguments[i];
                 std::optional<Class> type = type_exists(generic);
-                if (type.has_value()) {
+                if (type) {
                     print_error(std::format("ERROR generic identifier {} overlaps with class {}\n",
-                        generic.name.name, stringify(type.value().name)));
+                        generic.name.name, stringify(type->name)));
                     return {};
                 }
                 m_generics[class_.name.generic_arguments[i].name.name] = name.generic_arguments[i];
@@ -182,18 +184,18 @@ std::optional<Class> Analyzer::type_exists(const TypeName& name) {
 
 std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Identifier& identifier) {
     std::optional<Class> class_ = type_exists(type);
-    if (!class_.has_value())
+    if (!class_)
         return {};
 
     if (m_properties[stringify(type)].contains(identifier.name))
         return m_properties[stringify(type)][identifier.name];
 
-    if (class_.value().extends.has_value()) {
-        std::optional<Class> parent = type_exists(class_.value().extends.value());
-        if (!parent.has_value())
+    if (class_->extends) {
+        std::optional<Class> parent = type_exists(*class_->extends);
+        if (!parent)
             return {};
-        std::optional<TypeName> parent_prop = get_property(parent.value().name, identifier);
-        if (parent_prop.has_value())
+        std::optional<TypeName> parent_prop = get_property(parent->name, identifier);
+        if (parent_prop)
             return parent_prop;
     }
 
@@ -206,7 +208,7 @@ std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Ident
 std::optional<TypeName> Analyzer::get_method(
     const TypeName& type, const Identifier& identifier, const std::vector<TypeName>& arguments) {
     std::optional<Class> class_ = type_exists(type);
-    if (!class_.has_value())
+    if (!class_)
         return {};
 
     if (m_methods[stringify(type)].contains(identifier.name))
@@ -214,13 +216,12 @@ std::optional<TypeName> Analyzer::get_method(
             if (sign.first == arguments)
                 return sign.second;
 
-    if (class_.value().extends.has_value()) {
-        std::optional<Class> parent = type_exists(class_.value().extends.value());
-        if (!parent.has_value())
+    if (class_->extends) {
+        std::optional<Class> parent = type_exists(*class_->extends);
+        if (!parent)
             return {};
-        std::optional<TypeName> parent_method =
-            get_method(parent.value().name, identifier, arguments);
-        if (parent_method.has_value())
+        std::optional<TypeName> parent_method = get_method(parent->name, identifier, arguments);
+        if (parent_method)
             return parent_method;
     }
 
@@ -245,61 +246,61 @@ TypeName Analyzer::check_literal(const Expression::Literal& literal) {
 
 std::optional<TypeName> Analyzer::check_member_access(const Expression::MemberAccess& access) {
     auto object = check_expression(*access.object);
-    if (!object.has_value())
+    if (!object)
         return {};
-    return get_property(object.value(), access.member);
+    return get_property(*object, access.member);
 }
 
 std::optional<TypeName> Analyzer::check_this_access(const Expression::ThisAccess& access) {
-    if (!m_class.has_value()) {
+    if (!m_class) {
         print_error(std::format("ERROR 'this' can be accessed only inside methods\n"));
         return {};
     }
-    return get_property(m_class.value().name, access.member);
+    return get_property(m_class->name, access.member);
 }
 
 std::optional<TypeName> Analyzer::check_method_call(const Expression::MethodCall& call) {
     auto object = check_expression(*call.object);
-    if (!object.has_value())
+    if (!object)
         return {};
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
         std::optional<TypeName> type = check_expression(expr);
-        if (type.has_value())
-            arguments.push_back(type.value());
+        if (type)
+            arguments.push_back(*type);
         else
             return {};
     }
-    return get_method(object.value(), call.method, arguments);
+    return get_method(*object, call.method, arguments);
 }
 
 std::optional<TypeName> Analyzer::check_this_call(const Expression::ThisCall& call) {
-    if (!m_class.has_value()) {
+    if (!m_class) {
         print_error(std::format("ERROR 'this' can be accessed only inside methods\n"));
         return {};
     }
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
         std::optional<TypeName> type = check_expression(expr);
-        if (type.has_value())
-            arguments.push_back(type.value());
+        if (type)
+            arguments.push_back(*type);
         else
             return {};
     }
-    return get_method(m_class.value().name, call.method, arguments);
+    return get_method(m_class->name, call.method, arguments);
 }
 
 std::optional<TypeName> Analyzer::check_constructor_call(const Expression::ConstructorCall& call) {
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
         std::optional<TypeName> type = check_expression(expr);
-        if (type.has_value())
-            arguments.push_back(type.value());
+        if (type)
+            arguments.push_back(*type);
         else
             return {};
     }
 
-    if (!type_exists(call.type_name).has_value()) {
+    if (!type_exists(call.type_name)) {
         print_error(std::format("ERROR class {} doesn't exist\n", stringify(call.type_name)));
         print(Expression { call }, 0);
         return {};
@@ -341,18 +342,18 @@ std::optional<TypeName> Analyzer::check_expression(const Expression& expression)
 }
 
 std::optional<VariableState> Analyzer::check_variable(const Variable& variable) {
-    if (!type_exists(variable.type_name).has_value()) {
+    if (!type_exists(variable.type_name)) {
         print_error(std::format("ERROR class {} doesn't exist\n", stringify(variable.type_name)));
         return {};
     }
 
     VariableState state { variable.name.name, variable.type_name, false };
-    if (variable.value.has_value()) {
-        auto value = check_expression(variable.value.value());
-        if (!value.has_value()) {
+    if (variable.value) {
+        auto value = check_expression(*variable.value);
+        if (!value) {
             print(&variable, 0);
             return state;
-        } else if (value.value() != variable.type_name) {
+        } else if (*value != variable.type_name) {
             print_error(std::format("ERROR expression doesn't match with variable type\n"));
             print(&variable, 0);
             return state;
@@ -440,7 +441,7 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
         print(Statement { assignment }, 0);
         return;
     }
-    if (!type.has_value()) {
+    if (!type) {
         return;
     }
     if (type != check_expression(assignment.right)) {
@@ -454,11 +455,11 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
 }
 
 void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
-    if (!m_class.has_value()) {
+    if (!m_class) {
         print_error(std::format("ERROR super can be called only inside methods\n"));
         return;
     }
-    if (!m_class.value().extends.has_value()) {
+    if (!m_class->extends) {
         print_error(
             std::format("ERROR super can be called only for classes that extends smth.\nbruh..\n"));
         return;
@@ -467,38 +468,45 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
     std::vector<TypeName> arguments {};
     for (auto argument : super_call.arguments) {
         std::optional<TypeName> type = check_expression(argument);
-        if (!type.has_value()) {
+        if (!type) {
             return;
         }
-        arguments.push_back(type.value());
+        arguments.push_back(*type);
     }
 
     bool exists = false;
-    for (std::vector<TypeName> constructor :
-        m_constructors[m_class.value().extends.value().name.name])
+    for (std::vector<TypeName> constructor : m_constructors[m_class->extends->name.name])
         if (constructor == arguments) {
             exists = true;
             break;
         }
     if (!exists) {
-        print_error(std::format("ERROR class {} doesn't have matching constructor\n",
-            stringify(m_class.value().extends.value())));
+        print_error(std::format(
+            "ERROR class {} doesn't have matching constructor\n", stringify(*m_class->extends)));
         print(Statement { super_call }, 0);
     }
 }
 
 void Analyzer::check_return(const Statement::Return& return_) {
-    if (!m_method.has_value()) {
+    if (!m_method) {
         print_error(std::format("ERROR return statement outside of method\n"));
         print(Statement { return_ }, 0);
         return;
     }
 
-    std::optional<TypeName> type = check_expression(return_.value);
-    if (!type.has_value())
+    if (!m_method->return_type && !return_.value)
         return;
 
-    if (type.value() != m_method.value().return_type) {
+    if (!return_.value || !m_method->return_type) {
+        print_error(std::format("ERROR return value doesn't match return type\n"));
+        print(Statement { return_ }, 0);
+    }
+
+    std::optional<TypeName> type = check_expression(*return_.value);
+    if (!type)
+        return;
+
+    if (*type != m_method->return_type) {
         print_error(std::format("ERROR return value doesn't match return type\n"));
         print(Statement { return_ }, 0);
     }
@@ -519,17 +527,17 @@ void Analyzer::check_statement(const Statement& statement) {
         check_expression(*expression);
     if (auto variable = std::get_if<Variable>(&statement.value)) {
         auto state = check_variable(*variable);
-        if (!state.has_value()) {
+        if (!state) {
             print(statement, 0);
             return;
         }
-        if (m_variables.contains(state.value().name)) {
-            print_error(std::format(
-                "ERROR variable {} already exists in this scope\n", state.value().name));
+        if (m_variables.contains(state->name)) {
+            print_error(
+                std::format("ERROR variable {} already exists in this scope\n", state->name));
             print(statement, 0);
             return;
         }
-        m_variables[state.value().name] = state.value();
+        m_variables[state->name] = *state;
     }
 }
 
@@ -548,13 +556,15 @@ void Analyzer::check_method(const MemberDeclaration::Method& method) {
     for (Statement statement : method.body)
         check_statement(statement);
 
-    if (!type_exists(method.return_type).has_value()) {
-        print_error(std::format("ERROR class {} doesn't exist\n", stringify(method.return_type)));
-        print(MemberDeclaration { method }, 0);
-        return;
-    }
+    if (method.return_type)
+        if (!type_exists(*method.return_type)) {
+            print_error(
+                std::format("ERROR class {} doesn't exist\n", stringify(*method.return_type)));
+            print(MemberDeclaration { method }, 0);
+            return;
+        }
 
-    bool should_return = (method.return_type != TypeName { { "Void" }, {} });
+    bool should_return = m_method->return_type.has_value();
     bool returned = false;
     for (Statement statement : method.body)
         if (auto _ = get_if<Statement::Return>(&statement.value)) {
@@ -568,10 +578,10 @@ void Analyzer::check_method(const MemberDeclaration::Method& method) {
             arguments.push_back(pair.first);
         if (should_return)
             print_error(std::format("ERROR non-void method {}.{}({}) doesn't return\n",
-                m_class.value().name.name.name, method.name.name, stringify(arguments)));
+                m_class->name.name.name, method.name.name, stringify(arguments)));
         else
             print_error(std::format("ERROR void method {}.{}({}) returns\n",
-                m_class.value().name.name.name, method.name.name, stringify(arguments)));
+                m_class->name.name.name, method.name.name, stringify(arguments)));
     }
 
     m_method = method_bak;
@@ -599,11 +609,11 @@ void Analyzer::check_class(const Class& class_) {
 
     std::string classname = stringify(class_.name);
 
-    if (class_.extends.has_value()) {
-        if (!type_exists(class_.extends.value()).has_value())
+    if (class_.extends) {
+        if (!type_exists(*class_.extends))
             print_error(std::format("ERROR 'class {0} extends {1}' class {1} doesn't exist\n",
-                class_.name.name.name, class_.extends.value().name.name));
-        if (class_.extends.value().name == class_.name.name)
+                class_.name.name.name, class_.extends->name.name));
+        if (class_.extends->name == class_.name.name)
             print_error(
                 std::format("ERROR class {0} can't extend itself\n", class_.name.name.name));
     }

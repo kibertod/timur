@@ -1,5 +1,3 @@
-class Void is this() is end end
-
 class Integer is
     this() is end
     Integer Plus(Integer: other) is return 1 end
@@ -40,7 +38,7 @@ end
 
 class Array[T] is
     this(Integer: size) is end
-    Void Set(Integer: i, T: value) is end
+    Set(Integer: i, T: value) is end
     T Get(Integer: i) is end
 end
 
@@ -48,10 +46,10 @@ class List[T] is
     var Size: Integer := 0
     
     this() is end
-    Void Add(T: value) is end
-    Void Remove(Integer: i) is end
-    Void Assign(Integer: i, T: value) is end
-    Void Swap(Integer: first, Integer: second) is end
+    Add(T: value) is end
+    Remove(Integer: i) is end
+    Assign(Integer: i, T: value) is end
+    Swap(Integer: first, Integer: second) is end
     T Get(Integer: i) is end
     T Pop(Integer: i) is
         var value: T := this.Get(i)
@@ -62,12 +60,12 @@ end
 
 class StdIO is
     this() is end
-    Void Print(Integer: value) is end
-    Void Print(Real: value) is end
-    Void Print(String: value) is end
-    Void Print(Bool: value) is end
-    Void PrintLn(Integer: value) is end
-    Void PrintLn(Real: value) is end
-    Void PrintLn(String: value) is end
-    Void PrintLn(Bool: value) is end
+    Print(Integer: value) is end
+    Print(Real: value) is end
+    Print(String: value) is end
+    Print(Bool: value) is end
+    PrintLn(Integer: value) is end
+    PrintLn(Real: value) is end
+    PrintLn(String: value) is end
+    PrintLn(Bool: value) is end
 end

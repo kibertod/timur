@@ -6,5 +6,6 @@ CMakeCache.txt
 compile_commands.json
 .cache/
 .zed/
+.vscode/
 program.bc
 a.out

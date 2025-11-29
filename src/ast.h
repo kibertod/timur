@@ -107,7 +107,7 @@ namespace ast {
         };
 
         struct Return {
-            Expression value;
+            std::optional<Expression> value;
             bool operator==(const Return&) const = default;
         };
 
@@ -120,7 +120,7 @@ namespace ast {
     struct MemberDeclaration {
         struct Method {
             Identifier name;
-            TypeName return_type;
+            std::optional<TypeName> return_type;
             std::vector<std::pair<TypeName, Identifier>> arguments;
             std::vector<Statement> body;
             bool operator==(const Method&) const = default;

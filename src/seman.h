@@ -7,8 +7,6 @@
 
 using namespace ast;
 
-static TypeName void_ { { "Void" }, {} };
-
 struct VariableState {
     std::string name;
     TypeName type;
@@ -23,7 +21,8 @@ private:
     std::unordered_map<std::string, Class> m_classes;
     std::unordered_map<std::string, std::map<std::string, TypeName>> m_properties;
     std::unordered_map<std::string,
-        std::map<std::string, std::vector<std::pair<std::vector<TypeName>, TypeName>>>>
+        std::map<std::string,
+            std::vector<std::pair<std::vector<TypeName>, std::optional<TypeName>>>>>
         m_methods;
     std::unordered_map<std::string, std::vector<std::vector<TypeName>>> m_constructors;
     std::optional<Class> m_class;

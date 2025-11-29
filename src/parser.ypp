@@ -153,6 +153,7 @@ Variable:
 
 Statement:
     KReturn Expression { $$ = {ast::Statement::Return{$2}}; }
+    | KReturn { $$ = {ast::Statement::Return{{}}}; }
     | Expression Assign Expression { $$ = {ast::Statement::Assignment{$1, $3}}; }
     | Expression { $$ = {$1}; }
     | Variable { $$ = {$1}; }
@@ -188,6 +189,7 @@ Arguments:
 
 MemberDeclaration:
     TypeName Identifier LParen Arguments RParen KIs Statements KEnd { $$ = {ast::MemberDeclaration::Method{$2, $1, $4, $7}}; }
+    | Identifier LParen Arguments RParen KIs Statements KEnd { $$ = {ast::MemberDeclaration::Method{$1, {}, $3, $6}}; }
     | KThis LParen Arguments RParen KIs Statements KEnd { $$ = {ast::MemberDeclaration::Constructor{ $3, $6 }}; }
     | Variable { $$ = {$1}; }
 ;
