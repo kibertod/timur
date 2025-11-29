@@ -32,7 +32,6 @@ std::string Codegen::var_name() {
 void Codegen::generate_classes() {
     std::set<std::string> exists = { "Program", "Void" };
     for (const Class& class_ : m_ast.classes) {
-        std::print("sex: {}\n", class_.name.name.name);
         if (m_structs.contains(stringify(class_.name))) {
             exists.insert(stringify(class_.name));
             continue;
@@ -55,15 +54,11 @@ void Codegen::generate_classes() {
 }
 
 void Codegen::generate_class(Class class_) {
-    std::print("generating empty {}\n", stringify(class_.name));
-
     llvm::StructType* struct_ = llvm::StructType::create(m_context, stringify(class_.name));
     m_structs[stringify(class_.name)] = struct_;
 }
 
 void Codegen::generate_class_properties(Class class_) {
-    std::print("generating {} props\n", stringify(class_.name));
-
     std::vector<llvm::Type*> types {};
     for (const MemberDeclaration& member : class_.body)
         if (auto prop = std::get_if<Variable>(&member.value)) {
@@ -76,11 +71,8 @@ void Codegen::generate_class_properties(Class class_) {
 }
 
 void Codegen::generate_class_method_definitions(Class class_) {
-    std::print("{}\n", stringify(class_.name));
-
     for (const MemberDeclaration& member : class_.body) {
         if (auto constructor_ = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
-            std::print("{}.this\n", stringify(class_.name));
             MemberDeclaration::Constructor constructor = *constructor_;
 
             std::vector<llvm::Type*> args {};
@@ -91,7 +83,6 @@ void Codegen::generate_class_method_definitions(Class class_) {
                 std::format("this", stringify(class_.name)), stringify(class_.name), false);
         }
         if (auto method_ = std::get_if<MemberDeclaration::Method>(&member.value)) {
-            std::print("{}.{}\n", stringify(class_.name), method_->name.name);
             MemberDeclaration::Method method = *method_;
 
             for (size_t i = 0; i < method.arguments.size(); i++)
@@ -115,8 +106,6 @@ void Codegen::generate_class_method_definitions(Class class_) {
 }
 
 void Codegen::generate_class_method_implementations(Class class_) {
-    std::print("{}\n", stringify(class_.name));
-
     for (const MemberDeclaration& member : class_.body) {
         if (auto constructor_ = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
             MemberDeclaration::Constructor constructor = *constructor_;
@@ -164,7 +153,6 @@ void Codegen::generate_class_method_implementations(Class class_) {
             m_variables = variables_bak;
         }
         if (auto method_ = std::get_if<MemberDeclaration::Method>(&member.value)) {
-            std::print("{}.{}\n", stringify(class_.name), method_->name.name);
             MemberDeclaration::Method method = *method_;
 
             auto variables_bak = m_variables;
@@ -263,7 +251,6 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
 
 llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
     auto [object, type] = generate_lvalue(*call.object);
-    std::print("invoking {}.{}\n", type->getStructName().str(), call.method.name);
 
     std::vector<llvm::Value*> args = { object };
     for (const Expression& arg : call.arguments)
@@ -274,14 +261,11 @@ llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
         arg_types.push_back(args[i]->getType());
 
     llvm::Function* fn;
-    bool found = false;
-    for (auto overload : m_functions[type->getStructName().str()][call.method.name]) {
-        found = true;
+    for (auto overload : m_functions[type->getStructName().str()][call.method.name])
         if (overload.first == arg_types) {
             fn = overload.second;
+            break;
         }
-    }
-    std::print("{}\n", found);
 
     llvm::Value* fn_call = m_builder.CreateCall(fn, args);
     return fn_call;
