@@ -35,6 +35,7 @@ private:
             std::vector<std::pair<std::vector<llvm::Type*>, llvm::Function*>>>>
         m_functions;
     std::unordered_map<std::string, std::unordered_map<std::string, int>> m_props;
+    std::unordered_map<std::string, TypeName> m_generics;
 
     llvm::LLVMContext m_context;
     llvm::IRBuilder<> m_builder;
@@ -42,6 +43,7 @@ private:
     Analyzer m_analyzer;
 
     std::string var_name();
+    TypeName substitute_generics(const TypeName&);
 
     void generate_stdio();
     void generate_string();
@@ -57,27 +59,27 @@ private:
     void generate_bool_methods();
 
     void generate_classes();
-    void generate_class(Class class_, Generics generics = {});
-    void generate_class_properties(Class class_, Generics generics = {});
-    void generate_class_methods(Class class_, Generics generics = {});
+    void generate_class(Class class_);
+    void generate_class_properties(Class class_);
+    void generate_class_methods(Class class_);
 
     llvm::Function* generate_function_entry(llvm::Type* return_type, std::vector<llvm::Type*> args,
         std::string method_name, std::string struct_name);
 
     llvm::Value* generate_literal(const Expression::Literal&);
-    llvm::Value* generate_method_call(const Expression::MethodCall&, Generics = {});
-    llvm::Value* generate_constructor_call(const Expression::ConstructorCall&, Generics = {});
+    llvm::Value* generate_method_call(const Expression::MethodCall&);
+    llvm::Value* generate_constructor_call(const Expression::ConstructorCall&);
     llvm::Value* generate_this_access(const Expression::ThisAccess&);
-    llvm::Value* generate_member_access(const Expression::MemberAccess&, Generics = {});
-    llvm::Value* generate_expression(const Expression&, Generics = {});
+    llvm::Value* generate_member_access(const Expression::MemberAccess&);
+    llvm::Value* generate_expression(const Expression&);
     std::pair<llvm::Value*, llvm::Type*> generate_lvalue(const Expression&);
 
-    void generate_variable(const Variable&, Generics = {});
-    void generate_assignment(const Statement::Assignment&, Generics = {});
-    void generate_if(const Statement::If&, Generics = {});
-    void generate_while(const Statement::While&, Generics = {});
-    void generate_return(const Statement::Return&, Generics = {});
-    void generate_statement(const Statement&, Generics = {});
+    void generate_variable(const Variable&);
+    void generate_assignment(const Statement::Assignment&);
+    void generate_if(const Statement::If&);
+    void generate_while(const Statement::While&);
+    void generate_return(const Statement::Return&);
+    void generate_statement(const Statement&);
 
     llvm::StructType* get_or_create_struct(const TypeName&);
 

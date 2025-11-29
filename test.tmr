@@ -1,85 +1,38 @@
-class Storage is
-    var str: String
-    var int: Integer
+class Pair[T, U] is
+    var first: T
+    var second: U
 
-    this(String: string, Integer: int) is
-        this.str := string
-        this.int := int
+    this(T: f, U: s) is
+        this.first := f
+        this.second := s
     end
 
-    this(Integer: int) is
-        this.str := "undefined"
-        this.int := int
+    T First() is
+        return this.first
     end
 
-    Void Print() is
-        StdIO().Print(this.str.Concat(": "))
-        StdIO().PrintLn(this.int)
-    end
-
-    Void Print(String: sep) is
-        StdIO().Print(this.str.Concat(sep))
-        StdIO().PrintLn(this.int)
-    end
-
-    String Return() is
-        return this.str.Concat(": ")
+    U Second() is
+        return this.second
     end
 end
 
-class Eq[T] is
-    var value: T
-    this(T: value) is
-        this.value := value
-    end
-    Bool Eq(T: value) is
-        return this.value.Eq(value)
+class Printer[T] is
+    this() is end
+
+    Void Print(Pair[T, String]: pair) is
+        StdIO().Print(pair.First())
+        StdIO().Print(" -> ")
+        StdIO().PrintLn(pair.Second())
     end
 end
 
 class Program is
     this() is
-        var eq: Eq[Integer] := Eq[Integer](2)
-        if eq.Eq(1) then
-            StdIO().PrintLn("Правда")
-        end
-        if eq.Eq(2) then
-            StdIO().PrintLn("Неправда")
-        end
+        var p: Pair[Integer, String] := Pair[Integer, String](42, "answer")
+        var printer: Printer[Integer] := Printer[Integer]()
+        printer.Print(p)
 
-        var stdio: StdIO := StdIO()
-        if true.Xor(true) then
-            stdio.PrintLn("false blin")
-        elif false.Or(true) then
-            stdio.PrintLn("Unexpected")
-        elif true then
-            stdio.PrintLn("I know that")
-        else
-            stdio.PrintLn("Unexpected")
-        end
-
-        var i: Integer := 0
-        while i.Great(10).Not().And(true) loop
-            stdio.Print(i)
-            if i.Eq(10).Not() then stdio.Print(", ") end
-            i := i.Plus(1)
-        end
-        stdio.PrintLn("")
-
-        var storage: Storage := Storage("number", 14)
-        storage.Print()
-        storage.Print(" + ")
-        Storage(89725).Print()
-        stdio.PrintLn(storage.str)
-
-        storage.int := 0
-        storage.Print()
-        while storage.int.Great(9).Not() loop
-            storage.int := storage.int.Plus(1)
-            storage.Print()
-        end
-
-        var real: Real := Real(1).Plus(0.23)
-        stdio.PrintLn(real.Div(2.0))
+        var q: Pair[String, Bool] := Pair[String, Bool]("ok", true)
+        StdIO().PrintLn(q.Second())
     end
 end
