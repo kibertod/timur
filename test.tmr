@@ -27,10 +27,27 @@ class Storage is
     end
 end
 
+class Eq[T] is
+    var value: T
+    this(T: value) is
+        this.value := value
+    end
+    Bool Eq(T: value) is
+        return this.value.Eq(value)
+    end
+end
+
 class Program is
     this() is
-        var stdio: StdIO := StdIO()
+        var eq: Eq[Integer] := Eq[Integer](2)
+        if eq.Eq(1) then
+            StdIO().PrintLn("Правда")
+        end
+        if eq.Eq(2) then
+            StdIO().PrintLn("Неправда")
+        end
 
+        var stdio: StdIO := StdIO()
         if true.Xor(true) then
             stdio.PrintLn("false blin")
         elif false.Or(true) then
@@ -55,12 +72,12 @@ class Program is
         Storage(89725).Print()
         stdio.PrintLn(storage.str)
 
-        //storage.int := 0
-        //storage.Print()
-        //while storage.int.Great(1000).Not() loop
-        //    storage.int := storage.int.Plus(1)
-        //    storage.Print()
-        //end
+        storage.int := 0
+        storage.Print()
+        while storage.int.Great(9).Not() loop
+            storage.int := storage.int.Plus(1)
+            storage.Print()
+        end
 
         var real: Real := Real(1).Plus(0.23)
         stdio.PrintLn(real.Div(2.0))

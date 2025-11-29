@@ -13,12 +13,14 @@
 
 using namespace ast;
 
+typedef std::unordered_map<std::string, TypeName> Generics;
+
 class Codegen {
 private:
     Root m_ast;
 
     struct VarInfo {
-        llvm::AllocaInst* ptr;
+        llvm::Value* ptr;
         std::string gen_name;
         llvm::Type* type;
     };
@@ -55,29 +57,29 @@ private:
     void generate_bool_methods();
 
     void generate_classes();
-    void generate_class(const Class& class_);
-    void generate_class_properties(const Class& class_);
-    void generate_class_methods(const Class& class_);
+    void generate_class(Class class_, Generics generics = {});
+    void generate_class_properties(Class class_, Generics generics = {});
+    void generate_class_methods(Class class_, Generics generics = {});
 
     llvm::Function* generate_function_entry(llvm::Type* return_type, std::vector<llvm::Type*> args,
         std::string method_name, std::string struct_name);
 
-    llvm::Value* generate_literal(const Expression::Literal& literal);
-    llvm::Value* generate_method_call(const Expression::MethodCall& call);
-    llvm::Value* generate_constructor_call(const Expression::ConstructorCall& call);
-    llvm::Value* generate_this_access(const Expression::ThisAccess& access);
-    llvm::Value* generate_member_access(const Expression::MemberAccess& access);
-    llvm::Value* generate_expression(const Expression& expr);
-    std::pair<llvm::Value*, llvm::Type*> generate_lvalue(const Expression& expr);
+    llvm::Value* generate_literal(const Expression::Literal&);
+    llvm::Value* generate_method_call(const Expression::MethodCall&, Generics = {});
+    llvm::Value* generate_constructor_call(const Expression::ConstructorCall&, Generics = {});
+    llvm::Value* generate_this_access(const Expression::ThisAccess&);
+    llvm::Value* generate_member_access(const Expression::MemberAccess&, Generics = {});
+    llvm::Value* generate_expression(const Expression&, Generics = {});
+    std::pair<llvm::Value*, llvm::Type*> generate_lvalue(const Expression&);
 
-    void generate_variable(const Variable& var);
-    void generate_assignment(const Statement::Assignment& assign);
-    void generate_if(const Statement::If& if_);
-    void generate_while(const Statement::While& while_);
-    void generate_return(const Statement::Return& ret);
-    void generate_statement(const Statement& stmt);
+    void generate_variable(const Variable&, Generics = {});
+    void generate_assignment(const Statement::Assignment&, Generics = {});
+    void generate_if(const Statement::If&, Generics = {});
+    void generate_while(const Statement::While&, Generics = {});
+    void generate_return(const Statement::Return&, Generics = {});
+    void generate_statement(const Statement&, Generics = {});
 
-    llvm::Type* get_type(const TypeName& type);
+    llvm::StructType* get_or_create_struct(const TypeName&);
 
 public:
     Codegen(Root root);

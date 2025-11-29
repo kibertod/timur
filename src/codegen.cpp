@@ -28,99 +28,149 @@ std::string Codegen::var_name() {
     return name;
 }
 
+llvm::StructType* Codegen::get_or_create_struct(const TypeName& name) {
+    if (m_structs.contains(stringify(name)))
+        return m_structs[stringify(name)];
+    llvm::IRBuilderBase::InsertPoint insertion_point = m_builder.saveIP();
+    Class class_;
+    for (Class _class_ : m_ast.classes)
+        if (_class_.name.name.name == name.name.name) {
+            class_ = _class_;
+            break;
+        }
+    std::unordered_map<std::string, TypeName> generics;
+    for (size_t i = 0; i < name.generic_arguments.size(); i++)
+        generics[class_.name.generic_arguments[i].name.name] = name.generic_arguments[i];
+    generate_class(class_, generics);
+    generate_class_properties(class_, generics);
+    generate_class_methods(class_, generics);
+    m_builder.restoreIP(insertion_point);
+    return m_structs[stringify(name)];
+}
+
 void Codegen::generate_classes() {
     for (const Class& class_ : m_ast.classes)
-        if (class_.name.name.name != "Program")
+        if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty())
             generate_class(class_);
     for (const Class& class_ : m_ast.classes)
-        if (class_.name.name.name != "Program")
+        if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty())
             generate_class_properties(class_);
     for (const Class& class_ : m_ast.classes)
-        if (class_.name.name.name != "Program")
+        if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty())
             generate_class_methods(class_);
 }
 
-void Codegen::generate_class(const Class& class_) {
-    llvm::StructType* struct_ = llvm::StructType::create(m_context, class_.name.name.name);
-    m_structs[class_.name.name.name] = struct_;
-    m_props[class_.name.name.name] = {};
+void Codegen::generate_class(Class class_, Generics generics) {
+    for (size_t i = 0; i < class_.name.generic_arguments.size(); i++)
+        class_.name.generic_arguments[i] = generics[class_.name.generic_arguments[i].name.name];
+
+    llvm::StructType* struct_ = llvm::StructType::create(m_context, stringify(class_.name));
+    m_structs[stringify(class_.name)] = struct_;
 }
 
-void Codegen::generate_class_properties(const Class& class_) {
+void Codegen::generate_class_properties(Class class_, Generics generics) {
+    for (size_t i = 0; i < class_.name.generic_arguments.size(); i++)
+        class_.name.generic_arguments[i] = generics[class_.name.generic_arguments[i].name.name];
+
     std::vector<llvm::Type*> types {};
     for (const MemberDeclaration& member : class_.body)
         if (auto prop = std::get_if<Variable>(&member.value)) {
-            types.push_back(m_structs[prop->type_name.name.name]);
-            m_props[class_.name.name.name][prop->name.name] = m_props[class_.name.name.name].size();
+            TypeName type;
+            if (generics.contains(prop->type_name.name.name))
+                type = generics[prop->type_name.name.name];
+            else
+                type = prop->type_name;
+            types.push_back(get_or_create_struct(type));
+            m_props[stringify(class_.name)][prop->name.name] =
+                m_props[stringify(class_.name)].size();
         }
-    m_structs[class_.name.name.name]->setBody(types);
+    m_structs[stringify(class_.name)]->setBody(types);
 }
 
-void Codegen::generate_class_methods(const Class& class_) {
+void Codegen::generate_class_methods(Class class_, Generics generics) {
+    for (size_t i = 0; i < class_.name.generic_arguments.size(); i++)
+        class_.name.generic_arguments[i] = generics[class_.name.generic_arguments[i].name.name];
+
     for (const MemberDeclaration& member : class_.body) {
-        if (auto constructor = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
+        if (auto constructor_ = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
+            MemberDeclaration::Constructor constructor = *constructor_;
+
+            for (size_t i = 0; i < constructor.arguments.size(); i++) {
+                if (generics.contains(constructor.arguments[i].first.name.name))
+                    constructor.arguments[i] = { generics[constructor.arguments[i].first.name.name],
+                        constructor.arguments[i].second };
+            }
+
             auto variables_bak = m_variables;
             m_variables = {};
 
             std::vector<llvm::Type*> args {};
-            for (const auto& arg : constructor->arguments)
-                args.push_back(m_structs[arg.first.name.name]);
-            llvm::Function* fn = generate_function_entry(m_structs[class_.name.name.name], args,
-                std::format("this", class_.name.name.name), class_.name.name.name);
-            m_this = { m_builder.CreateAlloca(m_structs[class_.name.name.name]),
-                m_structs[class_.name.name.name] };
+            for (const auto& arg : constructor.arguments)
+                args.push_back(get_or_create_struct(arg.first));
+
+            llvm::Function* fn = generate_function_entry(m_structs[stringify(class_.name)], args,
+                std::format("this", stringify(class_.name)), stringify(class_.name));
+            m_this = { m_builder.CreateAlloca(m_structs[stringify(class_.name)]),
+                m_structs[stringify(class_.name)] };
             auto arg_iter = fn->arg_begin();
-            for (const auto& arg : constructor->arguments) {
+            for (const auto& arg : constructor.arguments) {
                 m_variables[arg.second.name] = { m_builder.CreateAlloca(
-                                                     m_structs[arg.first.name.name]),
-                    var_name(), m_structs[class_.name.name.name] };
+                                                     get_or_create_struct(arg.first)),
+                    var_name(), get_or_create_struct(arg.first) };
                 m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].ptr);
             }
-            for (const Statement& stmt : constructor->body) {
-                generate_statement(stmt);
+            for (const Statement& stmt : constructor.body) {
+                generate_statement(stmt, generics);
             }
             m_builder.CreateRet(
-                m_builder.CreateLoad(m_structs[class_.name.name.name], m_this.value().first));
+                m_builder.CreateLoad(m_structs[stringify(class_.name)], m_this.value().first));
 
             m_this = {};
             m_variables = variables_bak;
-            m_functions[class_.name.name.name]["this"].push_back({ args, fn });
+            m_functions[stringify(class_.name)]["this"].push_back({ args, fn });
         }
-        if (auto method = std::get_if<MemberDeclaration::Method>(&member.value)) {
+        if (auto method_ = std::get_if<MemberDeclaration::Method>(&member.value)) {
+            MemberDeclaration::Method method = *method_;
+
+            for (size_t i = 0; i < method.arguments.size(); i++) {
+                if (generics.contains(method.arguments[i].first.name.name))
+                    method.arguments[i] = { generics[method.arguments[i].first.name.name],
+                        method.arguments[i].second };
+            }
             auto variables_bak = m_variables;
             m_variables = {};
 
-            std::vector<llvm::Type*> args { m_structs[class_.name.name.name] };
-            for (const auto& arg : method->arguments)
-                args.push_back(m_structs[arg.first.name.name]);
+            std::vector<llvm::Type*> args { m_structs[stringify(class_.name)] };
+            for (const auto& arg : method.arguments)
+                args.push_back(get_or_create_struct(arg.first));
             llvm::Type* return_type;
-            if (method->return_type.name.name == "Void")
+            if (method.return_type.name.name == "Void")
                 return_type = m_builder.getVoidTy();
             else
-                return_type = m_structs[method->return_type.name.name];
+                return_type = get_or_create_struct(method.return_type);
             llvm::Function* fn = generate_function_entry(
-                return_type, args, method->name.name, class_.name.name.name);
+                return_type, args, method.name.name, stringify(class_.name));
 
             auto arg_iter = fn->arg_begin();
-            m_this = { m_builder.CreateAlloca(m_structs[class_.name.name.name]),
-                m_structs[class_.name.name.name] };
+            m_this = { m_builder.CreateAlloca(m_structs[stringify(class_.name)]),
+                get_or_create_struct(class_.name) };
             m_builder.CreateStore(&*arg_iter++, m_this.value().first);
-            for (const auto& arg : method->arguments) {
+            for (const auto& arg : method.arguments) {
                 m_variables[arg.second.name] = { m_builder.CreateAlloca(
-                                                     m_structs[arg.first.name.name]),
-                    var_name(), m_structs[class_.name.name.name] };
+                                                     get_or_create_struct(arg.first)),
+                    var_name(), get_or_create_struct(arg.first) };
                 m_builder.CreateStore(&*arg_iter++, m_variables[arg.second.name].ptr);
             }
-            for (const Statement& stmt : method->body) {
-                generate_statement(stmt);
+            for (const Statement& stmt : method.body) {
+                generate_statement(stmt, generics);
             }
 
-            if (method->return_type == TypeName { { "Void" }, {} })
+            if (method.return_type == TypeName { { "Void" }, {} })
                 m_builder.CreateRetVoid();
 
             m_this = {};
             m_variables = variables_bak;
-            m_functions[class_.name.name.name][method->name.name].push_back({ args, fn });
+            m_functions[stringify(class_.name)][method.name.name].push_back({ args, fn });
         }
     }
 }
@@ -141,8 +191,6 @@ llvm::Function* Codegen::generate_function_entry(llvm::Type* return_type,
     m_functions[struct_name][method_name].push_back({ args, fn });
     return fn;
 }
-
-llvm::Type* Codegen::get_type(const TypeName& type) { return m_structs[type.name.name]; }
 
 llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
     if (literal.type == Expression::Literal::Type::Int) {
@@ -170,13 +218,13 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
     llvm_unreachable("generate_literal called on non-literal");
 };
 
-llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
-    llvm::Value* object = generate_expression(*call.object);
+llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call, Generics generics) {
+    llvm::Value* object = generate_expression(*call.object, generics);
     std::string type = object->getType()->getStructName().str();
 
     std::vector<llvm::Value*> args = { object };
     for (const Expression& arg : call.arguments)
-        args.push_back(generate_expression(arg));
+        args.push_back(generate_expression(arg, generics));
 
     std::vector<llvm::Type*> arg_types = {};
     for (llvm::Value* arg : args)
@@ -191,19 +239,24 @@ llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
     return fn_call;
 }
 
-llvm::Value* Codegen::generate_constructor_call(const Expression::ConstructorCall& call) {
-    std::string type = stringify(call.type_name);
+llvm::Value* Codegen::generate_constructor_call(
+    const Expression::ConstructorCall& call, Generics generics) {
+    TypeName type = call.type_name;
+    if (generics.contains(call.type_name.name.name)) {
+        type = generics[call.type_name.name.name];
+    }
+    get_or_create_struct(type);
 
     std::vector<llvm::Value*> args = {};
     for (const Expression& arg : call.arguments)
-        args.push_back(generate_expression(arg));
+        args.push_back(generate_expression(arg, generics));
 
     std::vector<llvm::Type*> arg_types = {};
     for (llvm::Value* arg : args)
         arg_types.push_back(arg->getType());
 
     llvm::Function* fn;
-    for (auto overload : m_functions[type]["this"])
+    for (auto overload : m_functions[stringify(type)]["this"])
         if (overload.first == arg_types) {
             fn = overload.second;
         }
@@ -218,28 +271,30 @@ llvm::Value* Codegen::generate_this_access(const Expression::ThisAccess& access)
     return m_builder.CreateExtractValue(val, index);
 }
 
-llvm::Value* Codegen::generate_member_access(const Expression::MemberAccess& access) {
-    llvm::Value* object = generate_expression(*access.object);
+llvm::Value* Codegen::generate_member_access(
+    const Expression::MemberAccess& access, Generics generics) {
+    llvm::Value* object = generate_expression(*access.object, generics);
     int index = m_props[object->getType()->getStructName().str()][access.member.name];
     return m_builder.CreateExtractValue(object, index);
 }
 
-llvm::Value* Codegen::generate_expression(const Expression& expr) {
+llvm::Value* Codegen::generate_expression(const Expression& expr, Generics generics) {
     if (auto literal = std::get_if<Expression::Literal>(&expr.value))
         return generate_literal(*literal);
-    if (auto ident = std::get_if<Identifier>(&expr.value))
-        return m_builder.CreateLoad(m_variables[ident->name].ptr->getAllocatedType(),
-            m_variables[ident->name].ptr, (m_variables[ident->name].gen_name + "_val"));
+    if (auto ident = std::get_if<Identifier>(&expr.value)) {
+        return m_builder.CreateLoad(m_variables[ident->name].type, m_variables[ident->name].ptr,
+            (m_variables[ident->name].gen_name + "_val"));
+    }
     if (auto call = std::get_if<Expression::MethodCall>(&expr.value))
-        return generate_method_call(*call);
+        return generate_method_call(*call, generics);
     if (auto call = std::get_if<Expression::ConstructorCall>(&expr.value)) {
-        return generate_constructor_call(*call);
+        return generate_constructor_call(*call, generics);
     }
     if (auto access = std::get_if<Expression::ThisAccess>(&expr.value)) {
         return generate_this_access(*access);
     }
     if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
-        return generate_member_access(*access);
+        return generate_member_access(*access, generics);
     }
     llvm_unreachable("generate_expression called on non-expression");
 }
@@ -262,9 +317,14 @@ std::pair<llvm::Value*, llvm::Type*> Codegen::generate_lvalue(const Expression& 
     llvm_unreachable("generate_lvalue called on non-lvalue expression");
 }
 
-void Codegen::generate_variable(const Variable& variable) {
+void Codegen::generate_variable(const Variable& variable, Generics generics) {
     std::string name = var_name();
-    llvm::Type* type = get_type(variable.type_name);
+    TypeName type_name;
+    if (generics.contains(variable.type_name.name.name))
+        type_name = generics[type_name.name.name];
+    else
+        type_name = variable.type_name;
+    llvm::Type* type = get_or_create_struct(type_name);
     llvm::AllocaInst* alloc = m_builder.CreateAlloca(type, nullptr, name);
 
     if (variable.value.has_value()) {
@@ -274,75 +334,76 @@ void Codegen::generate_variable(const Variable& variable) {
     m_variables[variable.name.name] = { alloc, name, type };
 }
 
-void Codegen::generate_assignment(const Statement::Assignment& assign) {
-    m_builder.CreateStore(generate_expression(assign.right), generate_lvalue(assign.left).first);
+void Codegen::generate_assignment(const Statement::Assignment& assign, Generics generics) {
+    m_builder.CreateStore(
+        generate_expression(assign.right, generics), generate_lvalue(assign.left).first);
 }
 
-void Codegen::generate_return(const Statement::Return& ret) {
-    m_builder.CreateRet(generate_expression(ret.value));
+void Codegen::generate_return(const Statement::Return& ret, Generics generics) {
+    m_builder.CreateRet(generate_expression(ret.value, generics));
 }
 
-void Codegen::generate_if(const Statement::If& if_) {
+void Codegen::generate_if(const Statement::If& if_, Generics generics) {
     llvm::Function* fn = m_builder.GetInsertBlock()->getParent();
     llvm::BasicBlock* then = llvm::BasicBlock::Create(m_context, var_name(), fn);
     llvm::BasicBlock* else_ = llvm::BasicBlock::Create(m_context, var_name(), fn);
     llvm::BasicBlock* merge = llvm::BasicBlock::Create(m_context, var_name(), fn);
 
-    llvm::Value* cond = generate_expression(if_.condition);
+    llvm::Value* cond = generate_expression(if_.condition, generics);
     m_builder.CreateCondBr(m_builder.CreateExtractValue(cond, 0), then, else_);
 
     m_builder.SetInsertPoint(then);
     for (const Statement& stmt : if_.body)
-        generate_statement(stmt);
+        generate_statement(stmt, generics);
     m_builder.CreateBr(merge);
 
     m_builder.SetInsertPoint(else_);
     if (if_.elifs.empty())
         for (const Statement& stmt : if_.else_body)
-            generate_statement(stmt);
+            generate_statement(stmt, generics);
     else {
         Expression condition = if_.elifs[0].condition;
         std::vector<Statement> body = if_.elifs[0].body;
         std::vector<Statement::If::ElIf> elifs = if_.elifs;
         elifs.erase(elifs.begin());
         Statement::If reduced = { condition, body, elifs, if_.else_body };
-        generate_if(reduced);
+        generate_if(reduced, generics);
     };
     m_builder.CreateBr(merge);
 
     m_builder.SetInsertPoint(merge);
 }
 
-void Codegen::generate_while(const Statement::While& while_) {
+void Codegen::generate_while(const Statement::While& while_, Generics generics) {
     llvm::Function* fn = m_builder.GetInsertBlock()->getParent();
     llvm::BasicBlock* do_ = llvm::BasicBlock::Create(m_context, var_name(), fn);
     llvm::BasicBlock* merge = llvm::BasicBlock::Create(m_context, var_name(), fn);
 
-    llvm::Value* cond = generate_expression(while_.condition);
+    llvm::Value* cond = generate_expression(while_.condition, generics);
     m_builder.CreateCondBr(m_builder.CreateExtractValue(cond, 0), do_, merge);
 
     m_builder.SetInsertPoint(do_);
     for (const Statement& stmt : while_.body)
-        generate_statement(stmt);
-    cond = generate_expression(while_.condition);
+        generate_statement(stmt, generics);
+    cond = generate_expression(while_.condition, generics);
     m_builder.CreateCondBr(m_builder.CreateExtractValue(cond, 0), do_, merge);
 
     m_builder.SetInsertPoint(merge);
 }
 
-void Codegen::generate_statement(const Statement& stmt) {
+void Codegen::generate_statement(const Statement& stmt, Generics generics) {
     if (auto var = std::get_if<Variable>(&stmt.value))
-        generate_variable(*var);
+        generate_variable(*var, generics);
     if (auto expr = std::get_if<Expression>(&stmt.value))
-        generate_expression(*expr);
+        generate_expression(*expr, generics);
     if (auto assign = std::get_if<Statement::Assignment>(&stmt.value))
-        generate_assignment(*assign);
+        generate_assignment(*assign, generics);
     if (auto ret = std::get_if<Statement::Return>(&stmt.value))
-        generate_return(*ret);
+        generate_return(*ret, generics);
     if (auto if_ = std::get_if<Statement::If>(&stmt.value))
-        generate_if(*if_);
+        generate_if(*if_, generics);
     if (auto while_ = std::get_if<Statement::While>(&stmt.value))
-        generate_while(*while_);
+        generate_while(*while_, generics);
 }
 
 void Codegen::generate() {
@@ -361,9 +422,8 @@ void Codegen::generate() {
 
     generate_classes();
 
-    m_module->print(llvm::outs(), nullptr);
     for (const Class& class_ : m_ast.classes) {
-        if (class_.name.name.name == "Program") {
+        if (stringify(class_.name) == "Program") {
             for (const MemberDeclaration& member : class_.body) {
                 if (auto constructor = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
                     llvm::FunctionType* func_type =
@@ -384,7 +444,7 @@ void Codegen::generate() {
         }
     }
 
-    m_module->print(llvm::outs(), nullptr);
+    // m_module->print(llvm::outs(), nullptr);
     if (llvm::verifyModule(*m_module, &llvm::errs())) {
         llvm::errs() << "Error constructing LLVM module!\n";
         return;
