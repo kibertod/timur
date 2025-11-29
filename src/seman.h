@@ -28,36 +28,46 @@ private:
     std::unordered_map<std::string, std::vector<std::vector<TypeName>>> m_constructors;
     std::optional<Class> m_class;
     std::optional<MemberDeclaration::Method> m_method;
+    std::unordered_map<std::string, TypeName> m_generics;
 
-    bool lvalue_accessible(const Expression& expr);
-    TypeName substitute_generics(
-        const TypeName& declaration, const TypeName& instance, const TypeName& type);
-    std::vector<TypeName> substitute_generics(
-        const TypeName& declaration, const TypeName& instance, const std::vector<TypeName>& types);
-    std::optional<Class> type_exists(const TypeName& name);
-    std::optional<TypeName> get_property(const TypeName& type, const Identifier& property);
+    bool lvalue_accessible(const Expression&);
+    std::optional<Class> type_exists(const TypeName&);
+    std::optional<TypeName> get_property(const TypeName&, const Identifier&);
     std::optional<TypeName> get_method(
-        const TypeName& type, const Identifier& method, const std::vector<TypeName>& arguments);
+        const TypeName&, const Identifier&, const std::vector<TypeName>&);
 
-    TypeName check_literal(const Expression::Literal& literal);
-    std::optional<TypeName> check_member_access(const Expression::MemberAccess& access);
-    std::optional<TypeName> check_this_access(const Expression::ThisAccess& access);
-    std::optional<TypeName> check_method_call(const Expression::MethodCall& call);
-    std::optional<TypeName> check_this_call(const Expression::ThisCall& call);
-    std::optional<TypeName> check_constructor_call(const Expression::ConstructorCall& call);
+    TypeName check_literal(const Expression::Literal&);
+    std::optional<TypeName> check_member_access(const Expression::MemberAccess&);
+    std::optional<TypeName> check_this_access(const Expression::ThisAccess&);
+    std::optional<TypeName> check_method_call(const Expression::MethodCall&);
+    std::optional<TypeName> check_this_call(const Expression::ThisCall&);
+    std::optional<TypeName> check_constructor_call(const Expression::ConstructorCall&);
 
-    void check_statement(const Statement& statement);
-    void check_if(const Statement::If& if_);
-    void check_while(const Statement::While& while_);
-    void check_assignment(const Statement::Assignment& assignment);
-    void check_super_call(const Statement::SuperCall& call);
-    void check_return(const Statement::Return& return_);
+    MemberDeclaration::Method substitute_generics(MemberDeclaration::Method);
+    MemberDeclaration::Constructor substitute_generics(MemberDeclaration::Constructor);
+    MemberDeclaration substitute_generics(MemberDeclaration);
+    Variable substitute_generics(Variable);
+    Class substitute_generics(Class);
+    TypeName substitute_generics(TypeName);
+    Expression substitute_generics(Expression);
 
-    std::optional<VariableState> check_variable(const Variable& variable);
+    Statement substitute_generics(Statement);
+    Statement::If substitute_generics(Statement::If);
+    Statement::While substitute_generics(Statement::While);
 
-    void check_class(const Class& class_);
-    void check_method(const MemberDeclaration::Method& method);
-    void check_constructor(const MemberDeclaration::Constructor& constructor);
+    void check_statement(const Statement&);
+    void check_if(const Statement::If&);
+    void check_while(const Statement::While&);
+    void check_assignment(const Statement::Assignment&);
+    void check_super_call(const Statement::SuperCall&);
+    void check_return(const Statement::Return&);
+
+    std::optional<VariableState> check_variable(const Variable&);
+
+    void check_class_declaration(const Class&);
+    void check_class(const Class&);
+    void check_method(const MemberDeclaration::Method&);
+    void check_constructor(const MemberDeclaration::Constructor&);
 
     void print_error(std::string error);
 
@@ -65,6 +75,6 @@ public:
     bool error = false;
 
     void analyze();
-    std::optional<TypeName> check_expression(const Expression& expression);
+    std::optional<TypeName> check_expression(const Expression&);
     Analyzer(Root ast);
 };

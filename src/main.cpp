@@ -34,8 +34,8 @@ int main() {
     //     auto node = ctx.root[i];
     //     print(node, 0);
     // }
-    // Analyzer analyzer(ast::Root { ctx.root });
-    // analyzer.analyze();
+    Analyzer analyzer(ast::Root { ctx.root });
+    analyzer.analyze();
     // if (!analyzer.error) {
     {
         ctx = {};
