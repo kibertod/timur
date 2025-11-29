@@ -34,9 +34,10 @@ int main() {
     //     auto node = ctx.root[i];
     //     print(node, 0);
     // }
-    Analyzer analyzer(ast::Root { ctx.root });
-    analyzer.analyze();
-    if (!analyzer.error) {
+    // Analyzer analyzer(ast::Root { ctx.root });
+    // analyzer.analyze();
+    // if (!analyzer.error) {
+    {
         ctx = {};
         ctx.row = 1;
         ctx.src += test_src.str();
@@ -47,4 +48,5 @@ int main() {
         Codegen codegen { ast::Root { ctx.root } };
         codegen.generate();
     }
+    // }
 }

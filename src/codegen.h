@@ -25,7 +25,7 @@ private:
         llvm::Type* type;
     };
 
-    std::optional<std::pair<llvm::AllocaInst*, llvm::Type*>> m_this;
+    std::optional<std::pair<llvm::Value*, llvm::Type*>> m_this;
     std::unordered_map<std::string, VarInfo> m_variables;
     unsigned long long m_var_count;
 

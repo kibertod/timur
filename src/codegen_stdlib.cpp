@@ -47,12 +47,13 @@ void Codegen::generate_real() {
 
 void Codegen::generate_real_methods() {
     llvm::StructType* real = m_structs["Real"];
+    llvm::PointerType* real_ptr = llvm::PointerType::get(real, 0);
+    llvm::StructType* integer = m_structs["Integer"];
     TypeName real_tn = { { "Real" }, {} };
 
     // this(int)
     {
-        llvm::Function* fn =
-            generate_function_entry(real, { m_structs["Integer"] }, "this", "Real");
+        llvm::Function* fn = generate_function_entry(real, { integer }, "this", "Real");
         llvm::Value* int_val = m_builder.CreateExtractValue(fn->arg_begin(), 0);
         llvm::Value* real_val = m_builder.CreateSIToFP(int_val, m_builder.getDoubleTy());
         m_builder.CreateRet(m_builder.CreateInsertValue(llvm::UndefValue::get(real), real_val, 0));
@@ -60,9 +61,9 @@ void Codegen::generate_real_methods() {
 
     // plus
     {
-        llvm::Function* fn = generate_function_entry(real, { real, real }, "Plus", "Real");
+        llvm::Function* fn = generate_function_entry(real, { real_ptr, real }, "Plus", "Real");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(real, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -74,9 +75,9 @@ void Codegen::generate_real_methods() {
 
     // minus
     {
-        llvm::Function* fn = generate_function_entry(real, { real, real }, "Minus", "Real");
+        llvm::Function* fn = generate_function_entry(real, { real_ptr, real }, "Minus", "Real");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(real, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -88,9 +89,9 @@ void Codegen::generate_real_methods() {
 
     // div
     {
-        llvm::Function* fn = generate_function_entry(real, { real, real }, "Div", "Real");
+        llvm::Function* fn = generate_function_entry(real, { real_ptr, real }, "Div", "Real");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(real, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -102,9 +103,9 @@ void Codegen::generate_real_methods() {
 
     // mult
     {
-        llvm::Function* fn = generate_function_entry(real, { real, real }, "Mult", "Real");
+        llvm::Function* fn = generate_function_entry(real, { real_ptr, real }, "Mult", "Real");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(real, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -117,9 +118,9 @@ void Codegen::generate_real_methods() {
     // eq
     {
         llvm::Function* fn =
-            generate_function_entry(m_structs["Bool"], { real, real }, "Eq", "Real");
+            generate_function_entry(m_structs["Bool"], { real_ptr, real }, "Eq", "Real");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(real, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -132,9 +133,9 @@ void Codegen::generate_real_methods() {
     // great
     {
         llvm::Function* fn =
-            generate_function_entry(m_structs["Bool"], { real, real }, "Great", "Real");
+            generate_function_entry(m_structs["Bool"], { real_ptr, real }, "Great", "Real");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(real, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -146,8 +147,9 @@ void Codegen::generate_real_methods() {
 
     // ceil
     {
-        llvm::Function* fn = generate_function_entry(real, { real }, "Ceil", "Real");
-        llvm::Value* val = m_builder.CreateExtractValue(fn->arg_begin(), 0);
+        llvm::Function* fn = generate_function_entry(real, { real_ptr }, "Ceil", "Real");
+        llvm::Value* val = m_builder.CreateLoad(real, fn->arg_begin());
+        val = m_builder.CreateExtractValue(val, 0);
         llvm::Function* ceil = llvm::Intrinsic::getOrInsertDeclaration(
             m_module.get(), llvm::Intrinsic::ceil, { m_builder.getDoubleTy() });
         llvm::Value* res = m_builder.CreateCall(ceil, { val });
@@ -156,8 +158,9 @@ void Codegen::generate_real_methods() {
 
     // floor
     {
-        llvm::Function* fn = generate_function_entry(real, { real }, "Floor", "Real");
-        llvm::Value* val = m_builder.CreateExtractValue(fn->arg_begin(), 0);
+        llvm::Function* fn = generate_function_entry(real, { real_ptr }, "Floor", "Real");
+        llvm::Value* val = m_builder.CreateLoad(real, fn->arg_begin());
+        val = m_builder.CreateExtractValue(val, 0);
         llvm::Function* floor = llvm::Intrinsic::getOrInsertDeclaration(
             m_module.get(), llvm::Intrinsic::floor, { m_builder.getDoubleTy() });
         llvm::Value* res = m_builder.CreateCall(floor, { val });
@@ -166,8 +169,10 @@ void Codegen::generate_real_methods() {
 
     // int
     {
-        llvm::Function* fn = generate_function_entry(m_structs["Integer"], { real }, "Int", "Real");
-        llvm::Value* val = m_builder.CreateExtractValue(&*fn->arg_begin(), 0);
+        llvm::Function* fn =
+            generate_function_entry(m_structs["Integer"], { real_ptr }, "Int", "Real");
+        llvm::Value* val = m_builder.CreateLoad(real, fn->arg_begin());
+        val = m_builder.CreateExtractValue(val, 0);
         llvm::Value* res = m_builder.CreateFPToSI(val, m_builder.getInt64Ty());
         m_builder.CreateRet(
             m_builder.CreateInsertValue(llvm::UndefValue::get(m_structs["Integer"]), res, 0));
@@ -175,6 +180,8 @@ void Codegen::generate_real_methods() {
 }
 
 void Codegen::generate_stdio_methods() {
+    llvm::Type* stdio = m_structs["StdIO"];
+    llvm::PointerType* stdio_ptr = llvm::PointerType::get(stdio, 0);
     auto* i8ptr = llvm::PointerType::get(llvm::PointerType::getInt8Ty(m_context), 0);
     auto* printf_type = llvm::FunctionType::get(m_builder.getInt32Ty(), { i8ptr }, true);
 
@@ -182,17 +189,17 @@ void Codegen::generate_stdio_methods() {
         llvm::Function::Create(printf_type, llvm::Function::ExternalLinkage, "printf", *m_module);
     // this
     {
-        generate_function_entry(m_structs["StdIO"], {}, "this", "StdIO");
-        llvm::Value* val = m_builder.CreateAlloca(m_structs["StdIO"]);
-        llvm::Value* field = m_builder.CreateStructGEP(m_structs["StdIO"], val, 0);
+        generate_function_entry(stdio, {}, "this", "StdIO");
+        llvm::Value* val = m_builder.CreateAlloca(stdio);
+        llvm::Value* field = m_builder.CreateStructGEP(stdio, val, 0);
         m_builder.CreateStore(m_builder.getInt1(true), field);
-        m_builder.CreateRet(m_builder.CreateLoad(m_structs["StdIO"], val));
+        m_builder.CreateRet(m_builder.CreateLoad(stdio, val));
     }
 
     // print int
     {
         llvm::Function* print = generate_function_entry(
-            m_builder.getVoidTy(), { m_structs["StdIO"], m_structs["Integer"] }, "Print", "StdIO");
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["Integer"] }, "Print", "StdIO");
         {
             auto arg_iter = print->arg_begin();
             llvm::Value* a = ++arg_iter;
@@ -203,8 +210,8 @@ void Codegen::generate_stdio_methods() {
         }
 
         // ln
-        llvm::Function* println = generate_function_entry(m_builder.getVoidTy(),
-            { m_structs["StdIO"], m_structs["Integer"] }, "PrintLn", "StdIO");
+        llvm::Function* println = generate_function_entry(
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["Integer"] }, "PrintLn", "StdIO");
         auto arg_iter = println->arg_begin();
         llvm::Value* self = arg_iter++;
         llvm::Value* a = arg_iter;
@@ -217,7 +224,7 @@ void Codegen::generate_stdio_methods() {
     // print real
     {
         llvm::Function* print = generate_function_entry(
-            m_builder.getVoidTy(), { m_structs["StdIO"], m_structs["Real"] }, "Print", "StdIO");
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["Real"] }, "Print", "StdIO");
         {
             auto arg_iter = print->arg_begin();
             llvm::Value* a = ++arg_iter;
@@ -229,7 +236,7 @@ void Codegen::generate_stdio_methods() {
 
         // ln
         llvm::Function* println = generate_function_entry(
-            m_builder.getVoidTy(), { m_structs["StdIO"], m_structs["Real"] }, "PrintLn", "StdIO");
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["Real"] }, "PrintLn", "StdIO");
         auto arg_iter = println->arg_begin();
         llvm::Value* self = arg_iter++;
         llvm::Value* a = arg_iter;
@@ -242,7 +249,7 @@ void Codegen::generate_stdio_methods() {
     // print str
     {
         llvm::Function* print = generate_function_entry(
-            m_builder.getVoidTy(), { m_structs["StdIO"], m_structs["String"] }, "Print", "StdIO");
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["String"] }, "Print", "StdIO");
         {
             auto arg_iter = print->arg_begin();
             llvm::Value* a = ++arg_iter;
@@ -254,7 +261,7 @@ void Codegen::generate_stdio_methods() {
 
         // ln
         llvm::Function* println = generate_function_entry(
-            m_builder.getVoidTy(), { m_structs["StdIO"], m_structs["String"] }, "PrintLn", "StdIO");
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["String"] }, "PrintLn", "StdIO");
         auto arg_iter = println->arg_begin();
         llvm::Value* self = arg_iter++;
         llvm::Value* a = arg_iter;
@@ -267,7 +274,7 @@ void Codegen::generate_stdio_methods() {
     // print bool
     {
         llvm::Function* print = generate_function_entry(
-            m_builder.getVoidTy(), { m_structs["StdIO"], m_structs["Bool"] }, "Print", "StdIO");
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["Bool"] }, "Print", "StdIO");
         {
             auto arg_iter = print->arg_begin();
             llvm::Value* a = ++arg_iter;
@@ -281,7 +288,7 @@ void Codegen::generate_stdio_methods() {
         }
         // ln
         llvm::Function* println = generate_function_entry(
-            m_builder.getVoidTy(), { m_structs["StdIO"], m_structs["Bool"] }, "PrintLn", "StdIO");
+            m_builder.getVoidTy(), { stdio_ptr, m_structs["Bool"] }, "PrintLn", "StdIO");
         auto arg_iter = println->arg_begin();
         llvm::Value* self = arg_iter++;
         llvm::Value* a = arg_iter;
@@ -294,13 +301,14 @@ void Codegen::generate_stdio_methods() {
 
 void Codegen::generate_integer_methods() {
     llvm::StructType* integer = m_structs["Integer"];
+    llvm::PointerType* integer_ptr = llvm::PointerType::get(integer, 0);
     TypeName integer_tn = { { "Integer" }, {} };
     // plus
     {
         llvm::Function* fn =
-            generate_function_entry(integer, { integer, integer }, "Plus", "Integer");
+            generate_function_entry(integer, { integer_ptr, integer }, "Plus", "Integer");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(integer, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -313,9 +321,9 @@ void Codegen::generate_integer_methods() {
     // minus
     {
         llvm::Function* fn =
-            generate_function_entry(integer, { integer, integer }, "Minus", "Integer");
+            generate_function_entry(integer, { integer_ptr, integer }, "Minus", "Integer");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(integer, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -328,9 +336,9 @@ void Codegen::generate_integer_methods() {
     // div
     {
         llvm::Function* fn =
-            generate_function_entry(integer, { integer, integer }, "Div", "Integer");
+            generate_function_entry(integer, { integer_ptr, integer }, "Div", "Integer");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(integer, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -343,9 +351,9 @@ void Codegen::generate_integer_methods() {
     // mult
     {
         llvm::Function* fn =
-            generate_function_entry(integer, { integer, integer }, "Mult", "Integer");
+            generate_function_entry(integer, { integer_ptr, integer }, "Mult", "Integer");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(integer, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -358,9 +366,9 @@ void Codegen::generate_integer_methods() {
     // eq
     {
         llvm::Function* fn =
-            generate_function_entry(m_structs["Bool"], { integer, integer }, "Eq", "Integer");
+            generate_function_entry(m_structs["Bool"], { integer_ptr, integer }, "Eq", "Integer");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(integer, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -372,10 +380,10 @@ void Codegen::generate_integer_methods() {
 
     // great
     {
-        llvm::Function* fn =
-            generate_function_entry(m_structs["Bool"], { integer, integer }, "Great", "Integer");
+        llvm::Function* fn = generate_function_entry(
+            m_structs["Bool"], { integer_ptr, integer }, "Great", "Integer");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(integer, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_val = m_builder.CreateExtractValue(a, { 0 });
         llvm::Value* b_val = m_builder.CreateExtractValue(b, { 0 });
@@ -388,6 +396,7 @@ void Codegen::generate_integer_methods() {
 
 void Codegen::generate_string_methods() {
     llvm::Type* string = m_structs["String"];
+    llvm::Type* string_ptr = llvm::PointerType::get(string, 0);
     auto* i8ptr = llvm::PointerType::get(llvm::PointerType::getInt8Ty(m_context), 0);
     auto* strcat_type = llvm::FunctionType::get(i8ptr, { i8ptr, i8ptr }, true);
     llvm::Function* strcat =
@@ -396,9 +405,9 @@ void Codegen::generate_string_methods() {
     // concat
     {
         llvm::Function* fn =
-            generate_function_entry(string, { string, string }, "Concat", "String");
+            generate_function_entry(string, { string_ptr, string }, "Concat", "String");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* a = arg_iter++;
+        llvm::Value* a = m_builder.CreateLoad(string, arg_iter++);
         llvm::Value* b = arg_iter;
         llvm::Value* a_ptr = m_builder.CreateExtractValue(a, 0);
         llvm::Value* b_ptr = m_builder.CreateExtractValue(b, 0);
@@ -419,13 +428,14 @@ void Codegen::generate_string_methods() {
 }
 
 void Codegen::generate_bool_methods() {
-    llvm::Type* bool_ = m_structs["Bool"];
+    llvm::StructType* bool_ = m_structs["Bool"];
+    llvm::PointerType* bool_ptr = llvm::PointerType::get(bool_, 0);
 
     // not
     {
-        llvm::Function* fn = generate_function_entry(bool_, { bool_ }, "Not", "Bool");
+        llvm::Function* fn = generate_function_entry(bool_, { bool_ptr }, "Not", "Bool");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* val = arg_iter++;
+        llvm::Value* val = m_builder.CreateLoad(bool_, arg_iter++);
         val = m_builder.CreateNot(m_builder.CreateExtractValue(val, 0));
         llvm::Value* res = llvm::UndefValue::get(bool_);
         res = m_builder.CreateInsertValue(res, val, 0);
@@ -434,9 +444,9 @@ void Codegen::generate_bool_methods() {
 
     // and
     {
-        llvm::Function* fn = generate_function_entry(bool_, { bool_, bool_ }, "And", "Bool");
+        llvm::Function* fn = generate_function_entry(bool_, { bool_ptr, bool_ }, "And", "Bool");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* val = arg_iter++;
+        llvm::Value* val = m_builder.CreateLoad(bool_, arg_iter++);
         llvm::Value* other = arg_iter++;
         val = m_builder.CreateAnd(
             m_builder.CreateExtractValue(val, 0), m_builder.CreateExtractValue(other, 0));
@@ -447,9 +457,9 @@ void Codegen::generate_bool_methods() {
 
     // or
     {
-        llvm::Function* fn = generate_function_entry(bool_, { bool_, bool_ }, "Or", "Bool");
+        llvm::Function* fn = generate_function_entry(bool_, { bool_ptr, bool_ }, "Or", "Bool");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* val = arg_iter++;
+        llvm::Value* val = m_builder.CreateLoad(bool_, arg_iter++);
         llvm::Value* other = arg_iter++;
         val = m_builder.CreateOr(
             m_builder.CreateExtractValue(val, 0), m_builder.CreateExtractValue(other, 0));
@@ -460,9 +470,9 @@ void Codegen::generate_bool_methods() {
 
     // xor
     {
-        llvm::Function* fn = generate_function_entry(bool_, { bool_, bool_ }, "Xor", "Bool");
+        llvm::Function* fn = generate_function_entry(bool_, { bool_ptr, bool_ }, "Xor", "Bool");
         auto arg_iter = fn->arg_begin();
-        llvm::Value* val = arg_iter++;
+        llvm::Value* val = m_builder.CreateLoad(bool_, arg_iter++);
         llvm::Value* other = arg_iter++;
         val = m_builder.CreateXor(
             m_builder.CreateExtractValue(val, 0), m_builder.CreateExtractValue(other, 0));

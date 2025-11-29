@@ -35,6 +35,7 @@ end
 class String is
     this() is end
     String Concat(String: other) is return "stroka" end
+    Integer Cmp(String: other) is return 1 end
 end
 
 class Array[T] is

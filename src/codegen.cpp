@@ -142,7 +142,8 @@ void Codegen::generate_class_methods(Class class_) {
             auto variables_bak = m_variables;
             m_variables = {};
 
-            std::vector<llvm::Type*> args { m_structs[stringify(class_.name)] };
+            std::vector<llvm::Type*> args { llvm::PointerType::get(
+                m_structs[stringify(class_.name)], 0) };
             for (const auto& arg : method.arguments)
                 args.push_back(get_or_create_struct(arg.first));
             llvm::Type* return_type;
@@ -150,13 +151,12 @@ void Codegen::generate_class_methods(Class class_) {
                 return_type = m_builder.getVoidTy();
             else
                 return_type = get_or_create_struct(method.return_type);
+
             llvm::Function* fn = generate_function_entry(
                 return_type, args, method.name.name, stringify(class_.name));
 
             auto arg_iter = fn->arg_begin();
-            m_this = { m_builder.CreateAlloca(m_structs[stringify(class_.name)]),
-                get_or_create_struct(class_.name) };
-            m_builder.CreateStore(&*arg_iter++, m_this.value().first);
+            m_this = { arg_iter++, get_or_create_struct(class_.name) };
             for (const auto& arg : method.arguments) {
                 m_variables[arg.second.name] = { m_builder.CreateAlloca(
                                                      get_or_create_struct(arg.first)),
@@ -182,7 +182,10 @@ llvm::Function* Codegen::generate_function_entry(llvm::Type* return_type,
 
     std::string signature {};
     for (llvm::Type* arg : args)
-        signature += arg->getStructName().str();
+        if (arg->isStructTy())
+            signature += arg->getStructName().str();
+        else
+            signature += "Ptr";
 
     auto* fn_type = llvm::FunctionType::get(return_type, args, false);
     auto* fn =
@@ -221,21 +224,21 @@ llvm::Value* Codegen::generate_literal(const Expression::Literal& literal) {
 };
 
 llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
-    llvm::Value* object = generate_expression(*call.object);
-    std::string type = object->getType()->getStructName().str();
+    auto [object, type] = generate_lvalue(*call.object);
 
     std::vector<llvm::Value*> args = { object };
     for (const Expression& arg : call.arguments)
         args.push_back(generate_expression(arg));
 
-    std::vector<llvm::Type*> arg_types = {};
-    for (llvm::Value* arg : args)
-        arg_types.push_back(arg->getType());
+    std::vector<llvm::Type*> arg_types = { llvm::PointerType::get(type, 0) };
+    for (size_t i = 1; i < args.size(); i++)
+        arg_types.push_back(args[i]->getType());
 
     llvm::Function* fn;
-    for (auto overload : m_functions[type][call.method.name])
+    for (auto overload : m_functions[type->getStructName().str()][call.method.name]) {
         if (overload.first == arg_types)
             fn = overload.second;
+    }
 
     llvm::Value* fn_call = m_builder.CreateCall(fn, args);
     return fn_call;
@@ -299,16 +302,20 @@ llvm::Value* Codegen::generate_expression(const Expression& expr) {
 std::pair<llvm::Value*, llvm::Type*> Codegen::generate_lvalue(const Expression& expr) {
     if (auto ident = std::get_if<Identifier>(&expr.value)) {
         return { m_variables[ident->name].ptr, m_variables[ident->name].type };
-    }
-    if (auto access = std::get_if<Expression::ThisAccess>(&expr.value)) {
+    } else if (auto access = std::get_if<Expression::ThisAccess>(&expr.value)) {
         int index = m_props[m_this.value().second->getStructName().str()][access->member.name];
         return { m_builder.CreateStructGEP(m_this.value().second, m_this.value().first, index),
             m_this.value().second->getStructElementType(index) };
-    }
-    if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
+    } else if (auto access = std::get_if<Expression::MemberAccess>(&expr.value)) {
         auto [ptr, type] = generate_lvalue(*access->object);
         int index = m_props[type->getStructName().str()][access->member.name];
         return { m_builder.CreateStructGEP(type, ptr, index), type->getStructElementType(index) };
+    } else {
+        llvm::Value* val = generate_expression(expr);
+        llvm::Type* type = val->getType();
+        llvm::AllocaInst* ptr = m_builder.CreateAlloca(type);
+        m_builder.CreateStore(val, ptr);
+        return { ptr, type };
     }
 
     llvm_unreachable("generate_lvalue called on non-lvalue expression");
