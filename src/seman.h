@@ -77,4 +77,5 @@ public:
     void analyze();
     std::optional<TypeName> check_expression(const Expression&);
     Analyzer(Root ast);
+    Root ast();
 };

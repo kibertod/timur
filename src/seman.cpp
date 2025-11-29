@@ -173,6 +173,8 @@ std::optional<Class> Analyzer::type_exists(const TypeName& name) {
             check_class_declaration(class_);
             check_class(class_);
             m_generics = {};
+            m_ast.classes.push_back(
+                Class { TypeName { { stringify(class_.name) }, {} }, class_.extends, class_.body });
             return class_;
         }
     return {};
@@ -534,6 +536,7 @@ void Analyzer::check_statement(const Statement& statement) {
 void Analyzer::check_method(const MemberDeclaration::Method& method) {
     auto variables_bak = m_variables;
     m_variables = {};
+    auto method_bak = m_method;
     m_method = method;
     for (std::pair<TypeName, Identifier> argument : method.arguments) {
         if (m_variables.contains(argument.second.name)) {
@@ -571,7 +574,7 @@ void Analyzer::check_method(const MemberDeclaration::Method& method) {
                 m_class.value().name.name.name, method.name.name, stringify(arguments)));
     }
 
-    m_method = {};
+    m_method = method_bak;
     m_variables = variables_bak;
 }
 
@@ -709,5 +712,7 @@ void Analyzer::print_error(std::string error) {
     std::print("{}", error);
     this->error = true;
 }
+
+Root Analyzer::ast() { return m_ast; }
 
 Analyzer::Analyzer(Root ast) { m_ast = ast; }

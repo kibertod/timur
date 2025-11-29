@@ -1,38 +1,42 @@
-class Pair[T, U] is
-    var first: T
-    var second: U
+class A[T] is
+    this() is end
 
-    this(T: f, U: s) is
-        this.first := f
-        this.second := s
+    // create a B[T] from T
+    B[T] MakeB(T: v) is
+        return B[T](v)
     end
 
-    T First() is
-        return this.first
-    end
-
-    U Second() is
-        return this.second
+    // ask a B[T] to produce a T
+    T Ask(B[T]: b) is
+        return b.Get()
     end
 end
 
-class Printer[T] is
-    this() is end
+class B[T] is
+    var value: T
 
-    Void Print(Pair[T, String]: pair) is
-        StdIO().Print(pair.First())
-        StdIO().Print(" -> ")
-        StdIO().PrintLn(pair.Second())
+    this(T: v) is
+        this.value := v
+    end
+
+    // produce the stored value
+    T Get() is
+        return this.value
+    end
+
+    // use A[T] to produce a B[T] from T
+    B[T] MakeFromA(A[T]: a, T: v) is
+        return a.MakeB(v)
     end
 end
 
 class Program is
     this() is
-        var p: Pair[Integer, String] := Pair[Integer, String](42, "answer")
-        var printer: Printer[Integer] := Printer[Integer]()
-        printer.Print(p)
-
-        var q: Pair[String, Bool] := Pair[String, Bool]("ok", true)
-        StdIO().PrintLn(q.Second())
+        var a: A[Integer] := A[Integer]()
+        var b: B[Integer] := a.MakeB(5)
+        StdIO().PrintLn(b.Get())         // prints "5"
+        var x: Integer := a.Ask(b)
+        StdIO().PrintLn(x)              // prints "5"
     end
 end
+

@@ -61,10 +61,11 @@ private:
     void generate_classes();
     void generate_class(Class class_);
     void generate_class_properties(Class class_);
-    void generate_class_methods(Class class_);
+    void generate_class_method_definitions(Class class_);
+    void generate_class_method_implementations(Class class_);
 
     llvm::Function* generate_function_entry(llvm::Type* return_type, std::vector<llvm::Type*> args,
-        std::string method_name, std::string struct_name);
+        std::string method_name, std::string struct_name, bool insert = true);
 
     llvm::Value* generate_literal(const Expression::Literal&);
     llvm::Value* generate_method_call(const Expression::MethodCall&);

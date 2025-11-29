@@ -36,17 +36,8 @@ int main() {
     // }
     Analyzer analyzer(ast::Root { ctx.root });
     analyzer.analyze();
-    // if (!analyzer.error) {
-    {
-        ctx = {};
-        ctx.row = 1;
-        ctx.src += test_src.str();
-        ctx.pos = 0;
-        yy::parser parser(ctx);
-        parser.parse();
-
-        Codegen codegen { ast::Root { ctx.root } };
+    if (!analyzer.error) {
+        Codegen codegen { analyzer.ast() };
         codegen.generate();
     }
-    // }
 }
