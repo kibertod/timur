@@ -38,7 +38,7 @@ end
 
 class Array[T] is
     this(Integer: size) is end
-    Set(Integer: i, T: value) is end
+    void Set(Integer: i, T: value) is end
     T Get(Integer: i) is end
 end
 
@@ -46,10 +46,10 @@ class List[T] is
     var Size: Integer := 0
     
     this() is end
-    Add(T: value) is end
-    Remove(Integer: i) is end
-    Assign(Integer: i, T: value) is end
-    Swap(Integer: first, Integer: second) is end
+    void Add(T: value) is return void end
+    void Remove(Integer: i) is return void end
+    void Assign(Integer: i, T: value) is return void end
+    void Swap(Integer: first, Integer: second) is return void end
     T Get(Integer: i) is end
     T Pop(Integer: i) is
         var value: T := this.Get(i)
@@ -60,12 +60,12 @@ end
 
 class StdIO is
     this() is end
-    Print(Integer: value) is end
-    Print(Real: value) is end
-    Print(String: value) is end
-    Print(Bool: value) is end
-    PrintLn(Integer: value) is end
-    PrintLn(Real: value) is end
-    PrintLn(String: value) is end
-    PrintLn(Bool: value) is end
+    void Print(Integer: value) is return void end
+    void Print(Real: value) is return void end
+    void Print(String: value) is return void end
+    void Print(Bool: value) is return void end
+    void PrintLn(Integer: value) is return void end
+    void PrintLn(Real: value) is return void end
+    void PrintLn(String: value) is return void end
+    void PrintLn(Bool: value) is return void end
 end

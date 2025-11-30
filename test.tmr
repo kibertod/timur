@@ -24,12 +24,17 @@ class B[T] is
     B[T] MakeFromA(A[T]: a, T: v) is
         return a.MakeB(v)
     end
+
+    void Lal() is
+        return void
+    end
 end
 
 class Program is
     this() is
         var a: A[Integer] := A[Integer]()
         var b: B[Integer] := a.MakeB(5)
+        b.Lal()
         StdIO().PrintLn(b.Get())
         var x: Integer := a.Ask(b)
         StdIO().PrintLn(x)

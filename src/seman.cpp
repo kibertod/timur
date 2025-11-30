@@ -564,24 +564,19 @@ void Analyzer::check_method(const MemberDeclaration::Method& method) {
             return;
         }
 
-    bool should_return = m_method->return_type.has_value();
     bool returned = false;
     for (Statement statement : method.body)
         if (auto _ = get_if<Statement::Return>(&statement.value)) {
             returned = true;
             break;
         }
-    if (returned != should_return && m_class->name.name.name != "Array" &&
-        m_class->name.name.name != "List") {
+    std::set<std::string> builtins = { "Array", "List", "StdIO" };
+    if (!returned && !builtins.contains(m_class->name.name.name)) {
         std::vector<TypeName> arguments {};
         for (auto pair : method.arguments)
             arguments.push_back(pair.first);
-        if (should_return)
-            print_error(std::format("ERROR non-void method {}.{}({}) doesn't return\n",
-                m_class->name.name.name, method.name.name, stringify(arguments)));
-        else
-            print_error(std::format("ERROR void method {}.{}({}) returns\n",
-                m_class->name.name.name, method.name.name, stringify(arguments)));
+        print_error(std::format("ERROR method {}.{}({}) doesn't return\n", m_class->name.name.name,
+            method.name.name, stringify(arguments)));
     }
 
     m_method = method_bak;

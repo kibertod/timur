@@ -192,9 +192,6 @@ void Codegen::generate_class_method_implementations(Class class_) {
                 generate_statement(stmt);
             }
 
-            if (!method.return_type)
-                m_builder.CreateRetVoid();
-
             m_this = {};
             m_variables = variables_bak;
         }

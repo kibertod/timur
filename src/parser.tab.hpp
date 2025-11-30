@@ -531,35 +531,36 @@ namespace yy {
     YYEOF = 0,                     // "end of file"
     YYerror = 256,                 // error
     YYUNDEF = 257,                 // "invalid token"
-    KVar = 258,                    // KVar
-    KWhile = 259,                  // KWhile
-    KLoop = 260,                   // KLoop
-    KIf = 261,                     // KIf
-    KThen = 262,                   // KThen
-    KElse = 263,                   // KElse
-    KElif = 264,                   // KElif
-    KIs = 265,                     // KIs
-    KEnd = 266,                    // KEnd
-    KClass = 267,                  // KClass
-    KExtends = 268,                // KExtends
-    KThis = 269,                   // KThis
-    KSuper = 270,                  // KSuper
-    KTrue = 271,                   // KTrue
-    KFalse = 272,                  // KFalse
-    KReturn = 273,                 // KReturn
-    Identifier = 274,              // Identifier
-    Access = 275,                  // Access
-    Assign = 276,                  // Assign
-    LParen = 277,                  // LParen
-    RParen = 278,                  // RParen
-    Colon = 279,                   // Colon
-    Comma = 280,                   // Comma
-    LBracket = 281,                // LBracket
-    RBracket = 282,                // RBracket
-    LitStr = 283,                  // LitStr
-    LitInt = 284,                  // LitInt
-    LitReal = 285,                 // LitReal
-    Err = 286                      // Err
+    KVoid = 258,                   // KVoid
+    KVar = 259,                    // KVar
+    KWhile = 260,                  // KWhile
+    KLoop = 261,                   // KLoop
+    KIf = 262,                     // KIf
+    KThen = 263,                   // KThen
+    KElse = 264,                   // KElse
+    KElif = 265,                   // KElif
+    KIs = 266,                     // KIs
+    KEnd = 267,                    // KEnd
+    KClass = 268,                  // KClass
+    KExtends = 269,                // KExtends
+    KThis = 270,                   // KThis
+    KSuper = 271,                  // KSuper
+    KTrue = 272,                   // KTrue
+    KFalse = 273,                  // KFalse
+    KReturn = 274,                 // KReturn
+    Identifier = 275,              // Identifier
+    Access = 276,                  // Access
+    Assign = 277,                  // Assign
+    LParen = 278,                  // LParen
+    RParen = 279,                  // RParen
+    Colon = 280,                   // Colon
+    Comma = 281,                   // Comma
+    LBracket = 282,                // LBracket
+    RBracket = 283,                // RBracket
+    LitStr = 284,                  // LitStr
+    LitInt = 285,                  // LitInt
+    LitReal = 286,                 // LitReal
+    Err = 287                      // Err
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -576,58 +577,59 @@ namespace yy {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 32, ///< Number of tokens.
+        YYNTOKENS = 33, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
         S_YYUNDEF = 2,                           // "invalid token"
-        S_KVar = 3,                              // KVar
-        S_KWhile = 4,                            // KWhile
-        S_KLoop = 5,                             // KLoop
-        S_KIf = 6,                               // KIf
-        S_KThen = 7,                             // KThen
-        S_KElse = 8,                             // KElse
-        S_KElif = 9,                             // KElif
-        S_KIs = 10,                              // KIs
-        S_KEnd = 11,                             // KEnd
-        S_KClass = 12,                           // KClass
-        S_KExtends = 13,                         // KExtends
-        S_KThis = 14,                            // KThis
-        S_KSuper = 15,                           // KSuper
-        S_KTrue = 16,                            // KTrue
-        S_KFalse = 17,                           // KFalse
-        S_KReturn = 18,                          // KReturn
-        S_Identifier = 19,                       // Identifier
-        S_Access = 20,                           // Access
-        S_Assign = 21,                           // Assign
-        S_LParen = 22,                           // LParen
-        S_RParen = 23,                           // RParen
-        S_Colon = 24,                            // Colon
-        S_Comma = 25,                            // Comma
-        S_LBracket = 26,                         // LBracket
-        S_RBracket = 27,                         // RBracket
-        S_LitStr = 28,                           // LitStr
-        S_LitInt = 29,                           // LitInt
-        S_LitReal = 30,                          // LitReal
-        S_Err = 31,                              // Err
-        S_YYACCEPT = 32,                         // $accept
-        S_Program = 33,                          // Program
-        S_TypeName = 34,                         // TypeName
-        S_TypeNames = 35,                        // TypeNames
-        S_Expression = 36,                       // Expression
-        S_Expressions = 37,                      // Expressions
-        S_Literal = 38,                          // Literal
-        S_Variable = 39,                         // Variable
-        S_Statement = 40,                        // Statement
-        S_Statements = 41,                       // Statements
-        S_ElIf = 42,                             // ElIf
-        S_ElIfs = 43,                            // ElIfs
-        S_Argument = 44,                         // Argument
-        S_Arguments = 45,                        // Arguments
-        S_MemberDeclaration = 46,                // MemberDeclaration
-        S_MemberDeclarations = 47,               // MemberDeclarations
-        S_Class = 48,                            // Class
-        S_Classes = 49                           // Classes
+        S_KVoid = 3,                             // KVoid
+        S_KVar = 4,                              // KVar
+        S_KWhile = 5,                            // KWhile
+        S_KLoop = 6,                             // KLoop
+        S_KIf = 7,                               // KIf
+        S_KThen = 8,                             // KThen
+        S_KElse = 9,                             // KElse
+        S_KElif = 10,                            // KElif
+        S_KIs = 11,                              // KIs
+        S_KEnd = 12,                             // KEnd
+        S_KClass = 13,                           // KClass
+        S_KExtends = 14,                         // KExtends
+        S_KThis = 15,                            // KThis
+        S_KSuper = 16,                           // KSuper
+        S_KTrue = 17,                            // KTrue
+        S_KFalse = 18,                           // KFalse
+        S_KReturn = 19,                          // KReturn
+        S_Identifier = 20,                       // Identifier
+        S_Access = 21,                           // Access
+        S_Assign = 22,                           // Assign
+        S_LParen = 23,                           // LParen
+        S_RParen = 24,                           // RParen
+        S_Colon = 25,                            // Colon
+        S_Comma = 26,                            // Comma
+        S_LBracket = 27,                         // LBracket
+        S_RBracket = 28,                         // RBracket
+        S_LitStr = 29,                           // LitStr
+        S_LitInt = 30,                           // LitInt
+        S_LitReal = 31,                          // LitReal
+        S_Err = 32,                              // Err
+        S_YYACCEPT = 33,                         // $accept
+        S_Program = 34,                          // Program
+        S_TypeName = 35,                         // TypeName
+        S_TypeNames = 36,                        // TypeNames
+        S_Expression = 37,                       // Expression
+        S_Expressions = 38,                      // Expressions
+        S_Literal = 39,                          // Literal
+        S_Variable = 40,                         // Variable
+        S_Statement = 41,                        // Statement
+        S_Statements = 42,                       // Statements
+        S_ElIf = 43,                             // ElIf
+        S_ElIfs = 44,                            // ElIfs
+        S_Argument = 45,                         // Argument
+        S_Arguments = 46,                        // Arguments
+        S_MemberDeclaration = 47,                // MemberDeclaration
+        S_MemberDeclarations = 48,               // MemberDeclarations
+        S_Class = 49,                            // Class
+        S_Classes = 50                           // Classes
       };
     };
 
@@ -1305,6 +1307,21 @@ switch (yykind)
       make_YYUNDEF (const location_type& l)
       {
         return symbol_type (token::YYUNDEF, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
+      make_KVoid (location_type l)
+      {
+        return symbol_type (token::KVoid, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_KVoid (const location_type& l)
+      {
+        return symbol_type (token::KVoid, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -2046,7 +2063,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 201,     ///< Last index in yytable_.
+      yylast_ = 210,     ///< Last index in yytable_.
       yynnts_ = 18,  ///< Number of nonterminal symbols.
       yyfinal_ = 7 ///< Termination state number.
     };
@@ -2095,10 +2112,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31
+      25,    26,    27,    28,    29,    30,    31,    32
     };
     // Last valid token kind.
-    const int code_max = 286;
+    const int code_max = 287;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2358,7 +2375,7 @@ switch (yykind)
 
 
 } // yy
-#line 2362 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 2379 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 
