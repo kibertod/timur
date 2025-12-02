@@ -36,20 +36,17 @@ void Codegen::generate_classes() {
             exists.insert(stringify(class_.name));
             continue;
         }
-        if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty())
+        if (stringify(class_.name) != "Program")
             generate_class(class_);
     }
     for (const Class& class_ : m_ast.classes)
-        if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty() &&
-            !exists.contains(stringify(class_.name)))
+        if (stringify(class_.name) != "Program" && !exists.contains(stringify(class_.name)))
             generate_class_properties(class_);
     for (const Class& class_ : m_ast.classes)
-        if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty() &&
-            !exists.contains(stringify(class_.name)))
+        if (stringify(class_.name) != "Program" && !exists.contains(stringify(class_.name)))
             generate_class_method_definitions(class_);
     for (const Class& class_ : m_ast.classes)
-        if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty() &&
-            !exists.contains(stringify(class_.name)))
+        if (stringify(class_.name) != "Program" && !exists.contains(stringify(class_.name)))
             generate_class_method_implementations(class_);
 }
 

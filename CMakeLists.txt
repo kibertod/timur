@@ -33,7 +33,7 @@ find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-set(LLVM_COMPONENTS Core Support Target ExecutionEngine)
+set(LLVM_COMPONENTS Core Support Target ExecutionEngine OrcJIT)
 
 execute_process(
     COMMAND llvm-config --libs ${LLVM_COMPONENTS}
