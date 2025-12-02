@@ -89,8 +89,7 @@ void Codegen::generate_class_method_definitions(Class class_) {
                 method.arguments[i].first = method.arguments[i].first;
             method.return_type = method.return_type;
 
-            std::vector<llvm::Type*> args { llvm::PointerType::get(
-                m_structs[stringify(class_.name)], 0) };
+            std::vector<llvm::Type*> args { m_builder.getPtrTy(0) };
             for (const auto& arg : method.arguments)
                 args.push_back(m_structs[stringify(arg.first)]);
             llvm::Type* return_type;
@@ -158,8 +157,7 @@ void Codegen::generate_class_method_implementations(Class class_) {
             auto variables_bak = m_variables;
             m_variables = {};
 
-            std::vector<llvm::Type*> args { llvm::PointerType::get(
-                m_structs[stringify(class_.name)], 0) };
+            std::vector<llvm::Type*> args { m_builder.getPtrTy(0) };
             for (const auto& arg : method.arguments)
                 args.push_back(m_structs[stringify(arg.first)]);
             llvm::Function* fn;
@@ -253,7 +251,7 @@ llvm::Value* Codegen::generate_method_call(const Expression::MethodCall& call) {
     for (const Expression& arg : call.arguments)
         args.push_back(generate_expression(arg));
 
-    std::vector<llvm::Type*> arg_types = { llvm::PointerType::get(type, 0) };
+    std::vector<llvm::Type*> arg_types = { m_builder.getPtrTy(0) };
     for (size_t i = 1; i < args.size(); i++)
         arg_types.push_back(args[i]->getType());
 

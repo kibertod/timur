@@ -11,8 +11,7 @@
 
 void Codegen::generate_string() {
     llvm::StructType* string = llvm::StructType::create(m_context, "String");
-    string->setBody({ llvm::PointerType::get(llvm::PointerType::getInt8Ty(m_context), 0),
-        m_builder.getInt64Ty() });
+    string->setBody({ m_builder.getPtrTy(0), m_builder.getInt64Ty() });
     m_structs["String"] = string;
 }
 
@@ -42,7 +41,7 @@ void Codegen::generate_real() {
 
 void Codegen::generate_real_methods() {
     llvm::StructType* real = m_structs["Real"];
-    llvm::PointerType* real_ptr = llvm::PointerType::get(real, 0);
+    llvm::PointerType* real_ptr = m_builder.getPtrTy(0);
     llvm::StructType* integer = m_structs["Integer"];
     TypeName real_tn = { { "Real" }, {} };
 
@@ -176,8 +175,8 @@ void Codegen::generate_real_methods() {
 
 void Codegen::generate_stdio_methods() {
     llvm::Type* stdio = m_structs["StdIO"];
-    llvm::PointerType* stdio_ptr = llvm::PointerType::get(stdio, 0);
-    auto* i8ptr = llvm::PointerType::get(llvm::PointerType::getInt8Ty(m_context), 0);
+    llvm::PointerType* stdio_ptr = m_builder.getPtrTy(0);
+    auto* i8ptr = m_builder.getPtrTy(0);
     auto* printf_type = llvm::FunctionType::get(m_builder.getInt32Ty(), { i8ptr }, true);
 
     llvm::Function* fn_printf =
@@ -296,7 +295,7 @@ void Codegen::generate_stdio_methods() {
 
 void Codegen::generate_integer_methods() {
     llvm::StructType* integer = m_structs["Integer"];
-    llvm::PointerType* integer_ptr = llvm::PointerType::get(integer, 0);
+    llvm::PointerType* integer_ptr = m_builder.getPtrTy(0);
     TypeName integer_tn = { { "Integer" }, {} };
     // plus
     {
@@ -391,8 +390,8 @@ void Codegen::generate_integer_methods() {
 
 void Codegen::generate_string_methods() {
     llvm::Type* string = m_structs["String"];
-    llvm::Type* string_ptr = llvm::PointerType::get(string, 0);
-    auto* i8ptr = llvm::PointerType::get(llvm::PointerType::getInt8Ty(m_context), 0);
+    llvm::Type* string_ptr = m_builder.getPtrTy(0);
+    auto* i8ptr = m_builder.getPtrTy(0);
     auto* strcat_type = llvm::FunctionType::get(i8ptr, { i8ptr, i8ptr }, true);
     llvm::Function* strcat =
         llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", *m_module);
@@ -424,7 +423,7 @@ void Codegen::generate_string_methods() {
 
 void Codegen::generate_bool_methods() {
     llvm::StructType* bool_ = m_structs["Bool"];
-    llvm::PointerType* bool_ptr = llvm::PointerType::get(bool_, 0);
+    llvm::PointerType* bool_ptr = m_builder.getPtrTy(0);
 
     // not
     {
