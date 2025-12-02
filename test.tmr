@@ -1,43 +1,46 @@
-class A[T] is
+class B is
+    var str: String
     this() is end
-
-    B[T] MakeB(T: v) is
-        return B[T](v)
-    end
-
-    T Ask(B[T]: b) is
-        return b.Get()
+    void b() is
+        StdIO().PrintLn("this is from B")
+        return void
     end
 end
 
-class B[T] is
-    var value: T
-
-    this(T: v) is
-        this.value := v
+class D is
+    var int: Integer
+    this() is end
+    void d() is
+        StdIO().PrintLn("this is from D")
+        return void
     end
+end
 
-    T Get() is
-        return this.value
+class C extends B, D is
+    this() is end
+    void c() is
+        StdIO().PrintLn("this is from C")
+        return void
     end
+end
 
-    B[T] MakeFromA(A[T]: a, T: v) is
-        return a.MakeB(v)
-    end
-
-    void Lal() is
+class A extends C is
+    this() is end
+    void b() is
+        StdIO().PrintLn("this was from B but now it's from A!")
         return void
     end
 end
 
 class Program is
     this() is
-        var a: A[Integer] := A[Integer]()
-        var b: B[Integer] := a.MakeB(5)
-        b.Lal()
-        StdIO().PrintLn(b.Get())
-        var x: Integer := a.Ask(b)
-        StdIO().PrintLn(x)
+        var a: A := A()
+        a.str := "str"
+        a.int := 1
+        a.c()
+        a.d()
+        a.b()
+        StdIO().PrintLn(a.str)
+        StdIO().PrintLn(a.int)
     end
 end
-

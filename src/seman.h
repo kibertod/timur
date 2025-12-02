@@ -3,6 +3,7 @@
 #include "ast.h"
 #include <map>
 #include <optional>
+#include <set>
 #include <unordered_map>
 
 using namespace ast;
@@ -15,20 +16,31 @@ struct VariableState {
 
 class Analyzer {
 private:
+    struct Method {
+        std::string name;
+        std::vector<TypeName> args;
+        std::optional<TypeName> return_type;
+
+        bool operator==(const Method&) const = default;
+
+        bool operator<(const Method& other) const {
+            return name < other.name && args < other.args && return_type < other.return_type;
+        };
+    };
+
     std::unordered_map<std::string, VariableState> m_variables;
     std::unordered_map<std::string, VariableState> m_members;
     Root m_ast;
     std::unordered_map<std::string, Class> m_classes;
     std::unordered_map<std::string, std::map<std::string, TypeName>> m_properties;
-    std::unordered_map<std::string,
-        std::map<std::string,
-            std::vector<std::pair<std::vector<TypeName>, std::optional<TypeName>>>>>
-        m_methods;
+    std::unordered_map<std::string, std::map<std::string, std::vector<Method>>> m_methods;
     std::unordered_map<std::string, std::vector<std::vector<TypeName>>> m_constructors;
     std::optional<Class> m_class;
     std::optional<MemberDeclaration::Method> m_method;
     std::unordered_map<std::string, TypeName> m_generics;
 
+    std::pair<std::set<std::pair<std::string, TypeName>>, std::set<Analyzer::Method>> class_members(
+        const Class&);
     bool lvalue_accessible(const Expression&);
     std::optional<Class> type_exists(const TypeName&);
     std::optional<TypeName> get_property(const TypeName&, const Identifier&);

@@ -9,7 +9,31 @@
 
 using namespace ast;
 
+std::pair<std::set<std::pair<std::string, TypeName>>, std::set<Analyzer::Method>>
+Analyzer::class_members(const Class& class_) {
+    std::set<std::pair<std::string, TypeName>> props;
+    std::set<Method> methods;
+    for (const MemberDeclaration& member : class_.body)
+        if (auto method = std::get_if<MemberDeclaration::Method>(&member.value)) {
+            std::vector<TypeName> args {};
+            for (auto arg : method->arguments)
+                args.push_back(arg.first);
+            methods.insert({ method->name.name, args, method->return_type });
+        } else if (auto var = std::get_if<Variable>(&member.value))
+            props.insert({ var->name.name, var->type_name });
+    for (const TypeName& parent_tn : class_.extends) {
+        std::optional<Class> parent = type_exists(parent_tn);
+        if (parent) {
+            auto [parent_props, parent_methods] = class_members(*parent);
+            props.merge(parent_props);
+            methods.merge(parent_methods);
+        }
+    }
+    return { props, methods };
+}
+
 bool Analyzer::lvalue_accessible(const Expression& expr) {
+    return true;
     if (std::holds_alternative<Identifier>(expr.value) ||
         std::holds_alternative<Expression::ThisAccess>(expr.value))
         return true;
@@ -30,8 +54,8 @@ TypeName Analyzer::substitute_generics(TypeName type_name) {
 
 Class Analyzer::substitute_generics(Class class_) {
     class_.name = substitute_generics(class_.name);
-    if (class_.extends)
-        class_.extends = substitute_generics(*class_.extends);
+    for (TypeName& parent : class_.extends)
+        parent = substitute_generics(parent);
 
     for (MemberDeclaration& decl : class_.body) {
         decl = substitute_generics(decl);
@@ -190,8 +214,8 @@ std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Ident
     if (m_properties[stringify(type)].contains(identifier.name))
         return m_properties[stringify(type)][identifier.name];
 
-    if (class_->extends) {
-        std::optional<Class> parent = type_exists(*class_->extends);
+    for (TypeName& parent_tn : class_->extends) {
+        std::optional<Class> parent = type_exists(parent_tn);
         if (!parent)
             return {};
         std::optional<TypeName> parent_prop = get_property(parent->name, identifier);
@@ -213,11 +237,11 @@ std::optional<TypeName> Analyzer::get_method(
 
     if (m_methods[stringify(type)].contains(identifier.name))
         for (const auto& sign : m_methods[stringify(type)][identifier.name])
-            if (sign.first == arguments)
-                return sign.second;
+            if (sign.args == arguments)
+                return sign.return_type;
 
-    if (class_->extends) {
-        std::optional<Class> parent = type_exists(*class_->extends);
+    for (TypeName& parent_tn : class_->extends) {
+        std::optional<Class> parent = type_exists(parent_tn);
         if (!parent)
             return {};
         std::optional<TypeName> parent_method = get_method(parent->name, identifier, arguments);
@@ -459,7 +483,7 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
         print_error(std::format("ERROR super can be called only inside methods\n"));
         return;
     }
-    if (!m_class->extends) {
+    if (m_class->extends.size() == 0) {
         print_error(
             std::format("ERROR super can be called only for classes that extends smth.\nbruh..\n"));
         return;
@@ -474,16 +498,43 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
         arguments.push_back(*type);
     }
 
-    bool exists = false;
-    for (std::vector<TypeName> constructor : m_constructors[m_class->extends->name.name])
-        if (constructor == arguments) {
-            exists = true;
-            break;
+    if (super_call.parent) {
+        type_exists(*super_call.parent);
+        bool exists = false;
+        for (std::vector<TypeName> constructor : m_constructors[stringify(*super_call.parent)])
+            if (constructor == arguments) {
+                exists = true;
+                break;
+            }
+        if (!exists) {
+            print_error(std::format("ERROR class {} doesn't have matching constructor\n",
+                stringify(*super_call.parent)));
+            print(Statement { super_call }, 0);
         }
-    if (!exists) {
-        print_error(std::format(
-            "ERROR class {} doesn't have matching constructor\n", stringify(*m_class->extends)));
-        print(Statement { super_call }, 0);
+    } else {
+        if (m_class->extends.size() == 0) {
+            print_error(
+                std::format("ERROR class {} doesn't have a parent\n", stringify(m_class->name)));
+            print(Statement { super_call }, 0);
+        } else if (m_class->extends.size() > 1) {
+            print_error(
+                std::format("ERROR class {} have multiple parents\n", stringify(m_class->name)));
+            print(Statement { super_call }, 0);
+        } else {
+            TypeName parent = m_class->extends[0];
+            type_exists(parent);
+            bool exists = false;
+            for (std::vector<TypeName> constructor : m_constructors[stringify(parent)])
+                if (constructor == arguments) {
+                    exists = true;
+                    break;
+                }
+            if (!exists) {
+                print_error(std::format(
+                    "ERROR class {} doesn't have matching constructor\n", stringify(parent)));
+                print(Statement { super_call }, 0);
+            }
+        }
     }
 }
 
@@ -519,8 +570,8 @@ void Analyzer::check_statement(const Statement& statement) {
         check_while(*while_);
     if (auto assignment = std::get_if<Statement::Assignment>(&statement.value))
         check_assignment(*assignment);
-    if (auto super_call = std::get_if<Statement::SuperCall>(&statement.value))
-        check_super_call(*super_call);
+    // if (auto super_call = std::get_if<Statement::SuperCall>(&statement.value))
+    //     check_super_call(*super_call);
     if (auto return_ = std::get_if<Statement::Return>(&statement.value))
         check_return(*return_);
     if (auto expression = std::get_if<Expression>(&statement.value))
@@ -604,11 +655,12 @@ void Analyzer::check_class(const Class& class_) {
 
     std::string classname = stringify(class_.name);
 
-    if (class_.extends) {
-        if (!type_exists(*class_.extends))
+    for (const TypeName& parent_tn : class_.extends) {
+        std::optional<Class> parent = type_exists(parent_tn);
+        if (!parent)
             print_error(std::format("ERROR 'class {0} extends {1}' class {1} doesn't exist\n",
-                class_.name.name.name, class_.extends->name.name));
-        if (class_.extends->name == class_.name.name)
+                class_.name.name.name, stringify(parent_tn)));
+        if (parent_tn == class_.name)
             print_error(
                 std::format("ERROR class {0} can't extend itself\n", class_.name.name.name));
     }
@@ -644,6 +696,36 @@ void Analyzer::check_class_declaration(const Class& class_) {
         m_methods[classname] = {};
         m_constructors[classname] = {};
 
+        std::set<std::pair<std::string, TypeName>> props {};
+        std::set<Method> methods {};
+
+        for (const TypeName& parent_tn : class_.extends) {
+            std::optional<Class> parent = type_exists(parent_tn);
+            if (!parent)
+                continue;
+            auto [parent_props, parent_methods] = class_members(*parent);
+
+            for (auto parent_prop : parent_props)
+                for (auto prop : props)
+                    if (prop.first == parent_prop.first)
+                        print_error(std::format(
+                            "ERROR parents of class {} define property {} multiple times\n",
+                            stringify(class_.name), prop.first));
+            props.merge(parent_props);
+            for (Method parent_method : parent_methods)
+                for (Method method : methods)
+                    if (method.name == parent_method.name && method.args == parent_method.args)
+                        print_error(std::format(
+                            "ERROR parents of class {} define method {}({}) multiple times\n",
+                            stringify(class_.name), method.name, stringify(method.args)));
+            methods.merge(parent_methods);
+        }
+
+        for (auto prop : props)
+            m_properties[classname][prop.first] = prop.second;
+        for (auto method : methods)
+            m_methods[classname][method.name].push_back(method);
+
         for (MemberDeclaration member : class_.body) {
             if (auto property = std::get_if<Variable>(&member.value)) {
                 if (m_properties[classname].contains(property->name.name)) {
@@ -660,20 +742,20 @@ void Analyzer::check_class_declaration(const Class& class_) {
                 if (m_methods[classname].contains(method->name.name)) {
                     bool overload_exists = false;
                     for (auto overload : m_methods[classname][method->name.name]) {
-                        if (overload.first == arguments) {
+                        if (overload.args == arguments) {
                             overload_exists = true;
-                            print_error(std::format("ERROR duplicate methods {}({})) in class {}\n",
+                            print_error(std::format("ERROR duplicate methods {}({}) in class {}\n",
                                 method->name.name, stringify(arguments), classname));
                             break;
                         }
                     }
                     if (!overload_exists) {
                         m_methods[classname][method->name.name].push_back(
-                            { arguments, method->return_type });
+                            { method->name.name, arguments, method->return_type });
                     }
                 } else {
-                    m_methods[classname][method->name.name] = { { arguments,
-                        method->return_type } };
+                    m_methods[classname][method->name.name].push_back(
+                        { method->name.name, arguments, method->return_type });
                 }
             }
             if (auto constructor = std::get_if<MemberDeclaration::Constructor>(&member.value)) {

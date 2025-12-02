@@ -36,8 +36,8 @@ int main() {
     // }
     Analyzer analyzer(ast::Root { ctx.root });
     analyzer.analyze();
-    if (!analyzer.error) {
-        Codegen codegen { analyzer.ast() };
-        codegen.generate();
-    }
+    // if (!analyzer.error) {
+    Codegen codegen { analyzer.ast() };
+    codegen.generate();
+    // }
 }

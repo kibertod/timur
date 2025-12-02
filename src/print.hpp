@@ -17,6 +17,30 @@ inline std::string tabs(size_t depth) {
     return res;
 }
 
+inline std::string stringify(ast::TypeName type_name) {
+    std::string res;
+    res += type_name.name.name;
+    if (!type_name.generic_arguments.empty()) {
+        res += "[";
+        for (ast::TypeName generic : type_name.generic_arguments) {
+            res += std::format("{}, ", stringify(generic));
+        }
+        res.erase(res.size() - 2);
+        res += "]";
+    }
+    return res;
+}
+
+inline std::string stringify(const std::vector<ast::TypeName> arguments) {
+    std::string res;
+    for (ast::TypeName type : arguments) {
+        res += std::format("{}, ", stringify(type));
+    }
+    if (arguments.size() > 0)
+        res.erase(res.size() - 2);
+    return res;
+}
+
 inline std::string expression_heaading(std::string text) {
     return std::string("\033[1m\033[31m") + text + "\033[0m";
 }
@@ -42,35 +66,7 @@ inline std::string ident(std::string text) {
 }
 
 inline void print(ast::TypeName type_name, size_t depth) {
-    std::print("{0}{1}\n{0}{2} {3}\n{0}{4} \n", tabs(depth), misc_heaading("TYPENAME"),
-        ident("name:"), type_name.name.name, ident("generic arguments:"));
-    for (size_t i = 0; i < type_name.generic_arguments.size(); i++) {
-        print(type_name.generic_arguments[i], depth + 1);
-    }
-}
-
-inline std::string stringify(ast::TypeName type_name) {
-    std::string res;
-    res += type_name.name.name;
-    if (!type_name.generic_arguments.empty()) {
-        res += "[";
-        for (ast::TypeName generic : type_name.generic_arguments) {
-            res += std::format("{}, ", stringify(generic));
-        }
-        res.erase(res.size() - 2);
-        res += "]";
-    }
-    return res;
-}
-
-inline std::string stringify(const std::vector<ast::TypeName> arguments) {
-    std::string res;
-    for (ast::TypeName type : arguments) {
-        res += std::format("{}, ", stringify(type));
-    }
-    if (arguments.size() > 0)
-        res.erase(res.size() - 2);
-    return res;
+    std::print("{}{}\n", tabs(depth), stringify(type_name));
 }
 
 inline void print(ast::Expression expression, size_t depth) {
@@ -174,6 +170,8 @@ inline void print(ast::Statement statement, size_t depth) {
     }
     if (auto call = std::get_if<ast::Statement::SuperCall>(&statement.value)) {
         std::print("{0}{1}\n", tabs(depth), expression_heaading("SUPER CALL"));
+        if (call->parent)
+            std::print("{0}{1}{2}\n", tabs(depth), ident("parent: "), stringify(*call->parent));
         std::print("{0}{1}\n", tabs(depth), ident("arguments:"));
         for (size_t i = 0; i < call->arguments.size(); i++) {
             auto argument = call->arguments[i];
@@ -254,9 +252,10 @@ inline void print(ast::MemberDeclaration declaration, size_t depth) {
 inline void print(ast::Class class_, size_t depth) {
     std::print("{0}{1}\n{2} \n", tabs(depth), class_heading("CLASS"), ident("type_name:"));
     print(class_.name, depth + 1);
-    if (class_.extends) {
+    if (class_.extends.size() > 0) {
         std::print("{0}{1}\n", tabs(depth), ident("extends:"));
-        print(*class_.extends, depth + 1);
+        for (const ast::TypeName& parent : class_.extends)
+            print(parent, depth + 1);
     }
     std::print("{0}{1}\n", tabs(depth), ident("members:"));
     for (size_t i = 0; i < class_.body.size(); i++) {

@@ -160,7 +160,8 @@ Statement:
     | KWhile Expression KLoop Statements KEnd { $$ = {ast::Statement::While{$2, $4}}; }
     | KIf Expression KThen Statements ElIfs KEnd { $$ = {ast::Statement::If{$2, $4, $5, std::vector<ast::Statement>()}}; }
     | KIf Expression KThen Statements ElIfs KElse Statements KEnd { $$ = {ast::Statement::If{$2, $4, $5, $7}}; }
-    | KSuper LParen Expressions RParen { $$ = { ast::Statement::SuperCall{ $3 } }; }
+    | KSuper LParen Expressions RParen { $$ = { ast::Statement::SuperCall{ {}, $3 } }; }
+    | KSuper Access TypeName LParen Expressions RParen { $$ = { ast::Statement::SuperCall{ $3, $5 } }; }
 ;
 
 Statements:
@@ -200,7 +201,7 @@ MemberDeclarations:
 ;
 
 Class:
-    KClass TypeName KExtends TypeName KIs MemberDeclarations KEnd { $$ = {$2, $4, $6}; }
+    KClass TypeName KExtends TypeNames KIs MemberDeclarations KEnd { $$ = {$2, $4, $6}; }
     | KClass TypeName KIs MemberDeclarations KEnd { $$ = {$2, {}, $4}; }
 ;
 
