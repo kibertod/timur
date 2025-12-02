@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.16)
 project(Timur VERSION 0.1.0 LANGUAGES CXX)
 
 find_package(BISON REQUIRED)
-find_package(LLVM REQUIRED CONFIG)   # Add LLVM
 
 set(BISON_INPUT_FILE ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.ypp)
 set(BISON_OUTPUT_CPP ${CMAKE_CURRENT_SOURCE_DIR}/src/parser.tab.cpp)
@@ -34,7 +33,7 @@ find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
-set(LLVM_COMPONENTS Core Support Target ExecutionEngine OrcJIT)
+set(LLVM_COMPONENTS Core Support Target ExecutionEngine)
 
 execute_process(
     COMMAND llvm-config --libs ${LLVM_COMPONENTS}

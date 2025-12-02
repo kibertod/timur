@@ -468,7 +468,7 @@ void Codegen::generate() {
         }
     }
 
-    m_module->print(llvm::outs(), nullptr);
+    // m_module->print(llvm::outs(), nullptr);
     if (llvm::verifyModule(*m_module, &llvm::errs())) {
         llvm::errs() << "Error constructing LLVM module!\n";
         return;
