@@ -4,6 +4,8 @@
 #include "seman.h"
 #include "codegen.h"
 
+// #include "print.hpp"
+
 int main() {
     std::ifstream file("test.tmr");
     if (!file) {
@@ -30,12 +32,14 @@ int main() {
     yy::parser parser(ctx);
     parser.parse();
 
-    // for (size_t i = 0; i < ctx.root.size(); i++) {
-    //     auto node = ctx.root[i];
-    //     print(node, 0);
-    // }
     Analyzer analyzer(ast::Root { ctx.root });
     analyzer.analyze();
+
+    // for (size_t i = 0; i < analyzer.ast().classes.size(); i++) {
+    //     auto node = analyzer.ast().classes[i];
+    //     print(node, 0);
+    // }
+
     if (!analyzer.error) {
         Codegen codegen { analyzer.ast() };
         codegen.generate();

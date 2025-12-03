@@ -199,7 +199,7 @@ std::optional<Class> Analyzer::type_exists(const TypeName& name) {
             check_class_declaration(class_);
             check_class(class_);
             m_generics = {};
-            m_ast.classes.push_back(
+            m_particular_generics.push_back(
                 Class { TypeName { { stringify(class_.name) }, {} }, class_.extends, class_.body });
             return class_;
         }
@@ -835,6 +835,9 @@ void Analyzer::analyze() {
     if (!m_classes.contains("Program")) {
         print_error("ERROR class Program is not defined\n");
     }
+
+    for (Class class_ : m_particular_generics)
+        m_ast.classes.push_back(class_);
 }
 
 void Analyzer::print_error(std::string error) {

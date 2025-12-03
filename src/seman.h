@@ -31,6 +31,7 @@ private:
     std::unordered_map<std::string, VariableState> m_variables;
     std::unordered_map<std::string, VariableState> m_members;
     Root m_ast;
+    std::vector<Class> m_particular_generics;
     std::unordered_map<std::string, Class> m_classes;
     std::unordered_map<std::string, std::map<std::string, TypeName>> m_properties;
     std::unordered_map<std::string, std::map<std::string, std::vector<Method>>> m_methods;
