@@ -48,5 +48,6 @@ class Program is
         StdIO().PrintLn(a.str)
         a.ResetB()
         StdIO().PrintLn(a.str)
+        StdIO().PrintLn("str".Cmp("str"))
     end
 end

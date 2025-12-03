@@ -395,10 +395,14 @@ void Codegen::generate_integer_methods() {
 void Codegen::generate_string_methods() {
     llvm::Type* string = m_structs["String"];
     llvm::Type* string_ptr = m_builder.getPtrTy(0);
+    llvm::Type* integer = m_structs["Integer"];
     auto* i8ptr = m_builder.getPtrTy(0);
     auto* strcat_type = llvm::FunctionType::get(i8ptr, { i8ptr, i8ptr }, true);
+    auto* strcmp_type = llvm::FunctionType::get(m_builder.getInt32Ty(), { i8ptr, i8ptr }, false);
     llvm::Function* strcat =
         llvm::Function::Create(strcat_type, llvm::Function::ExternalLinkage, "strcat", *m_module);
+    llvm::Function* strcmp =
+        llvm::Function::Create(strcmp_type, llvm::Function::ExternalLinkage, "strcmp", *m_module);
 
     // concat
     {
@@ -421,6 +425,21 @@ void Codegen::generate_string_methods() {
         llvm::Value* res = llvm::UndefValue::get(string);
         res = m_builder.CreateInsertValue(res, new_ptr, 0);
         res = m_builder.CreateInsertValue(res, new_size, 1);
+        m_builder.CreateRet(res);
+    }
+
+    // cmp
+    {
+        llvm::Function* fn =
+            generate_function_entry(integer, { string_ptr, string }, "Cmp", "String");
+        auto arg_iter = fn->arg_begin();
+        llvm::Value* a = m_builder.CreateLoad(string, arg_iter++);
+        llvm::Value* b = arg_iter;
+        llvm::Value* a_ptr = m_builder.CreateExtractValue(a, 0);
+        llvm::Value* b_ptr = m_builder.CreateExtractValue(b, 0);
+        llvm::Value* res = m_builder.CreateCall(strcmp, { a_ptr, b_ptr });
+        res = m_builder.CreateZExt(res, m_builder.getInt64Ty());
+        res = m_builder.CreateInsertValue(llvm::UndefValue::get(integer), res, 0);
         m_builder.CreateRet(res);
     }
 }
