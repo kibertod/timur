@@ -218,18 +218,15 @@ std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Ident
         std::optional<Class> parent = type_exists(parent_tn);
         if (!parent)
             return {};
-        std::optional<TypeName> parent_prop = get_property(parent->name, identifier);
+        std::optional<TypeName> parent_prop = get_property(parent_tn, identifier);
         if (parent_prop)
             return parent_prop;
     }
 
-    print_error(
-        std::format("ERROR class {} doesn't have property {}\n", type.name.name, identifier.name));
-
     return {};
 }
 
-std::optional<TypeName> Analyzer::get_method(
+std::optional<std::optional<TypeName>> Analyzer::get_method(
     const TypeName& type, const Identifier& identifier, const std::vector<TypeName>& arguments) {
     std::optional<Class> class_ = type_exists(type);
     if (!class_)
@@ -244,13 +241,12 @@ std::optional<TypeName> Analyzer::get_method(
         std::optional<Class> parent = type_exists(parent_tn);
         if (!parent)
             return {};
-        std::optional<TypeName> parent_method = get_method(parent->name, identifier, arguments);
+        std::optional<std::optional<TypeName>> parent_method =
+            get_method(parent_tn, identifier, arguments);
         if (parent_method)
             return parent_method;
     }
 
-    print_error(std::format("ERROR method {}.{}({}) doesn't exist\n", stringify(type),
-        identifier.name, stringify(arguments)));
     return {};
 }
 
@@ -272,7 +268,17 @@ std::optional<TypeName> Analyzer::check_member_access(const Expression::MemberAc
     auto object = check_expression(*access.object);
     if (!object)
         return {};
-    return get_property(*object, access.member);
+    if (!*object) {
+        print_error(std::format("ERROR attempt of void property access\n"));
+        print(Expression { access }, 0);
+        return {};
+    }
+
+    std::optional<TypeName> type = get_property(**object, access.member);
+    if (!type)
+        print_error(std::format(
+            "ERROR class {} doesn't have property {}\n", (*object)->name.name, access.member.name));
+    return type;
 }
 
 std::optional<TypeName> Analyzer::check_this_access(const Expression::ThisAccess& access) {
@@ -280,47 +286,79 @@ std::optional<TypeName> Analyzer::check_this_access(const Expression::ThisAccess
         print_error(std::format("ERROR 'this' can be accessed only inside methods\n"));
         return {};
     }
-    return get_property(m_class->name, access.member);
+    std::optional<TypeName> type = get_property(m_class->name, access.member);
+    if (!type)
+        print_error(std::format("ERROR class {} doesn't have property {}\n",
+            m_class->name.name.name, access.member.name));
+    return type;
 }
 
-std::optional<TypeName> Analyzer::check_method_call(const Expression::MethodCall& call) {
+std::optional<std::optional<TypeName>> Analyzer::check_method_call(
+    const Expression::MethodCall& call) {
     auto object = check_expression(*call.object);
     if (!object)
         return {};
+    if (!*object) {
+        print_error("ERROR attempt of call method of void\n");
+        print(Expression { call }, 0);
+        return {};
+    }
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
-        std::optional<TypeName> type = check_expression(expr);
-        if (type)
-            arguments.push_back(*type);
-        else
+        auto type = check_expression(expr);
+        if (!type)
             return {};
+        if (!*type) {
+            print_error("ERROR void expression inside method call arguments\n");
+            print(Expression { call }, 0);
+            return {};
+        }
+        arguments.push_back(**type);
     }
-    return get_method(*object, call.method, arguments);
+    std::optional<std::optional<TypeName>> method = get_method(**object, call.method, arguments);
+    if (!method)
+        print_error(std::format("ERROR method {}.{}({}) doesn't exist\n", stringify(**object),
+            call.method.name, stringify(arguments)));
+    return method;
 }
 
-std::optional<TypeName> Analyzer::check_this_call(const Expression::ThisCall& call) {
+std::optional<std::optional<TypeName>> Analyzer::check_this_call(const Expression::ThisCall& call) {
     if (!m_class) {
         print_error(std::format("ERROR 'this' can be accessed only inside methods\n"));
         return {};
     }
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
-        std::optional<TypeName> type = check_expression(expr);
-        if (type)
-            arguments.push_back(*type);
-        else
+        auto type = check_expression(expr);
+        if (!type)
             return {};
+        if (!*type) {
+            print_error("ERROR void expression inside method call arguments\n");
+            print(Expression { call }, 0);
+            return {};
+        }
+        arguments.push_back(**type);
     }
-    return get_method(m_class->name, call.method, arguments);
+    std::optional<std::optional<TypeName>> type = get_method(m_class->name, call.method, arguments);
+    if (!type)
+        print_error(std::format("ERROR method {}.{}({}) doesn't exist\n", stringify(m_class->name),
+            call.method.name, stringify(arguments)));
+    return type;
 }
 
 std::optional<TypeName> Analyzer::check_constructor_call(const Expression::ConstructorCall& call) {
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
-        std::optional<TypeName> type = check_expression(expr);
-        if (type)
-            arguments.push_back(*type);
-        else
+        std::optional<std::optional<TypeName>> type = check_expression(expr);
+        if (type) {
+            if (*type)
+                arguments.push_back(**type);
+            else {
+                print_error(std::format("ERROR void expression in constructor arguments\n"));
+                print(Expression { call }, 0);
+                return {};
+            }
+        } else
             return {};
     }
 
@@ -339,7 +377,7 @@ std::optional<TypeName> Analyzer::check_constructor_call(const Expression::Const
     return {};
 }
 
-std::optional<TypeName> Analyzer::check_expression(const Expression& expression) {
+std::optional<std::optional<TypeName>> Analyzer::check_expression(const Expression& expression) {
     if (auto literal = std::get_if<Expression::Literal>(&expression.value))
         return check_literal(*literal);
     if (auto member_access = std::get_if<Expression::MemberAccess>(&expression.value))
@@ -347,9 +385,9 @@ std::optional<TypeName> Analyzer::check_expression(const Expression& expression)
     if (auto this_access = std::get_if<Expression::ThisAccess>(&expression.value))
         return check_this_access(*this_access);
     if (auto method_call = std::get_if<Expression::MethodCall>(&expression.value))
-        return check_method_call(*method_call);
+        return check_method_call(*method_call).value_or(std::nullopt);
     if (auto this_call = std::get_if<Expression::ThisCall>(&expression.value))
-        return check_this_call(*this_call);
+        return check_this_call(*this_call).value_or(std::nullopt);
     if (auto constructor_call = std::get_if<Expression::ConstructorCall>(&expression.value))
         return check_constructor_call(*constructor_call);
     if (auto identifier = std::get_if<Identifier>(&expression.value)) {
@@ -442,7 +480,7 @@ void Analyzer::check_while(const Statement::While& while_) {
 }
 
 void Analyzer::check_assignment(const Statement::Assignment& assignment) {
-    std::optional<TypeName> type;
+    std::optional<std::optional<TypeName>> type;
     if (!lvalue_accessible(assignment.left)) {
         print_error("ERROR lhs of an assignment operation should be an lvalue\n");
         print(Statement { assignment }, 0);
@@ -490,12 +528,16 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
     }
 
     std::vector<TypeName> arguments {};
-    for (auto argument : super_call.arguments) {
-        std::optional<TypeName> type = check_expression(argument);
-        if (!type) {
+    for (Expression expr : super_call.arguments) {
+        auto type = check_expression(expr);
+        if (!type)
+            return;
+        if (!*type) {
+            print_error("ERROR void expression inside call arguments\n");
+            print(Statement { super_call }, 0);
             return;
         }
-        arguments.push_back(*type);
+        arguments.push_back(**type);
     }
 
     if (super_call.parent) {
@@ -553,7 +595,7 @@ void Analyzer::check_return(const Statement::Return& return_) {
         print(Statement { return_ }, 0);
     }
 
-    std::optional<TypeName> type = check_expression(*return_.value);
+    auto type = check_expression(*return_.value);
     if (!type)
         return;
 

@@ -44,14 +44,14 @@ private:
     bool lvalue_accessible(const Expression&);
     std::optional<Class> type_exists(const TypeName&);
     std::optional<TypeName> get_property(const TypeName&, const Identifier&);
-    std::optional<TypeName> get_method(
+    std::optional<std::optional<TypeName>> get_method(
         const TypeName&, const Identifier&, const std::vector<TypeName>&);
 
     TypeName check_literal(const Expression::Literal&);
     std::optional<TypeName> check_member_access(const Expression::MemberAccess&);
     std::optional<TypeName> check_this_access(const Expression::ThisAccess&);
-    std::optional<TypeName> check_method_call(const Expression::MethodCall&);
-    std::optional<TypeName> check_this_call(const Expression::ThisCall&);
+    std::optional<std::optional<TypeName>> check_method_call(const Expression::MethodCall&);
+    std::optional<std::optional<TypeName>> check_this_call(const Expression::ThisCall&);
     std::optional<TypeName> check_constructor_call(const Expression::ConstructorCall&);
 
     MemberDeclaration::Method substitute_generics(MemberDeclaration::Method);
@@ -86,7 +86,7 @@ public:
     bool error = false;
 
     void analyze();
-    std::optional<TypeName> check_expression(const Expression&);
+    std::optional<std::optional<TypeName>> check_expression(const Expression&);
     Analyzer(Root ast);
     Root ast();
 };
