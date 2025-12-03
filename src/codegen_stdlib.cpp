@@ -47,10 +47,13 @@ void Codegen::generate_real_methods() {
 
     // this(int)
     {
-        llvm::Function* fn = generate_function_entry(real, { integer }, "this", "Real");
-        llvm::Value* int_val = m_builder.CreateExtractValue(fn->arg_begin(), 0);
+        llvm::Function* fn = generate_function_entry(real, { real_ptr, integer }, "this", "Real");
+        auto arg_iter = fn->arg_begin();
+        llvm::Value* res = arg_iter++;
+        llvm::Value* int_val = m_builder.CreateExtractValue(arg_iter, 0);
         llvm::Value* real_val = m_builder.CreateSIToFP(int_val, m_builder.getDoubleTy());
-        m_builder.CreateRet(m_builder.CreateInsertValue(llvm::UndefValue::get(real), real_val, 0));
+        res = m_builder.CreateLoad(real, res);
+        m_builder.CreateRet(m_builder.CreateInsertValue(res, real_val, 0));
     }
 
     // plus
@@ -183,8 +186,9 @@ void Codegen::generate_stdio_methods() {
         llvm::Function::Create(printf_type, llvm::Function::ExternalLinkage, "printf", *m_module);
     // this
     {
-        generate_function_entry(stdio, {}, "this", "StdIO");
-        llvm::Value* val = m_builder.CreateAlloca(stdio);
+        llvm::Function* fn =
+            generate_function_entry(stdio, { m_builder.getPtrTy(0) }, "this", "StdIO");
+        llvm::Value* val = fn->arg_begin();
         llvm::Value* field = m_builder.CreateStructGEP(stdio, val, 0);
         m_builder.CreateStore(m_builder.getInt1(true), field);
         m_builder.CreateRet(m_builder.CreateLoad(stdio, val));

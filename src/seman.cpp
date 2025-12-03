@@ -542,6 +542,19 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
 
     if (super_call.parent) {
         type_exists(*super_call.parent);
+
+        bool correct_parent = false;
+        for (const TypeName& parent : m_class->extends)
+            if (parent == *super_call.parent) {
+                correct_parent = true;
+                break;
+            }
+        if (!correct_parent) {
+            print_error(std::format("ERROR class {} doesn't have parent\n",
+                stringify(m_class->name), stringify(*super_call.parent)));
+            print(Statement { super_call }, 0);
+        }
+
         bool exists = false;
         for (std::vector<TypeName> constructor : m_constructors[stringify(*super_call.parent)])
             if (constructor == arguments) {
@@ -612,8 +625,8 @@ void Analyzer::check_statement(const Statement& statement) {
         check_while(*while_);
     if (auto assignment = std::get_if<Statement::Assignment>(&statement.value))
         check_assignment(*assignment);
-    // if (auto super_call = std::get_if<Statement::SuperCall>(&statement.value))
-    //     check_super_call(*super_call);
+    if (auto super_call = std::get_if<Statement::SuperCall>(&statement.value))
+        check_super_call(*super_call);
     if (auto return_ = std::get_if<Statement::Return>(&statement.value))
         check_return(*return_);
     if (auto expression = std::get_if<Expression>(&statement.value))

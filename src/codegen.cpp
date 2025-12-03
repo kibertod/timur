@@ -173,7 +173,7 @@ void Codegen::generate_class_method_declarations(Class class_) {
         if (auto constructor_ = std::get_if<MemberDeclaration::Constructor>(&member.value)) {
             MemberDeclaration::Constructor constructor = *constructor_;
 
-            std::vector<llvm::Type*> args {};
+            std::vector<llvm::Type*> args { m_builder.getPtrTy(0) };
             for (const auto& arg : constructor.arguments)
                 args.push_back(m_structs[stringify(arg.first)]);
 
@@ -199,7 +199,7 @@ void Codegen::generate_class_method_implementations(Class class_) {
             auto variables_bak = m_variables;
             m_variables = {};
 
-            std::vector<llvm::Type*> args {};
+            std::vector<llvm::Type*> args { m_builder.getPtrTy(0) };
             for (const auto& arg : constructor.arguments)
                 args.push_back(m_structs[stringify(arg.first)]);
 
@@ -220,9 +220,8 @@ void Codegen::generate_class_method_implementations(Class class_) {
             llvm::BasicBlock* entry = llvm::BasicBlock::Create(
                 m_context, std::format("{}_this_{}_entry", stringify(class_.name), signature), fn);
             m_builder.SetInsertPoint(entry);
-            m_this = { m_builder.CreateAlloca(m_structs[stringify(class_.name)]),
-                m_structs[stringify(class_.name)] };
             auto arg_iter = fn->arg_begin();
+            m_this = { arg_iter++, m_structs[stringify(class_.name)] };
             for (const auto& arg : constructor.arguments) {
                 m_variables[arg.second.name] = { m_builder.CreateAlloca(
                                                      m_structs[stringify(arg.first)]),
@@ -400,13 +399,15 @@ llvm::Value* Codegen::generate_this_call(const Expression::ThisCall& call) {
 llvm::Value* Codegen::generate_constructor_call(const Expression::ConstructorCall& call) {
     TypeName type = call.type_name;
 
-    std::vector<llvm::Value*> args = {};
+    llvm::Value* val = m_builder.CreateAlloca(m_structs[stringify(type)]);
+    m_builder.CreateStore(llvm::UndefValue::get(m_structs[stringify(type)]), val);
+    std::vector<llvm::Value*> args = { val };
     for (const Expression& arg : call.arguments)
         args.push_back(generate_expression(arg));
 
-    std::vector<llvm::Type*> arg_types = {};
-    for (llvm::Value* arg : args)
-        arg_types.push_back(arg->getType());
+    std::vector<llvm::Type*> arg_types = { m_builder.getPtrTy(0) };
+    for (size_t i = 1; i < args.size(); i++)
+        arg_types.push_back(args[i]->getType());
 
     llvm::Function* fn;
     for (auto overload : m_functions[stringify(type)]["this"])
