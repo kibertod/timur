@@ -1,6 +1,8 @@
 class B is
     var str: String
-    this() is end
+    this() is
+        this.str := "set in B"
+    end
     void b() is
         StdIO().PrintLn("this is from B")
         return void
@@ -17,7 +19,13 @@ class D is
 end
 
 class C extends B, D is
-    this() is end
+    this() is
+        this.str := "set in C"
+    end
+    void ResetB() is
+        super.B()
+        return void
+    end
     void c() is
         StdIO().PrintLn("this is from C")
         return void
@@ -25,7 +33,9 @@ class C extends B, D is
 end
 
 class A extends C is
-    this() is end
+    this() is
+        super()
+    end
     void b() is
         StdIO().PrintLn("this was from B but now it's from A!")
         return void
@@ -35,12 +45,8 @@ end
 class Program is
     this() is
         var a: A := A()
-        a.str := "str"
-        a.int := 1
-        a.c()
-        a.d()
-        a.b()
         StdIO().PrintLn(a.str)
-        StdIO().PrintLn(a.int)
+        a.ResetB()
+        StdIO().PrintLn(a.str)
     end
 end

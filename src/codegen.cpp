@@ -570,13 +570,21 @@ void Codegen::generate_super_call(const Statement::SuperCall& call) {
     else
         type = m_definitions[m_this->second->getStructName().str()].extends[0];
 
-    std::vector<llvm::Value*> args = { llvm::UndefValue::get(m_structs[stringify(type)]) };
+    size_t id = 0;
+    for (const TypeName& parent : m_definitions[m_this->second->getStructName().str()].extends) {
+        if (type == parent)
+            break;
+        id++;
+    }
+
+    std::vector<llvm::Value*> args = { m_builder.CreateStructGEP(
+        m_structs[stringify(type)], m_this->first, id) };
     for (const Expression& arg : call.arguments)
         args.push_back(generate_expression(arg));
 
-    std::vector<llvm::Type*> arg_types = { m_structs[stringify(type)] };
-    for (llvm::Value* arg : args)
-        arg_types.push_back(arg->getType());
+    std::vector<llvm::Type*> arg_types = { m_builder.getPtrTy(0) };
+    for (size_t i = 1; i < args.size(); i++)
+        arg_types.push_back(args[i]->getType());
 
     llvm::Function* fn;
     for (auto overload : m_functions[stringify(type)]["this"])
