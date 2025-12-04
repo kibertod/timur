@@ -32,13 +32,26 @@ Analyzer::class_members(const Class& class_) {
     return { props, methods };
 }
 
-bool Analyzer::lvalue_accessible(const Expression& expr) {
+bool Analyzer::is_lvalue(const Expression& expr) {
     return true;
     if (std::holds_alternative<Identifier>(expr.value) ||
         std::holds_alternative<Expression::ThisAccess>(expr.value))
         return true;
     if (auto access = std::get_if<Expression::MemberAccess>(&expr.value))
-        return lvalue_accessible(*access->object);
+        return is_lvalue(*access->object);
+    return false;
+}
+
+bool Analyzer::is_parent(
+    const std::optional<TypeName>& type, const std::optional<TypeName>& child) {
+    if (!type || !child)
+        return false;
+    for (const TypeName& parent : m_classes[stringify(*child)].extends) {
+        if (parent == *type)
+            return true;
+        if (is_parent(type, parent))
+            return true;
+    }
     return false;
 }
 
@@ -199,8 +212,8 @@ std::optional<Class> Analyzer::type_exists(const TypeName& name) {
             check_class_declaration(class_);
             check_class(class_);
             m_generics = {};
-            m_particular_generics.push_back(
-                Class { TypeName { { stringify(class_.name) }, {} }, class_.extends, class_.body });
+            m_particular_generics.push_back(Class {
+                TypeName { { stringify(class_.name) }, {}, false }, class_.extends, class_.body });
             return class_;
         }
     return {};
@@ -253,13 +266,13 @@ std::optional<std::optional<TypeName>> Analyzer::get_method(
 TypeName Analyzer::check_literal(const Expression::Literal& literal) {
     switch (literal.type) {
     case Expression::Literal::Int:
-        return TypeName { { "Integer" }, {} };
+        return TypeName { { "Integer" }, {}, false };
     case Expression::Literal::Str:
-        return TypeName { { "String" }, {} };
+        return TypeName { { "String" }, {}, false };
     case Expression::Literal::Bool:
-        return TypeName { { "Bool" }, {} };
+        return TypeName { { "Bool" }, {}, false };
     case Expression::Literal::Real:
-        return TypeName { { "Real" }, {} };
+        return TypeName { { "Real" }, {}, false };
     }
     return {};
 }
@@ -415,7 +428,7 @@ std::optional<VariableState> Analyzer::check_variable(const Variable& variable) 
         if (!value) {
             print(&variable, 0);
             return state;
-        } else if (*value != variable.type_name) {
+        } else if (*value != variable.type_name && !is_parent(variable.type_name, *value)) {
             print_error(std::format("ERROR expression doesn't match with variable type\n"));
             print(&variable, 0);
             return state;
@@ -427,7 +440,7 @@ std::optional<VariableState> Analyzer::check_variable(const Variable& variable) 
 
 void Analyzer::check_if(const Statement::If& if_) {
     bool errors = false;
-    if (check_expression(if_.condition) != TypeName { { "Bool" }, {} }) {
+    if (check_expression(if_.condition) != TypeName { { "Bool" }, {}, false }) {
         print_error(std::format("ERROR if statement condition is not bool\n"));
         errors = true;
     }
@@ -442,7 +455,7 @@ void Analyzer::check_if(const Statement::If& if_) {
             m_variables.erase(variable.first);
 
     for (Statement::If::ElIf elif : if_.elifs) {
-        if (check_expression(elif.condition) != TypeName { { "Bool" }, {} }) {
+        if (check_expression(elif.condition) != TypeName { { "Bool" }, {}, false }) {
             print_error(std::format("ERROR elif statement condition is not bool\n"));
             errors = true;
         }
@@ -464,7 +477,7 @@ void Analyzer::check_if(const Statement::If& if_) {
 }
 
 void Analyzer::check_while(const Statement::While& while_) {
-    if (check_expression(while_.condition) != TypeName { { "Bool" }, {} }) {
+    if (check_expression(while_.condition) != TypeName { { "Bool" }, {}, false }) {
         print_error(std::format("ERROR while statement condition is not bool\n"));
         print(Statement { { while_ } }, 0);
     }
@@ -480,22 +493,22 @@ void Analyzer::check_while(const Statement::While& while_) {
 }
 
 void Analyzer::check_assignment(const Statement::Assignment& assignment) {
-    std::optional<std::optional<TypeName>> type;
-    if (!lvalue_accessible(assignment.left)) {
+    std::optional<std::optional<TypeName>> lhs_type;
+    if (!is_lvalue(assignment.left)) {
         print_error("ERROR lhs of an assignment operation should be an lvalue\n");
         print(Statement { assignment }, 0);
     }
     if (auto _ = std::get_if<Expression::MemberAccess>(&assignment.left.value))
-        type = check_expression(assignment.left);
+        lhs_type = check_expression(assignment.left);
     else if (auto _ = std::get_if<Expression::ThisAccess>(&assignment.left.value))
-        type = check_expression(assignment.left);
+        lhs_type = check_expression(assignment.left);
     else if (auto identifier = std::get_if<Identifier>(&assignment.left.value)) {
         if (!m_variables.contains(identifier->name)) {
             print_error(
                 std::format("ERROR variable {} doesn't exist in this scope\n", identifier->name));
             return;
         } else {
-            type = m_variables[identifier->name].type;
+            lhs_type = m_variables[identifier->name].type;
         }
     } else {
         print_error(std::format(
@@ -503,10 +516,15 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
         print(Statement { assignment }, 0);
         return;
     }
-    if (!type) {
+
+    if (!lhs_type)
         return;
-    }
-    if (type != check_expression(assignment.right)) {
+
+    auto rhs_type = check_expression(assignment.right);
+    if (!rhs_type)
+        return;
+
+    if (*lhs_type != *rhs_type && !is_parent(*rhs_type, *lhs_type)) {
         print_error(std::format("ERROR lhs type doesn't match with rhs\n"));
         print(Statement { assignment }, 0);
         return;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -20,7 +21,12 @@ namespace ast {
     struct TypeName {
         Identifier name;
         std::vector<TypeName> generic_arguments;
-        bool operator==(const TypeName&) const = default;
+        bool ptr;
+
+        bool operator==(const TypeName& other) const {
+            return name == other.name && generic_arguments == other.generic_arguments;
+        }
+
         bool operator<(const TypeName&) const;
     };
 
@@ -161,7 +167,25 @@ namespace ast {
         TypeName name;
         std::vector<TypeName> extends;
         std::vector<MemberDeclaration> body;
-        bool operator==(const Class&) const = default;
+
+        bool operator==(const Class& other) const {
+            std::function<bool(const TypeName&, const TypeName&)> typename_full_match =
+                [&](const TypeName& left, const TypeName& right) {
+                    if (left.name.name != right.name.name)
+                        return false;
+                    if (left.ptr != right.ptr)
+                        return false;
+                    if (left.generic_arguments.size() != right.generic_arguments.size())
+                        return false;
+                    for (size_t i = 0; i < left.generic_arguments.size(); i++)
+                        if (!typename_full_match(
+                                left.generic_arguments[i], right.generic_arguments[i]))
+                            return false;
+                    return true;
+                };
+            return typename_full_match(name, other.name);
+        };
+
         bool operator<(const Class&) const;
     };
 

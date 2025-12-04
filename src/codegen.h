@@ -29,11 +29,24 @@ private:
         std::vector<llvm::Type*> args;
         llvm::Function* func;
         std::vector<int> owner;
+        std::string name;
     };
 
     struct MethodSignature {
         std::vector<llvm::Type*> args;
         llvm::Type* return_type;
+    };
+
+    struct GlobalFnKey {
+        std::string child;
+        std::string parent;
+        std::string method;
+        std::vector<llvm::Type*> args;
+
+        bool operator<(const GlobalFnKey& other) const {
+            return std::tie(child, parent, method, args) <
+                   std::tie(other.child, other.parent, other.method, other.args);
+        };
     };
 
     std::optional<std::pair<llvm::Value*, llvm::Type*>> m_this;
@@ -44,12 +57,21 @@ private:
     std::set<TypeName> m_postponed;
     std::unordered_map<std::string, Class> m_definitions;
     std::unordered_map<std::string, llvm::StructType*> m_structs;
+    std::unordered_map<std::string, llvm::StructType*> m_pointers;
     std::unordered_map<std::string, std::unordered_map<std::string, std::vector<FuncInfo>>>
         m_functions;
+    std::unordered_map<std::string, int> m_functions_count;
     std::unordered_map<std::string, std::unordered_map<std::string, std::vector<int>>> m_props;
+    std::map<std::pair<std::string, std::string>, std::vector<int>> m_parents;
+    llvm::StructType* m_ptr;
+
+    std::map<std::pair<std::string, std::string>, llvm::GlobalVariable*> m_fn_arrays;
+    std::map<std::pair<std::string, std::string>, llvm::GlobalVariable*> m_offset_arrays;
+    std::map<GlobalFnKey, uint64_t> m_vtable_fn_ids;
 
     llvm::LLVMContext m_context;
     llvm::IRBuilder<> m_builder;
+    llvm::DataLayout m_dl;
     std::unique_ptr<llvm::Module> m_module;
     Analyzer m_analyzer;
 
@@ -62,12 +84,17 @@ private:
     void generate_integer();
     void generate_real();
     void generate_bool();
+    void generate_ptr();
 
     void generate_stdio_methods();
     void generate_integer_methods();
     void generate_real_methods();
     void generate_string_methods();
     void generate_bool_methods();
+
+    void map_fn_globals(const Class&, std::vector<Class>, std::vector<llvm::Constant*>&,
+        std::vector<llvm::Constant*>&, std::vector<FuncInfo>&, const Class&, uint64_t offset);
+    void init_globals(const TypeName&, std::vector<Class>, uint64_t offset);
 
     void generate_classes();
     void generate_class(Class class_);

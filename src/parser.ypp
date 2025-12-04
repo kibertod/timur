@@ -60,6 +60,7 @@
     KReturn
     Identifier
     Access
+    Ptr
     Assign
     LParen
     RParen
@@ -111,8 +112,10 @@ Program:
 ;
 
 TypeName:
-    Identifier { $$ = {$1, {}}; }
-    | Identifier LBracket TypeNames RBracket { $$ = {$1, $3}; }
+    Identifier { $$ = {$1, {}, false}; }
+    | Identifier Ptr { $$ = {$1, {}, true}; }
+    | Identifier LBracket TypeNames RBracket { $$ = {$1, $3, false}; }
+    | Identifier LBracket TypeNames RBracket Ptr { $$ = {$1, $3, true}; }
 ;
 
 

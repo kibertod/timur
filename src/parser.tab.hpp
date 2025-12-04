@@ -550,17 +550,18 @@ namespace yy {
     KReturn = 274,                 // KReturn
     Identifier = 275,              // Identifier
     Access = 276,                  // Access
-    Assign = 277,                  // Assign
-    LParen = 278,                  // LParen
-    RParen = 279,                  // RParen
-    Colon = 280,                   // Colon
-    Comma = 281,                   // Comma
-    LBracket = 282,                // LBracket
-    RBracket = 283,                // RBracket
-    LitStr = 284,                  // LitStr
-    LitInt = 285,                  // LitInt
-    LitReal = 286,                 // LitReal
-    Err = 287                      // Err
+    Ptr = 277,                     // Ptr
+    Assign = 278,                  // Assign
+    LParen = 279,                  // LParen
+    RParen = 280,                  // RParen
+    Colon = 281,                   // Colon
+    Comma = 282,                   // Comma
+    LBracket = 283,                // LBracket
+    RBracket = 284,                // RBracket
+    LitStr = 285,                  // LitStr
+    LitInt = 286,                  // LitInt
+    LitReal = 287,                 // LitReal
+    Err = 288                      // Err
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -577,7 +578,7 @@ namespace yy {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 33, ///< Number of tokens.
+        YYNTOKENS = 34, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -601,35 +602,36 @@ namespace yy {
         S_KReturn = 19,                          // KReturn
         S_Identifier = 20,                       // Identifier
         S_Access = 21,                           // Access
-        S_Assign = 22,                           // Assign
-        S_LParen = 23,                           // LParen
-        S_RParen = 24,                           // RParen
-        S_Colon = 25,                            // Colon
-        S_Comma = 26,                            // Comma
-        S_LBracket = 27,                         // LBracket
-        S_RBracket = 28,                         // RBracket
-        S_LitStr = 29,                           // LitStr
-        S_LitInt = 30,                           // LitInt
-        S_LitReal = 31,                          // LitReal
-        S_Err = 32,                              // Err
-        S_YYACCEPT = 33,                         // $accept
-        S_Program = 34,                          // Program
-        S_TypeName = 35,                         // TypeName
-        S_TypeNames = 36,                        // TypeNames
-        S_Expression = 37,                       // Expression
-        S_Expressions = 38,                      // Expressions
-        S_Literal = 39,                          // Literal
-        S_Variable = 40,                         // Variable
-        S_Statement = 41,                        // Statement
-        S_Statements = 42,                       // Statements
-        S_ElIf = 43,                             // ElIf
-        S_ElIfs = 44,                            // ElIfs
-        S_Argument = 45,                         // Argument
-        S_Arguments = 46,                        // Arguments
-        S_MemberDeclaration = 47,                // MemberDeclaration
-        S_MemberDeclarations = 48,               // MemberDeclarations
-        S_Class = 49,                            // Class
-        S_Classes = 50                           // Classes
+        S_Ptr = 22,                              // Ptr
+        S_Assign = 23,                           // Assign
+        S_LParen = 24,                           // LParen
+        S_RParen = 25,                           // RParen
+        S_Colon = 26,                            // Colon
+        S_Comma = 27,                            // Comma
+        S_LBracket = 28,                         // LBracket
+        S_RBracket = 29,                         // RBracket
+        S_LitStr = 30,                           // LitStr
+        S_LitInt = 31,                           // LitInt
+        S_LitReal = 32,                          // LitReal
+        S_Err = 33,                              // Err
+        S_YYACCEPT = 34,                         // $accept
+        S_Program = 35,                          // Program
+        S_TypeName = 36,                         // TypeName
+        S_TypeNames = 37,                        // TypeNames
+        S_Expression = 38,                       // Expression
+        S_Expressions = 39,                      // Expressions
+        S_Literal = 40,                          // Literal
+        S_Variable = 41,                         // Variable
+        S_Statement = 42,                        // Statement
+        S_Statements = 43,                       // Statements
+        S_ElIf = 44,                             // ElIf
+        S_ElIfs = 45,                            // ElIfs
+        S_Argument = 46,                         // Argument
+        S_Arguments = 47,                        // Arguments
+        S_MemberDeclaration = 48,                // MemberDeclaration
+        S_MemberDeclarations = 49,               // MemberDeclarations
+        S_Class = 50,                            // Class
+        S_Classes = 51                           // Classes
       };
     };
 
@@ -1597,6 +1599,21 @@ switch (yykind)
 #if 201103L <= YY_CPLUSPLUS
       static
       symbol_type
+      make_Ptr (location_type l)
+      {
+        return symbol_type (token::Ptr, std::move (l));
+      }
+#else
+      static
+      symbol_type
+      make_Ptr (const location_type& l)
+      {
+        return symbol_type (token::Ptr, l);
+      }
+#endif
+#if 201103L <= YY_CPLUSPLUS
+      static
+      symbol_type
       make_Assign (location_type l)
       {
         return symbol_type (token::Assign, std::move (l));
@@ -2063,7 +2080,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 220,     ///< Last index in yytable_.
+      yylast_ = 208,     ///< Last index in yytable_.
       yynnts_ = 18,  ///< Number of nonterminal symbols.
       yyfinal_ = 7 ///< Termination state number.
     };
@@ -2112,10 +2129,10 @@ switch (yykind)
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32
+      25,    26,    27,    28,    29,    30,    31,    32,    33
     };
     // Last valid token kind.
-    const int code_max = 287;
+    const int code_max = 288;
 
     if (t <= 0)
       return symbol_kind::S_YYEOF;
@@ -2375,7 +2392,7 @@ switch (yykind)
 
 
 } // yy
-#line 2379 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
+#line 2396 "/home/kibertod/dev/uni/timur/src/parser.tab.hpp"
 
 
 

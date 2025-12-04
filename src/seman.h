@@ -42,7 +42,8 @@ private:
 
     std::pair<std::set<std::pair<std::string, TypeName>>, std::set<Analyzer::Method>> class_members(
         const Class&);
-    bool lvalue_accessible(const Expression&);
+    bool is_lvalue(const Expression&);
+    bool is_parent(const std::optional<TypeName>&, const std::optional<TypeName>&);
     std::optional<Class> type_exists(const TypeName&);
     std::optional<TypeName> get_property(const TypeName&, const Identifier&);
     std::optional<std::optional<TypeName>> get_method(

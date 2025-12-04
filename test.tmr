@@ -1,26 +1,78 @@
-class B is
+class Storage is
     var str: String
-    this() is
-        this.str := "set in B"
+    var int: Integer
+
+    this(String: string, Integer: int) is
+        this.str := string
+        this.int := int
     end
-    void b() is
-        StdIO().PrintLn("this is from B")
+
+    this(Integer: int) is
+        this.str := "undefined"
+        this.int := int
+    end
+
+    void Print() is
+        StdIO().Print(this.str.Concat(": "))
+        StdIO().PrintLn(this.int)
+        return void
+    end
+
+    void Print(String: sep) is
+        StdIO().Print(this.str.Concat(sep))
+        StdIO().PrintLn(this.int)
         return void
     end
 end
 
-class D is
+class Pair[T, U] is
+    var first: T
+    var second: U
+
+    this(T: f, U: s) is
+        this.first := f
+        this.second := s
+    end
+
+    T First() is
+        return this.first
+    end
+
+    U Second() is
+        return this.second
+    end
+end
+
+class Printer[T] is
+    this() is end
+
+    void Print(Pair[T, String]: pair) is
+        StdIO().Print(pair.First())
+        StdIO().Print(" -> ")
+        StdIO().PrintLn(pair.Second())
+        return void
+    end
+end
+
+class B is
+    var str: String
+    this() is
+        this.str := "set in B"
+        end
+    void b() is
+        StdIO().PrintLn("this is from B")
+        return void
+    end
+end class D is
     var int: Integer
     this() is end
     void d() is
         StdIO().PrintLn("this is from D")
         return void
     end
-end
-
-class C extends B, D is
+end class C extends B, D is
     this() is
-        this.str := "set in C"
+        this.str := "set in C" 
     end
     void ResetB() is
         super.B()
@@ -31,7 +83,6 @@ class C extends B, D is
         return void
     end
 end
-
 class A extends C is
     this() is
         super()
@@ -40,14 +91,65 @@ class A extends C is
         StdIO().PrintLn("this was from B but now it's from A!")
         return void
     end
-end
-
+end 
 class Program is
     this() is
+        var stdio: StdIO := StdIO()
+
+        stdio.PrintLn("-- Built-in's And Control Flow  --")
+        if true.Xor(true) then
+            stdio.PrintLn("false blin")
+        elif false.Or(true) then
+            stdio.PrintLn("Unexpected")
+        elif true then
+            stdio.PrintLn("I know that")
+        else
+            stdio.PrintLn("Unexpected")
+        end
+
+        var i: Integer := 0
+        while i.Great(10).Not().And(true) loop
+            stdio.Print(i)
+            if i.Eq(10).Not() then stdio.Print(", ") end
+            i := i.Plus(1)
+        end
+        stdio.PrintLn("")
+
+        var storage: Storage := Storage("number", 14)
+        storage.Print()
+        storage.Print(" + ")
+        Storage(89725).Print()
+        stdio.PrintLn(storage.str)
+
+        var real: Real := 1.2345
+        stdio.PrintLn(real.Div(2.0).Mult(3.0).Plus(10.00))
+
+        stdio.PrintLn("")
+        stdio.PrintLn("-- Generic Classes --")
+        var p: Pair[Integer, String] := Pair[Integer, String](42, "answer")
+        var printer: Printer[Integer] := Printer[Integer]()
+        printer.Print(p)
+
+        var q: Pair[String, Bool] := Pair[String, Bool]("ok", true)
+        StdIO().PrintLn(q.Second())
+
+        stdio.PrintLn("")
+        stdio.PrintLn("-- Multiple Inheritance --")
         var a: A := A()
-        StdIO().PrintLn(a.str)
-        a.ResetB()
-        StdIO().PrintLn(a.str)
-        StdIO().PrintLn("str".Cmp("str"))
+        a.str := "giperboreya"
+        a.b()
+
+        stdio.PrintLn("")
+
+        var c: C := C()
+        stdio.PrintLn(c.str)
+        c.ResetB()
+        stdio.PrintLn(c.str)
+
+        stdio.PrintLn("")
+
+        var b: B := a
+        stdio.PrintLn(b.str)
+        b.b()
     end
 end

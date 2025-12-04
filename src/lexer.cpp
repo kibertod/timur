@@ -91,6 +91,10 @@ namespace yy {
                 ctx.pos++;
                 return parser::make_Access(
                     location(position(YY_NULLPTR, ctx.row, ctx.pos - ctx.row_pos - buffer.size())));
+            case '*':
+                ctx.pos++;
+                return parser::make_Ptr(
+                    location(position(YY_NULLPTR, ctx.row, ctx.pos - ctx.row_pos - buffer.size())));
             case ',':
                 ctx.pos++;
                 return parser::make_Comma(

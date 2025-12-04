@@ -39,11 +39,17 @@ void Codegen::generate_real() {
     m_structs["Real"] = real;
 }
 
+void Codegen::generate_ptr() {
+    llvm::Type* ptr_ty = m_builder.getPtrTy(0);
+    m_ptr = llvm::StructType::create(m_context, "Ptr");
+    m_ptr->setBody({ ptr_ty, ptr_ty, ptr_ty });
+}
+
 void Codegen::generate_real_methods() {
     llvm::StructType* real = m_structs["Real"];
     llvm::PointerType* real_ptr = m_builder.getPtrTy(0);
     llvm::StructType* integer = m_structs["Integer"];
-    TypeName real_tn = { { "Real" }, {} };
+    TypeName real_tn = { { "Real" }, {}, false };
 
     // this(int)
     {
@@ -300,7 +306,7 @@ void Codegen::generate_stdio_methods() {
 void Codegen::generate_integer_methods() {
     llvm::StructType* integer = m_structs["Integer"];
     llvm::PointerType* integer_ptr = m_builder.getPtrTy(0);
-    TypeName integer_tn = { { "Integer" }, {} };
+    TypeName integer_tn = { { "Integer" }, {}, false };
     // plus
     {
         llvm::Function* fn =
