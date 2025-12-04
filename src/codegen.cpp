@@ -55,7 +55,7 @@ Codegen::MethodSignature Codegen::get_signature(const MemberDeclaration::Method&
 }
 
 void Codegen::generate_classes() {
-    std::set<std::string> exists = { "Program" };
+    std::set<std::string> exists = { "Program", "Bool", "Real", "Integer", "String", "StdIO" };
     for (const Class& class_ : m_ast.classes) {
         if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty() &&
             !exists.contains(stringify(class_.name))) {
@@ -63,18 +63,18 @@ void Codegen::generate_classes() {
             m_postponed.insert(class_.name);
         }
     }
-    do {
-        for (const Class& class_ : m_ast.classes) {
-            if (m_structs.contains(stringify(class_.name))) {
-                exists.insert(stringify(class_.name));
-                continue;
-            }
-            if (stringify(class_.name) != "Program")
-                generate_class(class_);
+    for (const Class& class_ : m_ast.classes) {
+        if (m_structs.contains(stringify(class_.name))) {
+            exists.insert(stringify(class_.name));
+            continue;
         }
+        if (stringify(class_.name) != "Program")
+            generate_class(class_);
+    }
+    do {
         for (const Class& class_ : m_ast.classes)
             if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty() &&
-                !exists.contains(stringify(class_.name)) && m_postponed.contains(class_.name))
+                !exists.contains(stringify(class_.name)))
                 generate_class_properties(class_);
         for (const Class& class_ : m_ast.classes)
             if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty() &&
@@ -84,16 +84,15 @@ void Codegen::generate_classes() {
             if (stringify(class_.name) != "Program" && class_.name.generic_arguments.empty() &&
                 !exists.contains(stringify(class_.name)) && m_postponed.contains(class_.name))
                 generate_class_method_implementations(class_);
-        for (const Class& class_ : m_ast.classes)
-            if (m_structs.contains(stringify(class_.name)))
+        for (const Class& class_ : m_ast.classes) {
+            auto status = m_class_gen_statuses[stringify(class_.name)];
+            if (status.props_generated)
                 m_postponed.erase(class_.name);
+        }
     } while (!m_postponed.empty());
 }
 
 void Codegen::generate_class(Class class_) {
-    if (!parents_generated(class_))
-        return;
-
     std::function<void(const Class&, const std::vector<TypeName>&, std::vector<int>)> map_parents =
         [&](const Class& child, const std::vector<TypeName>& parents, std::vector<int> prev_ids) {
             size_t id = 0;
@@ -112,6 +111,7 @@ void Codegen::generate_class(Class class_) {
 
     llvm::StructType* struct_ = llvm::StructType::create(m_context, stringify(class_.name));
     m_structs[stringify(class_.name)] = struct_;
+    m_class_gen_statuses[stringify(class_.name)].struct_generated = true;
 }
 
 void Codegen::generate_class_properties(Class class_) {
@@ -145,6 +145,7 @@ void Codegen::generate_class_properties(Class class_) {
             types.push_back(m_structs[stringify(var->type_name)]);
 
     m_structs[stringify(class_.name)]->setBody(types);
+    m_class_gen_statuses[stringify(class_.name)].props_generated = true;
 }
 
 void Codegen::generate_class_method_declarations(Class class_) {
@@ -210,6 +211,7 @@ void Codegen::generate_class_method_declarations(Class class_) {
                 sign.return_type, sign.args, method->name.name, stringify(class_.name), false);
         }
     }
+    m_class_gen_statuses[stringify(class_.name)].fn_def_generated = true;
 }
 
 void Codegen::generate_class_method_implementations(Class class_) {
@@ -307,6 +309,7 @@ void Codegen::generate_class_method_implementations(Class class_) {
             m_variables = variables_bak;
         }
     }
+    m_class_gen_statuses[stringify(class_.name)].fn_impl_generated = true;
 }
 
 llvm::Function* Codegen::generate_function_entry(llvm::Type* return_type,

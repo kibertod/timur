@@ -49,6 +49,14 @@ private:
         };
     };
 
+    struct ClassGenStatus {
+        bool struct_generated;
+        bool props_generated;
+        bool fn_def_generated;
+        bool fn_impl_generated;
+        bool operator==(const ClassGenStatus&) const = default;
+    };
+
     std::optional<std::pair<llvm::Value*, llvm::Type*>> m_this;
 
     std::unordered_map<std::string, VarInfo> m_variables;
@@ -56,6 +64,7 @@ private:
 
     std::set<TypeName> m_postponed;
     std::unordered_map<std::string, Class> m_definitions;
+    std::unordered_map<std::string, ClassGenStatus> m_class_gen_statuses;
     std::unordered_map<std::string, llvm::StructType*> m_structs;
     std::unordered_map<std::string, llvm::StructType*> m_pointers;
     std::unordered_map<std::string, std::unordered_map<std::string, std::vector<FuncInfo>>>
