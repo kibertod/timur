@@ -14,6 +14,11 @@
 using namespace ast;
 
 typedef std::unordered_map<std::string, TypeName> Generics;
+static std::optional<TypeName> integer_tn = TypeName { { "Integer" }, {}, false };
+static std::optional<TypeName> bool_tn = TypeName { { "Bool" }, {}, false };
+static std::optional<TypeName> real_tn = TypeName { { "Real" }, {}, false };
+static std::optional<TypeName> stdio_tn = TypeName { { "StdIO" }, {}, false };
+static std::optional<TypeName> string_tn = TypeName { { "String" }, {}, false };
 
 class Codegen {
 private:
@@ -22,7 +27,8 @@ private:
     struct VarInfo {
         llvm::Value* ptr;
         std::string gen_name;
-        llvm::Type* type;
+        TypeName type;
+        llvm::Type* llvm_type;
     };
 
     struct FuncInfo {
@@ -30,23 +36,30 @@ private:
         llvm::Function* func;
         std::vector<int> owner;
         std::string name;
+        std::optional<TypeName> return_type;
     };
 
     struct MethodSignature {
         std::vector<llvm::Type*> args;
-        llvm::Type* return_type;
+        llvm::Type* llvm_return;
+        std::optional<TypeName> return_type;
     };
 
     struct GlobalFnKey {
-        std::string child;
         std::string parent;
         std::string method;
         std::vector<llvm::Type*> args;
 
         bool operator<(const GlobalFnKey& other) const {
-            return std::tie(child, parent, method, args) <
-                   std::tie(other.child, other.parent, other.method, other.args);
+            return std::tie(parent, method, args) <
+                   std::tie(other.parent, other.method, other.args);
         };
+    };
+
+    struct This {
+        llvm::Value* ptr;
+        llvm::Type* llvm_ty;
+        TypeName tn;
     };
 
     struct ClassGenStatus {
@@ -57,7 +70,7 @@ private:
         bool operator==(const ClassGenStatus&) const = default;
     };
 
-    std::optional<std::pair<llvm::Value*, llvm::Type*>> m_this;
+    std::optional<This> m_this;
 
     std::unordered_map<std::string, VarInfo> m_variables;
     unsigned long long m_var_count;
@@ -70,7 +83,9 @@ private:
     std::unordered_map<std::string, std::unordered_map<std::string, std::vector<FuncInfo>>>
         m_functions;
     std::unordered_map<std::string, int> m_functions_count;
-    std::unordered_map<std::string, std::unordered_map<std::string, std::vector<int>>> m_props;
+    std::unordered_map<std::string,
+        std::unordered_map<std::string, std::pair<std::vector<int>, TypeName>>>
+        m_props;
     std::map<std::pair<std::string, std::string>, std::vector<int>> m_parents;
     llvm::StructType* m_ptr;
 
@@ -101,27 +116,30 @@ private:
     void generate_string_methods();
     void generate_bool_methods();
 
-    void map_fn_globals(const Class&, std::vector<Class>, std::vector<llvm::Constant*>&,
-        std::vector<llvm::Constant*>&, std::vector<FuncInfo>&, const Class&, uint64_t offset);
-    void init_globals(const TypeName&, std::vector<Class>, uint64_t offset);
+    void map_child_fn_ptrs(const Class&, const Class&);
 
     void generate_classes();
-    void generate_class(Class class_);
-    void generate_class_properties(Class class_);
-    void generate_class_method_declarations(Class class_);
-    void generate_class_method_implementations(Class class_);
+    void generate_class(Class);
+    void generate_class_properties(Class);
+    void generate_class_method_declarations(Class);
+    void generate_class_method_implementations(Class);
 
-    llvm::Function* generate_function_entry(llvm::Type* return_type, std::vector<llvm::Type*> args,
-        std::string method_name, std::string struct_name, bool insert = true);
+    llvm::Function* generate_function_entry(llvm::Type*, std::optional<TypeName>,
+        std::vector<llvm::Type*>, std::string, std::string, bool = true);
 
-    llvm::Value* generate_literal(const Expression::Literal&);
-    llvm::Value* generate_method_call(const Expression::MethodCall&);
-    llvm::Value* generate_this_call(const Expression::ThisCall&);
-    llvm::Value* generate_constructor_call(const Expression::ConstructorCall&);
-    llvm::Value* generate_this_access(const Expression::ThisAccess&);
-    llvm::Value* generate_member_access(const Expression::MemberAccess&);
-    llvm::Value* generate_expression(const Expression&);
-    std::pair<llvm::Value*, llvm::Type*> generate_lvalue(const Expression&);
+    std::pair<llvm::Value*, std::optional<TypeName>> generate_literal(const Expression::Literal&);
+    std::pair<llvm::Value*, std::optional<TypeName>> generate_method_call(
+        const Expression::MethodCall&);
+    std::pair<llvm::Value*, std::optional<TypeName>> generate_this_call(
+        const Expression::ThisCall&);
+    std::pair<llvm::Value*, std::optional<TypeName>> generate_constructor_call(
+        const Expression::ConstructorCall&);
+    std::pair<llvm::Value*, std::optional<TypeName>> generate_this_access(
+        const Expression::ThisAccess&);
+    std::pair<llvm::Value*, std::optional<TypeName>> generate_member_access(
+        const Expression::MemberAccess&);
+    std::pair<llvm::Value*, std::optional<TypeName>> generate_expression(const Expression&);
+    std::pair<llvm::Value*, TypeName> generate_lvalue(const Expression&);
 
     void generate_variable(const Variable&);
     void generate_assignment(const Statement::Assignment&);

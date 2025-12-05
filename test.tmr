@@ -1,155 +1,59 @@
-class Storage is
-    var str: String
-    var int: Integer
-
-    this(String: string, Integer: int) is
-        this.str := string
-        this.int := int
-    end
-
-    this(Integer: int) is
-        this.str := "undefined"
-        this.int := int
-    end
-
-    void Print() is
-        StdIO().Print(this.str.Concat(": "))
-        StdIO().PrintLn(this.int)
-        return void
-    end
-
-    void Print(String: sep) is
-        StdIO().Print(this.str.Concat(sep))
-        StdIO().PrintLn(this.int)
-        return void
-    end
-end
-
-class Pair[T, U] is
-    var first: T
-    var second: U
-
-    this(T: f, U: s) is
-        this.first := f
-        this.second := s
-    end
-
-    T First() is
-        return this.first
-    end
-
-    U Second() is
-        return this.second
-    end
-end
-
-class Printer[T] is
-    this() is end
-
-    void Print(Pair[T, String]: pair) is
-        StdIO().Print(pair.First())
-        StdIO().Print(" -> ")
-        StdIO().PrintLn(pair.Second())
-        return void
-    end
-end
-
-class B is
-    var str: String
+class Animal is
+    var legs_count: Integer
     this() is
-        this.str := "set in B"
-        end
-    void b() is
-        StdIO().PrintLn("this is from B")
-        return void
+        this.legs_count := 4
     end
-end class D is
-    var int: Integer
-    this() is end
-    void d() is
-        StdIO().PrintLn("this is from D")
-        return void
+    this(Integer: legs_count) is
+        this.legs_count := legs_count
     end
-end class C extends B, D is
+    void Speak() is
+        StdIO().PrintLn("...")
+        return void 
+    end
+end
+
+class Carnivore extends Animal is
+    var food: String
+    var body_count: Integer
     this() is
-        this.str := "set in C" 
+        this.food := "meat"
+        this.legs_count := 4
+        this.body_count := 0
     end
-    void ResetB() is
-        super.B()
-        return void
-    end
-    void c() is
-        StdIO().PrintLn("this is from C")
+    void Speak() is
+        StdIO().PrintLn("I want: ".Concat(this.food))
         return void
     end
 end
-class A extends C is
-    this() is
-        super()
+
+class Named is
+    var name: String
+    this(String: name) is
+        this.name := name
     end
-    void b() is
-        StdIO().PrintLn("this was from B but now it's from A!")
+    void Speak() is
         return void
     end
-end 
+end
+
+class Cat extends Named, Carnivore is
+    this(String: name) is
+        super.Named(name)
+        super.Carnivore()
+    end
+    void Speak() is
+        StdIO().PrintLn("Meow")
+        return void
+    end
+end
+
 class Program is
     this() is
-        var stdio: StdIO := StdIO()
-
-        stdio.PrintLn("-- Built-in's And Control Flow  --")
-        if true.Xor(true) then
-            stdio.PrintLn("false blin")
-        elif false.Or(true) then
-            stdio.PrintLn("Unexpected")
-        elif true then
-            stdio.PrintLn("I know that")
-        else
-            stdio.PrintLn("Unexpected")
-        end
-
-        var i: Integer := 0
-        while i.Great(10).Not().And(true) loop
-            stdio.Print(i)
-            if i.Eq(10).Not() then stdio.Print(", ") end
-            i := i.Plus(1)
-        end
-        stdio.PrintLn("")
-
-        var storage: Storage := Storage("number", 14)
-        storage.Print()
-        storage.Print(" + ")
-        Storage(89725).Print()
-        stdio.PrintLn(storage.str)
-
-        var real: Real := 1.2345
-        stdio.PrintLn(real.Div(2.0).Mult(3.0).Plus(10.00))
-
-        stdio.PrintLn("")
-        stdio.PrintLn("-- Generic Classes --")
-        var p: Pair[Integer, String] := Pair[Integer, String](42, "answer")
-        var printer: Printer[Integer] := Printer[Integer]()
-        printer.Print(p)
-
-        var q: Pair[String, Bool] := Pair[String, Bool]("ok", true)
-        StdIO().PrintLn(q.Second())
-
-        stdio.PrintLn("")
-        stdio.PrintLn("-- Multiple Inheritance --")
-        var a: A := A()
-        a.str := "giperboreya"
-        a.b()
-
-        stdio.PrintLn("")
-
-        var c: C := C()
-        stdio.PrintLn(c.str)
-        c.ResetB()
-        stdio.PrintLn(c.str)
-
-        stdio.PrintLn("")
-
-        var b: B := a
-        stdio.PrintLn(b.str)
-        b.b()
+        var cat: Cat := Cat("Hibyr Karauita")
+        var ket: Carnivore* := cat
+        ket.Speak()
+        StdIO().PrintLn(ket.legs_count)
+        var ket2: Named* := cat
+        StdIO().PrintLn(ket2.name)
     end
 end

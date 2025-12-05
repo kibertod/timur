@@ -1,3 +1,4 @@
+#include <functional>
 #include <print>
 #include <set>
 #include <string>
@@ -44,20 +45,16 @@ bool Analyzer::is_lvalue(const Expression& expr) {
 
 bool Analyzer::is_parent(
     const std::optional<TypeName>& type, const std::optional<TypeName>& child) {
-    if (!type || !child)
-        return false;
+    if (!type || !child) return false;
     for (const TypeName& parent : m_classes[stringify(*child)].extends) {
-        if (parent == *type)
-            return true;
-        if (is_parent(type, parent))
-            return true;
+        if (parent.eq_no_ptr(*type)) return true;
+        if (is_parent(type, parent)) return true;
     }
     return false;
 }
 
 TypeName Analyzer::substitute_generics(TypeName type_name) {
-    if (m_generics.contains(type_name.name.name))
-        type_name = m_generics[type_name.name.name];
+    if (m_generics.contains(type_name.name.name)) type_name = m_generics[type_name.name.name];
 
     for (TypeName& generic : type_name.generic_arguments)
         generic = substitute_generics(generic);
@@ -89,8 +86,7 @@ MemberDeclaration Analyzer::substitute_generics(MemberDeclaration decl) {
 
 Variable Analyzer::substitute_generics(Variable var) {
     var.type_name = substitute_generics(var.type_name);
-    if (var.value)
-        var.value = substitute_generics(*var.value);
+    if (var.value) var.value = substitute_generics(*var.value);
     return var;
 }
 
@@ -104,8 +100,7 @@ MemberDeclaration::Constructor Analyzer::substitute_generics(
 }
 
 MemberDeclaration::Method Analyzer::substitute_generics(MemberDeclaration::Method method) {
-    if (method.return_type)
-        method.return_type = substitute_generics(*method.return_type);
+    if (method.return_type) method.return_type = substitute_generics(*method.return_type);
     for (auto& arg : method.arguments)
         arg.first = substitute_generics(arg.first);
     for (Statement& stmt : method.body)
@@ -114,18 +109,15 @@ MemberDeclaration::Method Analyzer::substitute_generics(MemberDeclaration::Metho
 }
 
 Statement Analyzer::substitute_generics(Statement stmt) {
-    if (auto var = std::get_if<Variable>(&stmt.value))
-        return { substitute_generics(*var) };
+    if (auto var = std::get_if<Variable>(&stmt.value)) return { substitute_generics(*var) };
     if (auto ret = std::get_if<Statement::Return>(&stmt.value)) {
-        if (ret->value)
-            ret->value = substitute_generics(*ret->value);
+        if (ret->value) ret->value = substitute_generics(*ret->value);
         return { *ret };
     }
     if (auto expr = std::get_if<Expression>(&stmt.value)) {
         return { substitute_generics(*expr) };
     }
-    if (std::holds_alternative<Statement::SuperCall>(stmt.value))
-        return stmt;
+    if (std::holds_alternative<Statement::SuperCall>(stmt.value)) return stmt;
     if (auto if_stmt = std::get_if<Statement::If>(&stmt.value))
         return { substitute_generics(*if_stmt) };
     if (auto while_stmt = std::get_if<Statement::While>(&stmt.value))
@@ -181,20 +173,16 @@ Expression Analyzer::substitute_generics(Expression expr) {
             arg = substitute_generics(arg);
         return { *call };
     }
-    if (std::holds_alternative<Expression::ThisAccess>(expr.value))
-        return expr;
-    if (std::holds_alternative<Expression::Literal>(expr.value))
-        return expr;
-    if (std::holds_alternative<Identifier>(expr.value))
-        return expr;
+    if (std::holds_alternative<Expression::ThisAccess>(expr.value)) return expr;
+    if (std::holds_alternative<Expression::Literal>(expr.value)) return expr;
+    if (std::holds_alternative<Identifier>(expr.value)) return expr;
     std::unreachable();
 }
 
 std::optional<Class> Analyzer::type_exists(const TypeName& name) {
     if (m_classes.contains(stringify(name))) {
         Class class_ = m_classes[stringify(name)];
-        if (class_.name.generic_arguments.size() == name.generic_arguments.size())
-            return class_;
+        if (class_.name.generic_arguments.size() == name.generic_arguments.size()) return class_;
     }
     for (Class class_ : m_ast.classes)
         if (class_.name.name == name.name) {
@@ -221,19 +209,16 @@ std::optional<Class> Analyzer::type_exists(const TypeName& name) {
 
 std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Identifier& identifier) {
     std::optional<Class> class_ = type_exists(type);
-    if (!class_)
-        return {};
+    if (!class_) return {};
 
     if (m_properties[stringify(type)].contains(identifier.name))
         return m_properties[stringify(type)][identifier.name];
 
     for (TypeName& parent_tn : class_->extends) {
         std::optional<Class> parent = type_exists(parent_tn);
-        if (!parent)
-            return {};
+        if (!parent) return {};
         std::optional<TypeName> parent_prop = get_property(parent_tn, identifier);
-        if (parent_prop)
-            return parent_prop;
+        if (parent_prop) return parent_prop;
     }
 
     return {};
@@ -242,22 +227,18 @@ std::optional<TypeName> Analyzer::get_property(const TypeName& type, const Ident
 std::optional<std::optional<TypeName>> Analyzer::get_method(
     const TypeName& type, const Identifier& identifier, const std::vector<TypeName>& arguments) {
     std::optional<Class> class_ = type_exists(type);
-    if (!class_)
-        return {};
+    if (!class_) return {};
 
     if (m_methods[stringify(type)].contains(identifier.name))
         for (const auto& sign : m_methods[stringify(type)][identifier.name])
-            if (sign.args == arguments)
-                return sign.return_type;
+            if (sign.args == arguments) return sign.return_type;
 
     for (TypeName& parent_tn : class_->extends) {
         std::optional<Class> parent = type_exists(parent_tn);
-        if (!parent)
-            return {};
+        if (!parent) return {};
         std::optional<std::optional<TypeName>> parent_method =
             get_method(parent_tn, identifier, arguments);
-        if (parent_method)
-            return parent_method;
+        if (parent_method) return parent_method;
     }
 
     return {};
@@ -279,8 +260,7 @@ TypeName Analyzer::check_literal(const Expression::Literal& literal) {
 
 std::optional<TypeName> Analyzer::check_member_access(const Expression::MemberAccess& access) {
     auto object = check_expression(*access.object);
-    if (!object)
-        return {};
+    if (!object) return {};
     if (!*object) {
         print_error(std::format("ERROR attempt of void property access\n"));
         print(Expression { access }, 0);
@@ -309,8 +289,7 @@ std::optional<TypeName> Analyzer::check_this_access(const Expression::ThisAccess
 std::optional<std::optional<TypeName>> Analyzer::check_method_call(
     const Expression::MethodCall& call) {
     auto object = check_expression(*call.object);
-    if (!object)
-        return {};
+    if (!object) return {};
     if (!*object) {
         print_error("ERROR attempt of call method of void\n");
         print(Expression { call }, 0);
@@ -319,8 +298,7 @@ std::optional<std::optional<TypeName>> Analyzer::check_method_call(
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
         auto type = check_expression(expr);
-        if (!type)
-            return {};
+        if (!type) return {};
         if (!*type) {
             print_error("ERROR void expression inside method call arguments\n");
             print(Expression { call }, 0);
@@ -343,8 +321,7 @@ std::optional<std::optional<TypeName>> Analyzer::check_this_call(const Expressio
     std::vector<TypeName> arguments {};
     for (Expression expr : call.arguments) {
         auto type = check_expression(expr);
-        if (!type)
-            return {};
+        if (!type) return {};
         if (!*type) {
             print_error("ERROR void expression inside method call arguments\n");
             print(Expression { call }, 0);
@@ -382,8 +359,7 @@ std::optional<TypeName> Analyzer::check_constructor_call(const Expression::Const
     }
 
     for (std::vector<TypeName> overload : m_constructors[stringify(call.type_name)])
-        if (overload == arguments)
-            return call.type_name;
+        if (overload == arguments) return call.type_name;
 
     print_error(std::format("ERROR constructor {}({}) doesn't exist\n", stringify(call.type_name),
         stringify(arguments)));
@@ -428,7 +404,12 @@ std::optional<VariableState> Analyzer::check_variable(const Variable& variable) 
         if (!value) {
             print(&variable, 0);
             return state;
-        } else if (*value != variable.type_name && !is_parent(variable.type_name, *value)) {
+        } else if (!*value) {
+            print_error(std::format("ERROR attempt to assign void to a variable\n"));
+            print(&variable, 0);
+            return state;
+        } else if (!(*value)->eq_no_ptr(variable.type_name) &&
+                   !is_parent(variable.type_name, *value)) {
             print_error(std::format("ERROR expression doesn't match with variable type\n"));
             print(&variable, 0);
             return state;
@@ -451,8 +432,7 @@ void Analyzer::check_if(const Statement::If& if_) {
     for (Statement statement : if_.body)
         check_statement(statement);
     for (auto variable : m_variables)
-        if (!variables.contains(variable.first))
-            m_variables.erase(variable.first);
+        if (!variables.contains(variable.first)) m_variables.erase(variable.first);
 
     for (Statement::If::ElIf elif : if_.elifs) {
         if (check_expression(elif.condition) != TypeName { { "Bool" }, {}, false }) {
@@ -462,18 +442,15 @@ void Analyzer::check_if(const Statement::If& if_) {
         for (Statement statement : elif.body)
             check_statement(statement);
         for (auto variable : m_variables)
-            if (!variables.contains(variable.first))
-                m_variables.erase(variable.first);
+            if (!variables.contains(variable.first)) m_variables.erase(variable.first);
     }
 
     for (Statement statement : if_.else_body)
         check_statement(statement);
     for (auto variable : m_variables)
-        if (!variables.contains(variable.first))
-            m_variables.erase(variable.first);
+        if (!variables.contains(variable.first)) m_variables.erase(variable.first);
 
-    if (errors)
-        print(Statement { if_ }, 0);
+    if (errors) print(Statement { if_ }, 0);
 }
 
 void Analyzer::check_while(const Statement::While& while_) {
@@ -488,8 +465,7 @@ void Analyzer::check_while(const Statement::While& while_) {
     for (Statement statement : while_.body)
         check_statement(statement);
     for (auto variable : m_variables)
-        if (!variables.contains(variable.first))
-            m_variables.erase(variable.first);
+        if (!variables.contains(variable.first)) m_variables.erase(variable.first);
 }
 
 void Analyzer::check_assignment(const Statement::Assignment& assignment) {
@@ -517,12 +493,10 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
         return;
     }
 
-    if (!lhs_type)
-        return;
+    if (!lhs_type) return;
 
     auto rhs_type = check_expression(assignment.right);
-    if (!rhs_type)
-        return;
+    if (!rhs_type) return;
 
     if (*lhs_type != *rhs_type && !is_parent(*rhs_type, *lhs_type)) {
         print_error(std::format("ERROR lhs type doesn't match with rhs\n"));
@@ -548,8 +522,7 @@ void Analyzer::check_super_call(const Statement::SuperCall& super_call) {
     std::vector<TypeName> arguments {};
     for (Expression expr : super_call.arguments) {
         auto type = check_expression(expr);
-        if (!type)
-            return;
+        if (!type) return;
         if (!*type) {
             print_error("ERROR void expression inside call arguments\n");
             print(Statement { super_call }, 0);
@@ -618,8 +591,7 @@ void Analyzer::check_return(const Statement::Return& return_) {
         return;
     }
 
-    if (!m_method->return_type && !return_.value)
-        return;
+    if (!m_method->return_type && !return_.value) return;
 
     if (!return_.value || !m_method->return_type) {
         print_error(std::format("ERROR return value doesn't match return type\n"));
@@ -627,8 +599,7 @@ void Analyzer::check_return(const Statement::Return& return_) {
     }
 
     auto type = check_expression(*return_.value);
-    if (!type)
-        return;
+    if (!type) return;
 
     if (*type != m_method->return_type) {
         print_error(std::format("ERROR return value doesn't match return type\n"));
@@ -637,18 +608,14 @@ void Analyzer::check_return(const Statement::Return& return_) {
 }
 
 void Analyzer::check_statement(const Statement& statement) {
-    if (auto if_ = std::get_if<Statement::If>(&statement.value))
-        check_if(*if_);
-    if (auto while_ = std::get_if<Statement::While>(&statement.value))
-        check_while(*while_);
+    if (auto if_ = std::get_if<Statement::If>(&statement.value)) check_if(*if_);
+    if (auto while_ = std::get_if<Statement::While>(&statement.value)) check_while(*while_);
     if (auto assignment = std::get_if<Statement::Assignment>(&statement.value))
         check_assignment(*assignment);
     if (auto super_call = std::get_if<Statement::SuperCall>(&statement.value))
         check_super_call(*super_call);
-    if (auto return_ = std::get_if<Statement::Return>(&statement.value))
-        check_return(*return_);
-    if (auto expression = std::get_if<Expression>(&statement.value))
-        check_expression(*expression);
+    if (auto return_ = std::get_if<Statement::Return>(&statement.value)) check_return(*return_);
+    if (auto expression = std::get_if<Expression>(&statement.value)) check_expression(*expression);
     if (auto variable = std::get_if<Variable>(&statement.value)) {
         auto state = check_variable(*variable);
         if (!state) {
@@ -723,8 +690,7 @@ void Analyzer::check_constructor(const MemberDeclaration::Constructor& construct
 }
 
 void Analyzer::check_class(const Class& class_) {
-    if (class_.name.generic_arguments.size() > 0 && m_generics.size() == 0)
-        return;
+    if (class_.name.generic_arguments.size() > 0 && m_generics.size() == 0) return;
 
     std::string classname = stringify(class_.name);
 
@@ -741,8 +707,7 @@ void Analyzer::check_class(const Class& class_) {
     m_class = class_;
     std::optional<Class> class_bak = m_class;
     for (MemberDeclaration member : class_.body)
-        if (auto variable = std::get_if<Variable>(&member.value))
-            check_variable(*variable);
+        if (auto variable = std::get_if<Variable>(&member.value)) check_variable(*variable);
 
     for (MemberDeclaration member : class_.body) {
         if (auto method = std::get_if<MemberDeclaration::Method>(&member.value))
@@ -758,8 +723,7 @@ void Analyzer::check_class(const Class& class_) {
 }
 
 void Analyzer::check_class_declaration(const Class& class_) {
-    if (class_.name.generic_arguments.size() > 0 && m_generics.size() == 0)
-        return;
+    if (class_.name.generic_arguments.size() > 0 && m_generics.size() == 0) return;
     std::string classname = stringify(class_.name);
     if (m_classes.contains(classname)) {
         print_error(std::format("ERROR redeclaration of class {}\n", classname));
@@ -768,36 +732,6 @@ void Analyzer::check_class_declaration(const Class& class_) {
         m_properties[classname] = {};
         m_methods[classname] = {};
         m_constructors[classname] = {};
-
-        std::set<std::pair<std::string, TypeName>> props {};
-        std::set<Method> methods {};
-
-        for (const TypeName& parent_tn : class_.extends) {
-            std::optional<Class> parent = type_exists(parent_tn);
-            if (!parent)
-                continue;
-            auto [parent_props, parent_methods] = class_members(*parent);
-
-            for (auto parent_prop : parent_props)
-                for (auto prop : props)
-                    if (prop.first == parent_prop.first)
-                        print_error(std::format(
-                            "ERROR parents of class {} define property {} multiple times\n",
-                            stringify(class_.name), prop.first));
-            props.merge(parent_props);
-            for (Method parent_method : parent_methods)
-                for (Method method : methods)
-                    if (method.name == parent_method.name && method.args == parent_method.args)
-                        print_error(std::format(
-                            "ERROR parents of class {} define method {}({}) multiple times\n",
-                            stringify(class_.name), method.name, stringify(method.args)));
-            methods.merge(parent_methods);
-        }
-
-        for (auto prop : props)
-            m_properties[classname][prop.first] = prop.second;
-        for (auto method : methods)
-            m_methods[classname][method.name].push_back(method);
 
         for (MemberDeclaration member : class_.body) {
             if (auto property = std::get_if<Variable>(&member.value)) {
@@ -846,12 +780,57 @@ void Analyzer::check_class_declaration(const Class& class_) {
                             break;
                         }
                     }
-                    if (!overload_exists)
-                        m_constructors[classname].push_back(arguments);
+                    if (!overload_exists) m_constructors[classname].push_back(arguments);
                 } else {
                     m_constructors[classname] = { arguments };
                 }
             }
+        }
+
+        std::function<void(const Class&)> check_parent_defs = [&](const Class& parent) {
+            auto [parent_props, parent_methods] = class_members(parent);
+
+            for (auto parent_prop : parent_props)
+                if (m_properties[classname].contains(parent_prop.first)) {
+                    if (m_properties[classname][parent_prop.first] != parent_prop.second)
+                        print_error(
+                            std::format("ERROR class {} redefine property of {} of it's parent\n",
+                                stringify(class_.name), parent_prop.first));
+                } else
+                    m_properties[classname][parent_prop.first] = parent_prop.second;
+
+            for (Method parent_method : parent_methods) {
+                bool redefined = false;
+                for (Method method : m_methods[classname][parent_method.name])
+                    if (method.args == parent_method.args) {
+                        redefined = true;
+                        if (method.return_type != parent_method.return_type)
+                            print_error(std::format("ERROR methods {0}.{2}({3}) and {1}.{2}({3}) "
+                                                    "have different return types\n",
+                                stringify(class_.name), stringify(parent.name), method.name,
+                                stringify(method.args)));
+                    }
+                if (!redefined) m_methods[classname][parent_method.name].push_back(parent_method);
+            }
+
+            for (const TypeName& parent_tn : parent.extends) {
+                std::optional<Class> next_parent = type_exists(parent_tn);
+                if (!next_parent) {
+                    print_error(
+                        std::format("ERROR class {} doesn't exist\n", stringify(parent_tn)));
+                    continue;
+                }
+                check_parent_defs(*next_parent);
+            }
+        };
+
+        for (const TypeName& parent_tn : class_.extends) {
+            std::optional<Class> parent = type_exists(parent_tn);
+            if (!parent) {
+                print_error(std::format("ERROR class {} doesn't exist\n", stringify(parent_tn)));
+                continue;
+            }
+            check_parent_defs(*parent);
         }
     }
 }

@@ -9,6 +9,10 @@ bool TypeName::operator<(const TypeName& other) const {
     return std::tie(name, generic_arguments) < std::tie(other.name, other.generic_arguments);
 }
 
+bool TypeName::eq_no_ptr(const TypeName& other) const {
+    return name == other.name && generic_arguments == other.generic_arguments;
+}
+
 bool Variable::operator<(const Variable& other) const {
     return std::tie(name, type_name, value) < std::tie(other.name, other.type_name, other.value);
 }
@@ -36,8 +40,7 @@ bool Expression::ConstructorCall::operator<(const ConstructorCall& other) const 
 }
 
 bool Expression::Literal::operator<(const Literal& other) const {
-    if (bool cmp = type < other.type; cmp != 0)
-        return cmp;
+    if (bool cmp = type < other.type; cmp != 0) return cmp;
     return value < other.value;
 }
 
