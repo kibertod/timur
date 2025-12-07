@@ -1,59 +1,31 @@
-class Animal is
-    var legs_count: Integer
-    this() is
-        this.legs_count := 4
-    end
-    this(Integer: legs_count) is
-        this.legs_count := legs_count
-    end
-    void Speak() is
-        StdIO().PrintLn("...")
-        return void 
-    end
-end
-
-class Carnivore extends Animal is
-    var food: String
-    var body_count: Integer
-    this() is
-        this.food := "meat"
-        this.legs_count := 4
-        this.body_count := 0
-    end
-    void Speak() is
-        StdIO().PrintLn("I want: ".Concat(this.food))
+class Util is
+    this() is end
+    void Mutate(Integer*: int) is
+        *int := int.Plus(10)
         return void
     end
 end
 
-class Named is
-    var name: String
-    this(String: name) is
-        this.name := name
+class SelfMutable is
+    var val: Integer
+    this(Integer: val) is
+        this.val := val
     end
-    void Speak() is
-        return void
-    end
-end
-
-class Cat extends Named, Carnivore is
-    this(String: name) is
-        super.Named(name)
-        super.Carnivore()
-    end
-    void Speak() is
-        StdIO().PrintLn("Meow")
+    void Increment() is
+        this.val := this.val.Plus(1)
         return void
     end
 end
 
 class Program is
     this() is
-        var cat: Cat := Cat("Hibyr Karauita")
-        var ket: Carnivore* := cat
-        ket.Speak()
-        StdIO().PrintLn(ket.legs_count)
-        var ket2: Named* := cat
-        StdIO().PrintLn(ket2.name)
+        var ptr: SelfMutable* := SelfMutable(1)
+        StdIO().PrintLn(ptr.val)
+        ptr.Increment()
+        StdIO().PrintLn(ptr.val)
+
+        var int: Integer* := 1
+        Util().Mutate(int)
+        StdIO().PrintLn(*int)
     end
 end

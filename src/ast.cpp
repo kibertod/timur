@@ -44,6 +44,8 @@ bool Expression::Literal::operator<(const Literal& other) const {
     return value < other.value;
 }
 
+bool Expression::Deref::operator<(const Deref& other) const { return *object < *other.object; }
+
 bool Expression::operator<(const Expression& other) const { return value < other.value; }
 
 bool Statement::If::ElIf::operator<(const ElIf& other) const {

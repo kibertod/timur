@@ -54,6 +54,7 @@ private:
     std::optional<std::optional<TypeName>> check_method_call(const Expression::MethodCall&);
     std::optional<std::optional<TypeName>> check_this_call(const Expression::ThisCall&);
     std::optional<TypeName> check_constructor_call(const Expression::ConstructorCall&);
+    std::optional<TypeName> check_deref(const Expression::Deref&);
 
     MemberDeclaration::Method substitute_generics(MemberDeclaration::Method);
     MemberDeclaration::Constructor substitute_generics(MemberDeclaration::Constructor);

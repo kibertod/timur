@@ -133,6 +133,7 @@ Expression:
     | TypeName LParen Expressions RParen { $$ = { ast::Expression::ConstructorCall{ $1, $3 } }; }
     | Identifier { $$ = { ast::Identifier{$1} }; }
     | Literal { $$ = { $1 }; }
+    | Ptr Expression { $$ = { ast::Expression::Deref{ std::make_shared<ast::Expression>($2) } }; }
 ;
 
 Expressions:

@@ -26,7 +26,6 @@ private:
 
     struct VarInfo {
         llvm::Value* ptr;
-        std::string gen_name;
         TypeName type;
         llvm::Type* llvm_type;
     };
@@ -102,6 +101,7 @@ private:
     std::string var_name();
     bool parents_generated(const Class&);
     MethodSignature get_signature(const MemberDeclaration::Method&);
+    llvm::StructType* get_struct(const TypeName&);
 
     void generate_stdio();
     void generate_string();
@@ -140,6 +140,9 @@ private:
         const Expression::MemberAccess&);
     std::pair<llvm::Value*, std::optional<TypeName>> generate_expression(const Expression&);
     std::pair<llvm::Value*, TypeName> generate_lvalue(const Expression&);
+    std::pair<llvm::Value*, TypeName> generate_deref(const Expression::Deref&);
+
+    llvm::Value* generate_ptr(const Expression&, const TypeName&);
 
     void generate_variable(const Variable&);
     void generate_assignment(const Statement::Assignment&);

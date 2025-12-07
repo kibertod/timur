@@ -36,8 +36,7 @@ inline std::string stringify(const std::vector<ast::TypeName> arguments) {
     for (ast::TypeName type : arguments) {
         res += std::format("{}, ", stringify(type));
     }
-    if (arguments.size() > 0)
-        res.erase(res.size() - 2);
+    if (arguments.size() > 0) res.erase(res.size() - 2);
     return res;
 }
 
@@ -112,6 +111,11 @@ inline void print(ast::Expression expression, size_t depth) {
     }
     if (auto identifier = std::get_if<ast::Identifier>(&expression.value)) {
         std::print("{0}{1} {2}\n", tabs(depth), misc_heaading("IDENTIFIER"), identifier->name);
+    }
+    if (auto deref = std::get_if<ast::Expression::Deref>(&expression.value)) {
+        std::print(
+            "{0}{1}\n{0}{2}", tabs(depth), expression_heaading("DEREFERENCE"), ident("value"));
+        print(*deref->object, depth + 1);
     }
     if (auto literal = std::get_if<ast::Expression::Literal>(&expression.value)) {
         std::cout << tabs(depth) << expression_heaading("LITERAL ");

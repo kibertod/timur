@@ -36,7 +36,8 @@ Analyzer::class_members(const Class& class_) {
 bool Analyzer::is_lvalue(const Expression& expr) {
     return true;
     if (std::holds_alternative<Identifier>(expr.value) ||
-        std::holds_alternative<Expression::ThisAccess>(expr.value))
+        std::holds_alternative<Expression::ThisAccess>(expr.value) ||
+        std::holds_alternative<Expression::Deref>(expr.value))
         return true;
     if (auto access = std::get_if<Expression::MemberAccess>(&expr.value))
         return is_lvalue(*access->object);
@@ -366,6 +367,22 @@ std::optional<TypeName> Analyzer::check_constructor_call(const Expression::Const
     return {};
 }
 
+std::optional<TypeName> Analyzer::check_deref(const Expression::Deref& deref) {
+    auto object = check_expression(*deref.object);
+    if (!object) return {};
+    if (!*object) {
+        print_error(std::format("ERROR attempt to dereference void\n"));
+        print(Expression { deref }, 0);
+        return {};
+    }
+    if (!(*object)->ptr) {
+        print_error(std::format("ERROR attempt to dereference non-pointer value\n"));
+        print(Expression { deref }, 0);
+        return {};
+    }
+    return TypeName { (*object)->name, (*object)->generic_arguments, false };
+}
+
 std::optional<std::optional<TypeName>> Analyzer::check_expression(const Expression& expression) {
     if (auto literal = std::get_if<Expression::Literal>(&expression.value))
         return check_literal(*literal);
@@ -379,6 +396,7 @@ std::optional<std::optional<TypeName>> Analyzer::check_expression(const Expressi
         return check_this_call(*this_call).value_or(std::nullopt);
     if (auto constructor_call = std::get_if<Expression::ConstructorCall>(&expression.value))
         return check_constructor_call(*constructor_call);
+    if (auto deref = std::get_if<Expression::Deref>(&expression.value)) return check_deref(*deref);
     if (auto identifier = std::get_if<Identifier>(&expression.value)) {
         if (!m_variables.contains(identifier->name))
             print_error(
@@ -474,9 +492,11 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
         print_error("ERROR lhs of an assignment operation should be an lvalue\n");
         print(Statement { assignment }, 0);
     }
-    if (auto _ = std::get_if<Expression::MemberAccess>(&assignment.left.value))
+    if (std::holds_alternative<Expression::MemberAccess>(assignment.left.value))
         lhs_type = check_expression(assignment.left);
-    else if (auto _ = std::get_if<Expression::ThisAccess>(&assignment.left.value))
+    else if (std::holds_alternative<Expression::ThisAccess>(assignment.left.value))
+        lhs_type = check_expression(assignment.left);
+    else if (std::holds_alternative<Expression::Deref>(assignment.left.value))
         lhs_type = check_expression(assignment.left);
     else if (auto identifier = std::get_if<Identifier>(&assignment.left.value)) {
         if (!m_variables.contains(identifier->name)) {
@@ -497,8 +517,13 @@ void Analyzer::check_assignment(const Statement::Assignment& assignment) {
 
     auto rhs_type = check_expression(assignment.right);
     if (!rhs_type) return;
+    if (!*rhs_type) {
+        print_error(std::format("ERROR attempt to assign void\n"));
+        print(Statement { assignment }, 0);
+        return;
+    }
 
-    if (*lhs_type != *rhs_type && !is_parent(*rhs_type, *lhs_type)) {
+    if (!(*lhs_type)->eq_no_ptr(**rhs_type) && !is_parent(*rhs_type, *lhs_type)) {
         print_error(std::format("ERROR lhs type doesn't match with rhs\n"));
         print(Statement { assignment }, 0);
         return;

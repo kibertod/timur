@@ -72,8 +72,14 @@ namespace ast {
             bool operator<(const Literal&) const;
         };
 
+        struct Deref {
+            Ptr<Expression> object;
+            bool operator==(const Deref&) const = default;
+            bool operator<(const Deref&) const;
+        };
+
         std::variant<Identifier, MemberAccess, MethodCall, ConstructorCall, Literal, ThisAccess,
-            ThisCall>
+            ThisCall, Deref>
             value;
         bool operator==(const Expression&) const = default;
         bool operator<(const Expression&) const;
